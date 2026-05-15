@@ -63,10 +63,11 @@ services:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$DB_ROOT_PASSWORD\" --silent || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 30
+      start_period: 40s
     networks:
       - motor1000
 
