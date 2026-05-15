@@ -1,0 +1,5 @@
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="1" y="1" width="38" height="38" rx="10" fill="#F59E0B"/>
+  <path d="M10 26V14H15.5L20 21L24.5 14H30V26H25.5V20.8L20.7 28H19.3L14.5 20.8V26H10Z" fill="#111827"/>
+  <text x="50" y="25" fill="#E5E7EB" font-family="Segoe UI, Arial, sans-serif" font-size="18" font-weight="700">Motor1000</text>
+</svg>

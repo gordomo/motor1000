@@ -1,0 +1,158 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: motor1000_app
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      APP_LOCALE: ${APP_LOCALE:-es}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-motor1000}
+      DB_USERNAME: ${DB_USERNAME:-motor1000}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      FILAMENT_FILESYSTEM_DISK: public
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - app_storage:/var/www/storage
+      - app_cache:/var/www/bootstrap/cache
+    networks:
+      - motor1000
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: motor1000_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - app_storage:/var/www/storage:ro
+      - app_cache:/var/www/bootstrap/cache:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - motor1000
+
+  mysql:
+    image: mysql:8.0
+    container_name: motor1000_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE:-motor1000}
+      MYSQL_USER: ${DB_USERNAME:-motor1000}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - motor1000
+
+  redis:
+    image: redis:7-alpine
+    container_name: motor1000_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - motor1000
+
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: motor1000_horizon
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan horizon
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-motor1000}
+      DB_USERNAME: ${DB_USERNAME:-motor1000}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - app_storage:/var/www/storage
+      - app_cache:/var/www/bootstrap/cache
+    networks:
+      - motor1000
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: motor1000_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: sh -c "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-motor1000}
+      DB_USERNAME: ${DB_USERNAME:-motor1000}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - app_storage:/var/www/storage
+      - app_cache:/var/www/bootstrap/cache
+    networks:
+      - motor1000
+
+volumes:
+  mysql_data:
+  redis_data:
+  app_storage:
+  app_cache:
+
+networks:
+  motor1000:
+    driver: bridge

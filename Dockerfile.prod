@@ -1,0 +1,53 @@
+FROM php:8.3-fpm
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libicu-dev \
+    libgd-dev \
+    zip \
+    unzip \
+    nodejs \
+    npm \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache \
+    sockets
+
+RUN pecl install redis && docker-php-ext-enable redis
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/app.ini
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+WORKDIR /var/www
+
+COPY . /var/www
+
+RUN composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
+RUN npm ci
+RUN npm run build
+
+RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
+EXPOSE 9000
+
+CMD ["php-fpm"]
