@@ -74,6 +74,12 @@ class VehicleResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('qr_card')
+                    ->label('Ficha QR')
+                    ->icon('heroicon-o-qr-code')
+                    ->color('info')
+                    ->url(fn (Vehicle $record): string => route('vehicles.qr-card', $record))
+                    ->openUrlInNewTab(),
             ])
             ->defaultSort('license_plate');
     }

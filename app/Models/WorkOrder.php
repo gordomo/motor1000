@@ -39,6 +39,7 @@ class WorkOrder extends Model
         'completed_at',
         'delivered_at',
         'checklist',
+        'quote_id',
     ];
 
     protected $casts = [
@@ -116,6 +117,11 @@ class WorkOrder extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function quote(): BelongsTo
+    {
+        return $this->belongsTo(Quote::class);
     }
 
     public function recalculateTotal(): void

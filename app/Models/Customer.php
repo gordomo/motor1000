@@ -21,6 +21,8 @@ class Customer extends Model
         'whatsapp',
         'document',
         'document_type',
+        'tax_id',
+        'tax_id_type',
         'birthday',
         'address',
         'city',
@@ -75,6 +77,11 @@ class Customer extends Model
     public function communications(): HasMany
     {
         return $this->hasMany(Communication::class);
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
     }
 
     public function tasks(): HasMany

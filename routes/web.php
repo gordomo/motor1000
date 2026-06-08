@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\WorkOrderPdfController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\QuotePdfController;
+use App\Http\Controllers\VehiclePublicController;
+use App\Http\Controllers\VehicleQrCardController;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,3 +57,17 @@ Route::get('/work-orders/{workOrder}/pdf', WorkOrderPdfController::class)
 
 Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)
     ->name('invoices.pdf');
+
+// Presupuesto PDF (requiere login)
+Route::get('/quotes/{quote}/pdf', [QuotePdfController::class, '__invoke'])
+    ->name('quotes.pdf');
+Route::get('/quotes/{quote}/pdf/stream', [QuotePdfController::class, 'stream'])
+    ->name('quotes.pdf.stream');
+
+// Página pública del vehículo (por QR, sin login)
+Route::get('/v/{token}', [VehiclePublicController::class, '__invoke'])
+    ->name('vehicle.public');
+
+// Ficha QR imprimible (requiere login)
+Route::get('/vehicles/{vehicle}/qr-card', VehicleQrCardController::class)
+    ->name('vehicles.qr-card');

@@ -12,17 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->boolean('is_super_admin')->default(false)->after('is_active');
+            $table->foreignId('tenant_id')->nullable()->change();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn('is_super_admin');
+            $table->foreignId('tenant_id')->nullable(false)->change();
         });
     }
 };

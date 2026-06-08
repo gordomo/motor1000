@@ -28,6 +28,7 @@ class Vehicle extends Model
         'engine',
         'notes',
         'last_service_at',
+        'public_token',
     ];
 
     protected $casts = [
@@ -35,6 +36,24 @@ class Vehicle extends Model
         'mileage'         => 'integer',
         'year'            => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Vehicle $vehicle) {
+            if (! $vehicle->public_token) {
+                $vehicle->public_token = (string) \Illuminate\Support\Str::uuid();
+            }
+            if ($vehicle->license_plate) {
+                $vehicle->license_plate = strtoupper($vehicle->license_plate);
+            }
+        });
+
+        static::updating(function (Vehicle $vehicle) {
+            if ($vehicle->isDirty('license_plate') && $vehicle->license_plate) {
+                $vehicle->license_plate = strtoupper($vehicle->license_plate);
+            }
+        });
+    }
 
     public function tenant(): BelongsTo
     {
@@ -59,6 +78,11 @@ class Vehicle extends Model
     public function reminders(): HasMany
     {
         return $this->hasMany(Reminder::class);
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
     }
 
     public function getDisplayNameAttribute(): string
