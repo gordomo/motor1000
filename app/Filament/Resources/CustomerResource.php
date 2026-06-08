@@ -6,6 +6,7 @@ use App\Enums\CustomerStatus;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Models\Customer;
+use App\Models\Vehicle;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -92,6 +93,53 @@ class CustomerResource extends Resource
                     Forms\Components\Toggle::make('email_opted_in')
                         ->label('Acepta correo')
                         ->default(true),
+                ]),
+
+            Forms\Components\Section::make('Vehículo asociado (carga rápida)')
+                ->description('Opcional: se crea junto con el cliente en una sola operación.')
+                ->visibleOn('create')
+                ->columns(3)
+                ->schema([
+                    Forms\Components\TextInput::make('vehicle.license_plate')
+                        ->label('Patente / Matrícula')
+                        ->maxLength(10)
+                        ->extraInputAttributes(['style' => 'text-transform:uppercase']),
+                    Forms\Components\TextInput::make('vehicle.brand')
+                        ->label('Marca'),
+                    Forms\Components\TextInput::make('vehicle.model')
+                        ->label('Modelo'),
+                    Forms\Components\TextInput::make('vehicle.year')
+                        ->label('Año')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('vehicle.vin')
+                        ->label('Número de chasis (VIN)'),
+                    Forms\Components\TextInput::make('vehicle.mileage')
+                        ->label('Kilometraje actual')
+                        ->numeric()
+                        ->default(0),
+                    Forms\Components\Select::make('vehicle.fuel_type')
+                        ->label('Combustible')
+                        ->options([
+                            'gasoline' => 'Gasolina',
+                            'ethanol' => 'Etanol',
+                            'flex' => 'Flex',
+                            'diesel' => 'Diesel',
+                            'electric' => 'Eléctrico',
+                            'hybrid' => 'Híbrido',
+                        ])
+                        ->default('flex'),
+                    Forms\Components\Select::make('vehicle.transmission')
+                        ->label('Transmisión')
+                        ->options([
+                            'manual' => 'Manual',
+                            'automatic' => 'Automática',
+                            'cvt' => 'CVT',
+                        ])
+                        ->default('manual'),
+                    Forms\Components\Textarea::make('vehicle.notes')
+                        ->label('Observaciones técnicas')
+                        ->rows(2)
+                        ->columnSpan(3),
                 ]),
         ]);
     }
