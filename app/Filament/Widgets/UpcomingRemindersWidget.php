@@ -15,7 +15,7 @@ class UpcomingRemindersWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
 
         return $table
             ->query(

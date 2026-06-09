@@ -13,7 +13,7 @@ class WorkshopStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
         $kpis = app(DashboardService::class)->getKpis($tenantId);
 
         return [

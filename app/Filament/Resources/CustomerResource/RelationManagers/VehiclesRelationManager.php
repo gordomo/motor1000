@@ -59,7 +59,7 @@ class VehiclesRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data): array {
-                        $data['tenant_id'] = app('current.tenant')->id;
+                        $data['tenant_id'] = \App\Support\CurrentTenant::id();
                         return $data;
                     }),
             ])

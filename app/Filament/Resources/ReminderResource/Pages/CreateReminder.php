@@ -11,7 +11,7 @@ class CreateReminder extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['tenant_id'] = app('current.tenant')->id;
+        $data['tenant_id'] = \App\Support\CurrentTenant::id();
 
         return $data;
     }

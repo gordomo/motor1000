@@ -2,6 +2,7 @@
 
 namespace App\Scopes;
 
+use App\Support\CurrentTenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
@@ -10,8 +11,8 @@ class TenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        if (app()->has('current.tenant')) {
-            $builder->where($model->getTable() . '.tenant_id', app('current.tenant')->id);
+        if ($tenantId = CurrentTenant::id()) {
+            $builder->where($model->getTable() . '.tenant_id', $tenantId);
         }
     }
 }

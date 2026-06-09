@@ -12,7 +12,7 @@ class CreateInvoice extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $tenant = app('current.tenant');
+        $tenant = \App\Support\CurrentTenant::get();
         $data['tenant_id'] = $tenant->id;
 
         $last = Invoice::withoutGlobalScopes()

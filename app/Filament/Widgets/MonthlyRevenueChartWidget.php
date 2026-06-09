@@ -16,7 +16,7 @@ class MonthlyRevenueChartWidget extends ChartWidget
 
     protected function getData(): array
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
         $trend = app(DashboardService::class)->getKpis($tenantId)['monthly_revenue_trend'];
 
         return [

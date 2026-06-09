@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Tenant;
+use App\Support\CurrentTenant;
 
 class TenantBranding
 {
@@ -25,7 +26,7 @@ class TenantBranding
 
     public static function getTenant(): ?Tenant
     {
-        return app()->bound('current.tenant') ? app('current.tenant') : null;
+        return CurrentTenant::get();
     }
 
     /**

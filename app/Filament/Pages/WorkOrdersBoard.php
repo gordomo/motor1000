@@ -50,7 +50,7 @@ class WorkOrdersBoard extends Page
 
     public function moveOrder(int $orderId, string $targetStatus): void
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
         $status = WorkOrderStatus::tryFrom($targetStatus);
 
         if (! $status) {
@@ -91,7 +91,7 @@ class WorkOrdersBoard extends Page
 
     protected function refreshBoard(): void
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
 
         $orders = WorkOrder::withoutGlobalScopes()
             ->where('tenant_id', $tenantId)

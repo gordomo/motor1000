@@ -18,7 +18,7 @@ class ExecutiveOverviewWidget extends Widget
 
     protected function getViewData(): array
     {
-        $tenantId = app('current.tenant')?->id ?? 0;
+        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
         $kpis = app(DashboardService::class)->getKpis($tenantId);
 
         $currentMonthRevenue = (float) $kpis['monthly_revenue'];
