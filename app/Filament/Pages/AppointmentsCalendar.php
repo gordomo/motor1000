@@ -28,7 +28,44 @@ class AppointmentsCalendar extends Page
 
     public function mount(): void
     {
-        $this->events = $this->buildEvents();
+        $this->events = array_merge($this->buildEvents(), $this->buildDeliveryEvents());
+    }
+
+    /**
+     * Falla #5: las previsiones de entrega de las órdenes de servicio deben verse
+     * en el calendario, no sólo las citas creadas a mano.
+     */
+    protected function buildDeliveryEvents(): array
+    {
+        return \App\Models\WorkOrder::query()
+            ->whereNotNull('estimated_at')
+            ->where('status', '!=', \App\Enums\WorkOrderStatus::Delivered)
+            ->with(['customer:id,name', 'vehicle:id,license_plate', 'mechanic:id,name'])
+            ->orderBy('estimated_at')
+            ->get()
+            ->map(function (\App\Models\WorkOrder $order): array {
+                $start = $order->estimated_at;
+                $customer = $order->customer?->name;
+                $title = 'Entrega ' . $order->number . ($customer ? ' - ' . $customer : '');
+
+                return [
+                    'id' => 'wo-' . $order->id,
+                    'title' => $title,
+                    'start' => $start?->toIso8601String(),
+                    'end' => $start?->copy()->addMinutes(30)->toIso8601String(),
+                    'allDay' => false,
+                    'editable' => false,
+                    'color' => '#f59e0b',
+                    'url' => \App\Filament\Resources\WorkOrderResource::getUrl('view', ['record' => $order]),
+                    'extendedProps' => [
+                        'estado' => 'Entrega prevista',
+                        'mecanico' => $order->mechanic?->name ?: 'Sin asignar',
+                        'vehiculo' => $order->vehicle?->license_plate ?: 'Sin vehículo',
+                    ],
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     protected function buildEvents(): array

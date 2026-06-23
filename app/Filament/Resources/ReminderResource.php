@@ -52,7 +52,7 @@ class ReminderResource extends Resource
                     ->required(),
                 Forms\Components\Select::make('trigger_type')
                     ->label('Tipo de disparador')
-                    ->options(['date' => 'Data', 'mileage' => 'KM', 'months_since_last' => 'Meses desde el último servicio'])
+                    ->options(['date' => 'Fecha', 'mileage' => 'KM', 'months_since_last' => 'Meses desde el último servicio'])
                     ->default('date')->required()->reactive(),
                 Forms\Components\TextInput::make('title')->label('Título')->required(),
                 Forms\Components\DateTimePicker::make('due_at')

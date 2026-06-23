@@ -40,7 +40,11 @@ class AppPanelProvider extends PanelProvider
             ->brandName('Motor1000')
             ->brandLogo(asset('images/motor1000-mark.svg'))
             ->brandLogoHeight('1.9rem')
-            ->darkMode(true)
+            // Falla #1: el tema custom (theme-overrides.blade.php) está diseñado para
+            // superficies claras. Con el modo oscuro activo, Filament emitía colores de
+            // texto/etiquetas claros sobre esos fondos claros => texto ilegible y
+            // desplegables con fondo negro. Forzamos modo claro para que todo sea coherente.
+            ->darkMode(false)
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])

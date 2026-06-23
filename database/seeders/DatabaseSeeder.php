@@ -154,7 +154,7 @@ class DatabaseSeeder extends Seeder
                 'tax' => $tax,
                 'discount' => $discount,
                 'total' => $total,
-                'payment_method' => fake()->randomElement(['pix', 'credit_card', 'debit_card', 'cash']),
+                'payment_method' => fake()->randomElement(['mercado_pago', 'credit_card', 'debit_card', 'cash', 'bank_transfer']),
                 'due_at' => now()->addDays(fake()->numberBetween(3, 25)),
                 'paid_at' => $status === 'paid' ? now()->subDays(fake()->numberBetween(0, 10)) : null,
                 'notes' => fake()->sentence(),

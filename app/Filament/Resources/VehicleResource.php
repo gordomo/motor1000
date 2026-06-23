@@ -35,6 +35,14 @@ class VehicleResource extends Resource
                     ->label('Patente')
                     ->required()
                     ->maxLength(10)
+                    // Falla #F: evitar patentes duplicadas dentro del mismo taller.
+                    ->dehydrateStateUsing(fn (?string $state): ?string => $state ? strtoupper(trim($state)) : $state)
+                    ->unique(
+                        ignoreRecord: true,
+                        modifyRuleUsing: fn (\Illuminate\Validation\Rules\Unique $rule) =>
+                            $rule->where('tenant_id', \App\Support\CurrentTenant::id()),
+                    )
+                    ->validationMessages(['unique' => 'Ya existe un vehículo con esta patente en el taller.'])
                     ->extraInputAttributes(['style' => 'text-transform:uppercase']),
                 Forms\Components\TextInput::make('brand')->label('Marca')->required(),
                 Forms\Components\TextInput::make('model')->label('Modelo')->required(),

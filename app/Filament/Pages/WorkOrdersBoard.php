@@ -50,16 +50,16 @@ class WorkOrdersBoard extends Page
 
     public function moveOrder(int $orderId, string $targetStatus): void
     {
-        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
         $status = WorkOrderStatus::tryFrom($targetStatus);
 
         if (! $status) {
             return;
         }
 
-        $order = WorkOrder::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
-            ->find($orderId);
+        // Usa el global scope de tenant (igual que el listado y la vista de detalle)
+        // para garantizar consistencia: el tablero opera siempre sobre las mismas
+        // órdenes del tenant actual.
+        $order = WorkOrder::query()->find($orderId);
 
         if (! $order) {
             return;
@@ -91,10 +91,9 @@ class WorkOrdersBoard extends Page
 
     protected function refreshBoard(): void
     {
-        $tenantId = \App\Support\CurrentTenant::id() ?? 0;
-
-        $orders = WorkOrder::withoutGlobalScopes()
-            ->where('tenant_id', $tenantId)
+        // Lee exactamente las mismas órdenes que el listado (global scope de tenant),
+        // evitando el desfasaje que mostraba datos de demo / órdenes huérfanas.
+        $orders = WorkOrder::query()
             ->with(['customer:id,name', 'vehicle:id,license_plate,brand,model', 'mechanic:id,name'])
             ->latest()
             ->get()

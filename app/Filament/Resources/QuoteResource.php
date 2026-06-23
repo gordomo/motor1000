@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Enums\QuoteStatus;
 use App\Filament\Resources\QuoteResource\Pages;
-use App\Models\Customer;
 use App\Models\Mechanic;
 use App\Models\Quote;
 use App\Models\Vehicle;
@@ -17,7 +16,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class QuoteResource extends Resource
 {
@@ -55,7 +53,7 @@ class QuoteResource extends Resource
 
                     Forms\Components\Select::make('customer_id')
                         ->label('Cliente')
-                        ->relationship('customer', 'name', fn (Builder $q) => $q->orderBy('name'))
+                        ->relationship('customer', 'name')
                         ->searchable()
                         ->preload()
                         ->required()
@@ -107,6 +105,7 @@ class QuoteResource extends Resource
                 ->schema([
                     Forms\Components\Repeater::make('checklist')
                         ->label('')
+                        ->default(Quote::defaultChecklist())
                         ->addable(false)
                         ->deletable(false)
                         ->reorderable(false)

@@ -47,13 +47,42 @@ class InvoiceResource extends Resource
                         ->searchable()
                         ->preload()
                         ->required()
+                        ->reactive()
+                        ->afterStateUpdated(fn (Forms\Set $set) => $set('work_order_id', null))
                         ->label('Cliente'),
 
+                    // Falla #6: el desplegable se llena con las órdenes del cliente
+                    // elegido y, al seleccionar una, autocompleta los importes.
                     Forms\Components\Select::make('work_order_id')
-                        ->relationship('workOrder', 'number')
+                        ->label('Orden de Servicio')
+                        ->options(function (Forms\Get $get): array {
+                            $customerId = $get('customer_id');
+                            if (! $customerId) {
+                                return [];
+                            }
+                            return \App\Models\WorkOrder::query()
+                                ->where('customer_id', $customerId)
+                                ->orderByDesc('id')
+                                ->pluck('number', 'id')
+                                ->all();
+                        })
                         ->searchable()
                         ->nullable()
-                        ->label('Orden de Servicio'),
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                            if (! $state) {
+                                return;
+                            }
+                            $order = \App\Models\WorkOrder::query()->find($state);
+                            if (! $order) {
+                                return;
+                            }
+                            $subtotal = (float) $order->labor_cost + (float) $order->parts_cost;
+                            $discount = (float) $order->discount;
+                            $set('subtotal', round($subtotal, 2));
+                            $set('discount', round($discount, 2));
+                            $set('total', round(max(0, $subtotal - $discount), 2));
+                        }),
 
                     Forms\Components\Select::make('status')
                         ->options([
@@ -103,12 +132,12 @@ class InvoiceResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('payment_method')
                         ->options([
-                            'cash'         => 'Efectivo',
-                            'credit_card'  => 'Tarjeta de Crédito',
-                            'debit_card'   => 'Tarjeta de Débito',
-                            'pix'          => 'PIX',
-                            'bank_transfer'=> 'Transferencia',
-                            'check'        => 'Cheque',
+                            'cash'          => 'Efectivo',
+                            'credit_card'   => 'Tarjeta de Crédito',
+                            'debit_card'    => 'Tarjeta de Débito',
+                            'bank_transfer' => 'Transferencia bancaria',
+                            'mercado_pago'  => 'Mercado Pago',
+                            'check'         => 'Cheque',
                         ])
                         ->nullable()
                         ->label('Forma de pago'),

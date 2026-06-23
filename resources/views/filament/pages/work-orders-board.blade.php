@@ -8,8 +8,8 @@
             >
                 <header class="m1-board__col-header">
                     <div>
-                        <h3 class="text-sm font-semibold text-zinc-100">{{ $column['label'] }}</h3>
-                        <p class="text-xs text-zinc-400">{{ count($column['items']) }} órdenes</p>
+                        <h3 class="text-sm font-semibold text-zinc-800">{{ $column['label'] }}</h3>
+                        <p class="text-xs text-zinc-500">{{ count($column['items']) }} órdenes</p>
                     </div>
                     <x-ui.status-badge :label="count($column['items'])" tone="slate" />
                 </header>
@@ -45,15 +45,15 @@
                             <p class="m1-wo-card__meta">Mecánico: {{ $item['mechanic'] }}</p>
 
                             <div class="m1-wo-card__footer">
-                                <span class="text-xs text-zinc-400">Entrega: {{ $item['estimated_at'] }}</span>
+                                <span class="text-xs text-zinc-500">Entrega: {{ $item['estimated_at'] }}</span>
                                 <div class="flex items-center gap-2">
-                                    <a class="text-xs font-semibold text-amber-300 hover:text-amber-200" href="{{ $item['viewUrl'] }}">Ver</a>
-                                    <a class="text-xs font-semibold text-blue-300 hover:text-blue-200" href="{{ $item['editUrl'] }}">Editar</a>
+                                    <a class="text-xs font-semibold text-amber-600 hover:text-amber-700" href="{{ $item['viewUrl'] }}">Ver</a>
+                                    <a class="text-xs font-semibold text-blue-600 hover:text-blue-700" href="{{ $item['editUrl'] }}">Editar</a>
                                 </div>
                             </div>
                         </article>
                     @empty
-                        <div class="rounded-xl border border-dashed border-zinc-700/80 bg-zinc-900/40 p-4 text-center text-xs text-zinc-500">
+                        <div class="rounded-xl border border-dashed border-zinc-300 bg-white/60 p-4 text-center text-xs text-zinc-500">
                             Arrastra aquí para mover una orden
                         </div>
                     @endforelse

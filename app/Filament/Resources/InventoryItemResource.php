@@ -38,7 +38,7 @@ class InventoryItemResource extends Resource
                 Forms\Components\TextInput::make('category')->label('Categoría'),
                 Forms\Components\Select::make('unit')
                     ->label('Unidad')
-                    ->options(['un' => 'Unidad', 'kg' => 'Kg', 'lt' => 'Litro', 'm' => 'Metro', 'cx' => 'Caixa'])
+                    ->options(['un' => 'Unidad', 'kg' => 'Kg', 'lt' => 'Litro', 'm' => 'Metro', 'cx' => 'Caja'])
                     ->default('un'),
                 Forms\Components\TextInput::make('cost_price')->label('Precio de costo')->numeric()->prefix('$'),
                 Forms\Components\TextInput::make('sale_price')->label('Precio de venta')->numeric()->prefix('$'),

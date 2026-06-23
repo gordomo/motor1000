@@ -74,11 +74,10 @@ class WorkOrderResource extends Resource
                         ->required(),
                     Forms\Components\Select::make('mechanic_id')
                         ->label('Mecánico')
-                        ->relationship(
-                            name: 'mechanic',
-                            titleAttribute: 'name',
-                            modifyQueryUsing: fn (Builder $query) => $query->where('is_active', true),
-                        )
+                        // Se usa options() en vez de relationship(...closure) para evitar el
+                        // error "qualifyColumn() on null" de Filament al modificar la query de
+                        // la relación (mismo problema que rompía el alta de presupuestos).
+                        ->options(fn () => Mechanic::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
                         ->searchable()
                         ->preload()
                         ->nullable(),
@@ -346,7 +345,7 @@ class WorkOrderResource extends Resource
         ]);
     }
 
-    public static function getRelationManagers(): array
+    public static function getRelations(): array
     {
         return [];
     }
