@@ -30,14 +30,28 @@ class DatabaseSeeder extends Seeder
             [
                 'name'     => 'Motor1000 - Taller Demo',
                 'email'    => 'contato@motor1000demo.com',
-                'phone'    => '(11) 99999-0000',
-                'address'  => 'Av. Paulista, 1000',
-                'city'     => 'São Paulo',
-                'state'    => 'SP',
-                'timezone' => 'America/Sao_Paulo',
+                'phone'    => '(011) 4555-0000',
+                'address'  => 'Av. Corrientes 1000',
+                'city'     => 'Buenos Aires',
+                'state'    => 'CABA',
+                'timezone' => 'America/Argentina/Buenos_Aires',
                 'currency' => 'ARS',
                 'is_active' => true,
                 'settings' => ['notifications' => ['email' => true, 'whatsapp' => false]],
+            ]
+        );
+
+        // Super administrador de la plataforma (accede a /admin para gestionar
+        // talleres y usuarios). No pertenece a ningún taller y no tiene rol de taller.
+        User::updateOrCreate(
+            ['email' => 'super@motor1000.test'],
+            [
+                'tenant_id'         => null,
+                'name'              => 'Super Admin',
+                'email_verified_at' => now(),
+                'password'          => Hash::make('password'),
+                'is_active'         => true,
+                'is_super_admin'    => true,
             ]
         );
 
@@ -162,7 +176,8 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->command->info('✅ Demo data seeded exitosamente!');
-        $this->command->info('👤 Admin: admin@motor1000.test / password');
-        $this->command->info('👤 Manager: gerente@motor1000.test / password');
+        $this->command->info('🛡️  Super Admin (/admin): super@motor1000.test / password');
+        $this->command->info('👤 Admin taller (/painel): admin@motor1000.test / password');
+        $this->command->info('👤 Manager taller (/painel): gerente@motor1000.test / password');
     }
 }

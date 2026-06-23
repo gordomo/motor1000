@@ -43,6 +43,13 @@ class UsersRelationManager extends RelationManager
                     ->dehydrated(fn (?string $state) => filled($state))
                     ->maxLength(255)
                     ->helperText('Dejar vacío para mantener la contraseña actual al editar.'),
+                Forms\Components\Select::make('roles')
+                    ->label('Roles / permisos')
+                    ->relationship('roles', 'name')
+                    ->getOptionLabelFromRecordUsing(fn ($record): string => \App\Support\Roles::label($record->name))
+                    ->multiple()
+                    ->preload()
+                    ->helperText('Define qué puede hacer el usuario dentro del panel del taller.'),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Activo')
                     ->default(true),
