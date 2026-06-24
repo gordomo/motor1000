@@ -16,11 +16,12 @@ class TaskResource extends Resource
     protected static ?string $model = Task::class;
 
     protected static ?string $navigationIcon   = 'heroicon-o-check-circle';
-    protected static ?string $navigationGroup  = 'Taller';
-    protected static ?string $navigationLabel  = 'Tareas';
-    protected static ?string $modelLabel       = 'Tarea';
-    protected static ?string $pluralModelLabel = 'Tareas';
     protected static ?int    $navigationSort   = 5;
+
+    public static function getNavigationGroup(): ?string { return __('Taller'); }
+    public static function getNavigationLabel(): string { return __('Tareas'); }
+    public static function getModelLabel(): string { return __('Tarea'); }
+    public static function getPluralModelLabel(): string { return __('Tareas'); }
 
     public static function getNavigationBadge(): ?string
     {
@@ -35,74 +36,74 @@ class TaskResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Tarea')
+            Forms\Components\Section::make(__('Tarea'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('title')
                         ->required()
                         ->maxLength(255)
                         ->columnSpanFull()
-                        ->label('Título'),
+                        ->label(__('Título')),
 
                     Forms\Components\Select::make('type')
                         ->options([
-                            'internal'    => 'Interna',
-                            'customer'    => 'Cliente',
-                            'maintenance' => 'Mantenimiento',
-                            'reminder'    => 'Recordatorio',
+                            'internal'    => __('Interna'),
+                            'customer'    => __('Cliente'),
+                            'maintenance' => __('Mantenimiento'),
+                            'reminder'    => __('Recordatorio'),
                         ])
                         ->required()
                         ->default('internal')
-                        ->label('Tipo'),
+                        ->label(__('Tipo')),
 
                     Forms\Components\Select::make('priority')
                         ->options([
-                            'low'    => 'Baja',
-                            'medium' => 'Media',
-                            'high'   => 'Alta',
-                            'urgent' => 'Urgente',
+                            'low'    => __('Baja'),
+                            'medium' => __('Media'),
+                            'high'   => __('Alta'),
+                            'urgent' => __('Urgente'),
                         ])
                         ->required()
                         ->default('medium')
-                        ->label('Prioridad'),
+                        ->label(__('Prioridad')),
 
                     Forms\Components\Select::make('status')
                         ->options([
-                            'open'        => 'Abierta',
-                            'in_progress' => 'En progreso',
-                            'done'        => 'Completada',
-                            'canceled'    => 'Cancelada',
+                            'open'        => __('Abierta'),
+                            'in_progress' => __('En progreso'),
+                            'done'        => __('Completada'),
+                            'canceled'    => __('Cancelada'),
                         ])
                         ->required()
                         ->default('open')
-                        ->label('Estado'),
+                        ->label(__('Estado')),
 
                     Forms\Components\Select::make('assigned_to')
                         ->relationship('assignedTo', 'name')
                         ->searchable()
                         ->preload()
                         ->nullable()
-                        ->label('Responsable'),
+                        ->label(__('Responsable')),
 
                     Forms\Components\Select::make('customer_id')
                         ->relationship('customer', 'name')
                         ->searchable()
                         ->nullable()
-                        ->label('Cliente'),
+                        ->label(__('Cliente')),
 
                     Forms\Components\Select::make('work_order_id')
                         ->relationship('workOrder', 'number')
                         ->searchable()
                         ->nullable()
-                        ->label('Orden de servicio'),
+                        ->label(__('Orden de servicio')),
 
                     Forms\Components\DateTimePicker::make('due_at')
-                        ->label('Vencimiento'),
+                        ->label(__('Vencimiento')),
 
                     Forms\Components\Textarea::make('description')
                         ->rows(3)
                         ->columnSpanFull()
-                        ->label('Descripción'),
+                        ->label(__('Descripción')),
                 ]),
         ]);
     }
@@ -114,7 +115,7 @@ class TaskResource extends Resource
                 Tables\Columns\TextColumn::make('title')
                     ->searchable()
                     ->limit(40)
-                    ->label('Título'),
+                    ->label(__('Título')),
 
                 Tables\Columns\BadgeColumn::make('priority')
                     ->colors([
@@ -124,13 +125,13 @@ class TaskResource extends Resource
                         'danger'    => 'urgent',
                     ])
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'low'    => 'Baja',
-                        'medium' => 'Media',
-                        'high'   => 'Alta',
-                        'urgent' => 'Urgente',
+                        'low'    => __('Baja'),
+                        'medium' => __('Media'),
+                        'high'   => __('Alta'),
+                        'urgent' => __('Urgente'),
                         default  => $state,
                     })
-                    ->label('Prioridad'),
+                    ->label(__('Prioridad')),
 
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
@@ -140,24 +141,24 @@ class TaskResource extends Resource
                         'success'   => 'done',
                     ])
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'open'        => 'Abierta',
-                        'in_progress' => 'En progreso',
-                        'done'        => 'Completada',
-                        'canceled'    => 'Cancelada',
+                        'open'        => __('Abierta'),
+                        'in_progress' => __('En progreso'),
+                        'done'        => __('Completada'),
+                        'canceled'    => __('Cancelada'),
                         default       => $state,
                     })
-                    ->label('Estado'),
+                    ->label(__('Estado')),
 
                 Tables\Columns\TextColumn::make('assignedTo.name')
                     ->placeholder('—')
-                    ->label('Responsable'),
+                    ->label(__('Responsable')),
 
                 Tables\Columns\TextColumn::make('due_at')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->placeholder('—')
                     ->color(fn (Task $r) => $r->due_at && $r->due_at->isPast() && $r->status !== 'done' ? 'danger' : null)
-                    ->label('Vencimiento'),
+                    ->label(__('Vencimiento')),
             ])
             ->defaultSort('due_at', 'asc')
             ->filters([

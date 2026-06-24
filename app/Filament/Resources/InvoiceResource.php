@@ -20,11 +20,27 @@ class InvoiceResource extends Resource
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon       = 'heroicon-o-document-currency-dollar';
-    protected static ?string $navigationGroup      = 'Financiero';
-    protected static ?string $navigationLabel      = 'Facturas';
-    protected static ?string $modelLabel           = 'Factura';
-    protected static ?string $pluralModelLabel     = 'Facturas';
     protected static ?int    $navigationSort       = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Financiero');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Facturas');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Factura');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Facturas');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -39,7 +55,7 @@ class InvoiceResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Información de Factura')
+            Forms\Components\Section::make(__('Información de Factura'))
                 ->columns(3)
                 ->schema([
                     Forms\Components\Select::make('customer_id')
@@ -49,12 +65,12 @@ class InvoiceResource extends Resource
                         ->required()
                         ->reactive()
                         ->afterStateUpdated(fn (Forms\Set $set) => $set('work_order_id', null))
-                        ->label('Cliente'),
+                        ->label(__('Cliente')),
 
                     // Falla #6: el desplegable se llena con las órdenes del cliente
                     // elegido y, al seleccionar una, autocompleta los importes.
                     Forms\Components\Select::make('work_order_id')
-                        ->label('Orden de Servicio')
+                        ->label(__('Orden de Servicio'))
                         ->options(function (Forms\Get $get): array {
                             $customerId = $get('customer_id');
                             if (! $customerId) {
@@ -86,18 +102,18 @@ class InvoiceResource extends Resource
 
                     Forms\Components\Select::make('status')
                         ->options([
-                            'draft'    => 'Borrador',
-                            'pending'  => 'Pendiente',
-                            'paid'     => 'Pago',
-                            'overdue'  => 'Vencido',
-                            'canceled' => 'Cancelado',
+                            'draft'    => __('Borrador'),
+                            'pending'  => __('Pendiente'),
+                            'paid'     => __('Pago'),
+                            'overdue'  => __('Vencido'),
+                            'canceled' => __('Cancelado'),
                         ])
                         ->required()
                         ->default('pending')
-                        ->label('Estado'),
+                        ->label(__('Estado')),
                 ]),
 
-            Forms\Components\Section::make('Valores')
+            Forms\Components\Section::make(__('Valores'))
                 ->columns(4)
                 ->schema([
                     Forms\Components\TextInput::make('subtotal')
@@ -105,54 +121,54 @@ class InvoiceResource extends Resource
                         ->prefix('$')
                         ->required()
                         ->default(0)
-                        ->label('Subtotal'),
+                        ->label(__('Subtotal')),
 
                     Forms\Components\TextInput::make('tax')
                         ->numeric()
                         ->prefix('$')
                         ->default(0)
-                        ->label('Impuestos'),
+                        ->label(__('Impuestos')),
 
                     Forms\Components\TextInput::make('discount')
                         ->numeric()
                         ->prefix('$')
                         ->default(0)
-                        ->label('Descuento'),
+                        ->label(__('Descuento')),
 
                     Forms\Components\TextInput::make('total')
                         ->numeric()
                         ->prefix('$')
                         ->required()
                         ->default(0)
-                        ->label('Total'),
+                        ->label(__('Total')),
                 ]),
 
-            Forms\Components\Section::make('Pago')
+            Forms\Components\Section::make(__('Pago'))
                 ->columns(3)
                 ->schema([
                     Forms\Components\Select::make('payment_method')
                         ->options([
-                            'cash'          => 'Efectivo',
-                            'credit_card'   => 'Tarjeta de Crédito',
-                            'debit_card'    => 'Tarjeta de Débito',
-                            'bank_transfer' => 'Transferencia bancaria',
-                            'mercado_pago'  => 'Mercado Pago',
-                            'check'         => 'Cheque',
+                            'cash'          => __('Efectivo'),
+                            'credit_card'   => __('Tarjeta de Crédito'),
+                            'debit_card'    => __('Tarjeta de Débito'),
+                            'bank_transfer' => __('Transferencia bancaria'),
+                            'mercado_pago'  => __('Mercado Pago'),
+                            'check'         => __('Cheque'),
                         ])
                         ->nullable()
-                        ->label('Forma de pago'),
+                        ->label(__('Forma de pago')),
 
                     Forms\Components\DateTimePicker::make('due_at')
-                        ->label('Vencimiento'),
+                        ->label(__('Vencimiento')),
 
                     Forms\Components\DateTimePicker::make('paid_at')
-                        ->label('Fecha de pago'),
+                        ->label(__('Fecha de pago')),
                 ]),
 
             Forms\Components\Textarea::make('notes')
                 ->rows(3)
                 ->columnSpanFull()
-                ->label('Observaciones'),
+                ->label(__('Observaciones')),
         ]);
     }
 
@@ -163,15 +179,15 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('number')
                     ->searchable()
                     ->sortable()
-                    ->label('Número'),
+                    ->label(__('Número')),
 
                 Tables\Columns\TextColumn::make('customer.name')
                     ->searchable()
                     ->sortable()
-                    ->label('Cliente'),
+                    ->label(__('Cliente')),
 
                 Tables\Columns\TextColumn::make('workOrder.number')
-                    ->label('OS')
+                    ->label(__('OS'))
                     ->placeholder('—'),
 
                 Tables\Columns\BadgeColumn::make('status')
@@ -182,45 +198,45 @@ class InvoiceResource extends Resource
                         'danger'    => fn ($state) => in_array($state, ['overdue', 'canceled']),
                     ])
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'draft'    => 'Borrador',
-                        'pending'  => 'Pendiente',
-                        'paid'     => 'Pago',
-                        'overdue'  => 'Vencido',
-                        'canceled' => 'Cancelado',
+                        'draft'    => __('Borrador'),
+                        'pending'  => __('Pendiente'),
+                        'paid'     => __('Pago'),
+                        'overdue'  => __('Vencido'),
+                        'canceled' => __('Cancelado'),
                         default    => $state,
                     })
-                    ->label('Estado'),
+                    ->label(__('Estado')),
 
                 Tables\Columns\TextColumn::make('total')
                     ->money('ARS')
                     ->sortable()
-                    ->label('Total'),
+                    ->label(__('Total')),
 
                 Tables\Columns\TextColumn::make('due_at')
                     ->dateTime('d/m/Y')
                     ->sortable()
-                    ->label('Vencimiento'),
+                    ->label(__('Vencimiento')),
 
                 Tables\Columns\TextColumn::make('paid_at')
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->placeholder('—')
-                    ->label('Pagado el'),
+                    ->label(__('Pagado el')),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'draft'    => 'Borrador',
-                        'pending'  => 'Pendiente',
-                        'paid'     => 'Pago',
-                        'overdue'  => 'Vencido',
-                        'canceled' => 'Cancelado',
+                        'draft'    => __('Borrador'),
+                        'pending'  => __('Pendiente'),
+                        'paid'     => __('Pago'),
+                        'overdue'  => __('Vencido'),
+                        'canceled' => __('Cancelado'),
                     ])
-                    ->label('Estado'),
+                    ->label(__('Estado')),
 
                 Tables\Filters\Filter::make('overdue')
-                    ->label('Vencidas')
+                    ->label(__('Vencidas'))
                     ->query(fn (Builder $q) => $q->where('status', 'overdue')),
             ])
             ->actions([
@@ -233,7 +249,7 @@ class InvoiceResource extends Resource
                     ->url(fn (Invoice $record): string => route('invoices.pdf', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('mark_paid')
-                    ->label('Marcar como pagada')
+                    ->label(__('Marcar como pagada'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Invoice $r) => in_array($r->status, ['pending', 'overdue']))
@@ -246,7 +262,7 @@ class InvoiceResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('download_pdfs_zip')
-                        ->label('Descargar PDFs (ZIP)')
+                        ->label(__('Descargar PDFs (ZIP)'))
                         ->icon('heroicon-o-archive-box-arrow-down')
                         ->color('gray')
                         ->deselectRecordsAfterCompletion()

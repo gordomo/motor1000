@@ -30,7 +30,7 @@ class AppPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('app')
-            ->path('painel')
+            ->path('panel')
             ->login()
             ->colors([
                 'primary' => Color::Amber,
@@ -49,13 +49,13 @@ class AppPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->navigationGroups([
-                NavigationGroup::make('Taller')
+                NavigationGroup::make(__('Taller'))
                     ->collapsed(false),
-                NavigationGroup::make('CRM')
+                NavigationGroup::make(__('CRM'))
                     ->collapsed(false),
-                NavigationGroup::make('Financiero')
+                NavigationGroup::make(__('Financiero'))
                     ->collapsed(false),
-                NavigationGroup::make('Configuraciones')
+                NavigationGroup::make(__('Configuraciones'))
                     ->collapsed(true),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

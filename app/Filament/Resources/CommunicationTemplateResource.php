@@ -15,28 +15,44 @@ class CommunicationTemplateResource extends Resource
     protected static ?string $model = CommunicationTemplate::class;
 
     protected static ?string $navigationIcon   = 'heroicon-o-chat-bubble-left-ellipsis';
-    protected static ?string $navigationGroup  = 'Configuraciones';
-    protected static ?string $navigationLabel  = 'Plantillas de comunicación';
-    protected static ?string $modelLabel       = 'Plantilla';
-    protected static ?string $pluralModelLabel = 'Plantillas';
     protected static ?int    $navigationSort   = 3;
+
+    public static function getModelLabel(): string
+    {
+        return __('Plantilla');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Plantillas');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Plantillas de comunicación');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Configuraciones');
+    }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Identificación')
+            Forms\Components\Section::make(__('Identificación'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(255)
-                        ->label('Nombre'),
+                        ->label(__('Nombre')),
 
                     Forms\Components\TextInput::make('slug')
                         ->required()
                         ->maxLength(100)
                         ->unique(ignoreRecord: true)
-                        ->label('Slug'),
+                        ->label(__('Slug')),
 
                     Forms\Components\Select::make('channel')
                         ->options([
@@ -45,35 +61,35 @@ class CommunicationTemplateResource extends Resource
                             'sms'      => 'SMS',
                         ])
                         ->required()
-                        ->label('Canal'),
+                        ->label(__('Canal')),
 
                     Forms\Components\TextInput::make('event')
                         ->maxLength(100)
                         ->placeholder('ex: work_order.completed')
-                        ->label('Evento'),
+                        ->label(__('Evento')),
 
                     Forms\Components\Toggle::make('is_active')
                         ->default(true)
-                        ->label('Activo'),
+                        ->label(__('Activo')),
                 ]),
 
-            Forms\Components\Section::make('Contenido')
+            Forms\Components\Section::make(__('Contenido'))
                 ->schema([
                     Forms\Components\TextInput::make('subject')
                         ->maxLength(255)
-                        ->placeholder('Asunto (solo correo)')
-                        ->label('Asunto'),
+                        ->placeholder(__('Asunto (solo correo)'))
+                        ->label(__('Asunto')),
 
                     Forms\Components\Textarea::make('body')
                         ->required()
                         ->rows(8)
-                        ->hint('Usa {variable} para insertar datos dinámicos')
-                        ->label('Cuerpo del mensaje'),
+                        ->hint(__('Usa {variable} para insertar datos dinámicos'))
+                        ->label(__('Cuerpo del mensaje')),
 
                     Forms\Components\KeyValue::make('variables')
                         ->nullable()
-                        ->label('Variables disponibles')
-                        ->hint('Clave: nombre de variable | Valor: descripción'),
+                        ->label(__('Variables disponibles'))
+                        ->hint(__('Clave: nombre de variable | Valor: descripción')),
                 ]),
         ]);
     }
@@ -85,10 +101,10 @@ class CommunicationTemplateResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->label('Nombre'),
+                    ->label(__('Nombre')),
 
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug'),
+                    ->label(__('Slug')),
 
                 Tables\Columns\BadgeColumn::make('channel')
                     ->colors([
@@ -102,19 +118,19 @@ class CommunicationTemplateResource extends Resource
                         'sms'      => 'SMS',
                         default    => $state,
                     })
-                    ->label('Canal'),
+                    ->label(__('Canal')),
 
                 Tables\Columns\TextColumn::make('event')
                     ->placeholder('—')
-                    ->label('Evento'),
+                    ->label(__('Evento')),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->label('Activo'),
+                    ->label(__('Activo')),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime('d/m/Y')
-                    ->label('Actualizado'),
+                    ->label(__('Actualizado')),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('channel')
@@ -123,8 +139,8 @@ class CommunicationTemplateResource extends Resource
                         'email'    => 'E-mail',
                         'sms'      => 'SMS',
                     ])
-                    ->label('Canal'),
-                Tables\Filters\TernaryFilter::make('is_active')->label('Activo'),
+                    ->label(__('Canal')),
+                Tables\Filters\TernaryFilter::make('is_active')->label(__('Activo')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

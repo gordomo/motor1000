@@ -9,8 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class WorkOrderStatusChartWidget extends ChartWidget
 {
-    protected static ?string $heading = 'OS por estado';
     protected static ?int $sort = 2;
+
+    public function getHeading(): ?string
+    {
+        return __('OS por estado');
+    }
 
     protected int|string|array $columnSpan = [
         'xl' => 6,
@@ -50,7 +54,7 @@ class WorkOrderStatusChartWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'           => 'OS',
+                    'label'           => __('OS'),
                     'data'            => $values,
                     'backgroundColor' => $colors,
                     'borderWidth'     => 0,

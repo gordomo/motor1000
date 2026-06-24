@@ -20,28 +20,40 @@ class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'CRM';
-    protected static ?string $modelLabel = 'Cliente';
-    protected static ?string $pluralModelLabel = 'Clientes';
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('CRM');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Cliente');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Clientes');
+    }
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Información personal')
+            Forms\Components\Section::make(__('Información personal'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('name')
-                        ->label('Nombre Completo')
+                        ->label(__('Nombre Completo'))
                         ->required()
                         ->maxLength(255),
                     Forms\Components\Select::make('status')
-                        ->label('Estado')
+                        ->label(__('Estado'))
                         ->options(CustomerStatus::class)
                         ->default('active')
                         ->required(),
                     Forms\Components\TextInput::make('phone')
-                        ->label('Teléfono')
+                        ->label(__('Teléfono'))
                         ->tel()
                         ->maxLength(20),
                     Forms\Components\TextInput::make('whatsapp')
@@ -53,91 +65,91 @@ class CustomerResource extends Resource
                         ->email()
                         ->maxLength(255),
                     Forms\Components\DatePicker::make('birthday')
-                        ->label('Cumpleaños'),
+                        ->label(__('Cumpleaños')),
                     Forms\Components\TextInput::make('document')
-                        ->label('Documento fiscal')
+                        ->label(__('Documento fiscal'))
                         ->maxLength(20),
                     Forms\Components\Select::make('document_type')
-                        ->label('Tipo de documento')
-                        ->options(['cpf' => 'Documento personal', 'cnpj' => 'Documento fiscal'])
+                        ->label(__('Tipo de documento'))
+                        ->options(['cpf' => __('Documento personal'), 'cnpj' => __('Documento fiscal')])
                         ->default('cpf'),
                 ]),
-            Forms\Components\Section::make('Dirección')
+            Forms\Components\Section::make(__('Dirección'))
                 ->columns(3)
                 ->collapsed()
                 ->schema([
                     Forms\Components\TextInput::make('address')
-                        ->label('Dirección')
+                        ->label(__('Dirección'))
                         ->columnSpan(2),
                     Forms\Components\TextInput::make('city')
-                        ->label('Ciudad'),
+                        ->label(__('Ciudad')),
                     Forms\Components\TextInput::make('state')
-                        ->label('Estado')
+                        ->label(__('Estado'))
                         ->maxLength(2),
                     Forms\Components\TextInput::make('zip')
-                        ->label('Código postal')
+                        ->label(__('Código postal'))
                         ->maxLength(10),
                 ]),
-            Forms\Components\Section::make('Observaciones')
+            Forms\Components\Section::make(__('Observaciones'))
                 ->collapsed()
                 ->schema([
                     Forms\Components\TagsInput::make('tags')
-                        ->label('Etiquetas')
-                        ->placeholder('Agregar etiqueta'),
+                        ->label(__('Etiquetas'))
+                        ->placeholder(__('Agregar etiqueta')),
                     Forms\Components\Textarea::make('notes')
-                        ->label('Notas')
+                        ->label(__('Notas'))
                         ->rows(4),
                     Forms\Components\Toggle::make('whatsapp_opted_in')
-                        ->label('Acepta WhatsApp')
+                        ->label(__('Acepta WhatsApp'))
                         ->default(true),
                     Forms\Components\Toggle::make('email_opted_in')
-                        ->label('Acepta correo')
+                        ->label(__('Acepta correo'))
                         ->default(true),
                 ]),
 
-            Forms\Components\Section::make('Vehículo asociado (carga rápida)')
-                ->description('Opcional: se crea junto con el cliente en una sola operación.')
+            Forms\Components\Section::make(__('Vehículo asociado (carga rápida)'))
+                ->description(__('Opcional: se crea junto con el cliente en una sola operación.'))
                 ->visibleOn('create')
                 ->columns(3)
                 ->schema([
                     Forms\Components\TextInput::make('vehicle.license_plate')
-                        ->label('Patente / Matrícula')
+                        ->label(__('Patente / Matrícula'))
                         ->maxLength(10)
                         ->extraInputAttributes(['style' => 'text-transform:uppercase']),
                     Forms\Components\TextInput::make('vehicle.brand')
-                        ->label('Marca'),
+                        ->label(__('Marca')),
                     Forms\Components\TextInput::make('vehicle.model')
-                        ->label('Modelo'),
+                        ->label(__('Modelo')),
                     Forms\Components\TextInput::make('vehicle.year')
-                        ->label('Año')
+                        ->label(__('Año'))
                         ->numeric(),
                     Forms\Components\TextInput::make('vehicle.vin')
-                        ->label('Número de chasis (VIN)'),
+                        ->label(__('Número de chasis (VIN)')),
                     Forms\Components\TextInput::make('vehicle.mileage')
-                        ->label('Kilometraje actual')
+                        ->label(__('Kilometraje actual'))
                         ->numeric()
                         ->default(0),
                     Forms\Components\Select::make('vehicle.fuel_type')
-                        ->label('Combustible')
+                        ->label(__('Combustible'))
                         ->options([
-                            'gasoline' => 'Gasolina',
-                            'ethanol' => 'Etanol',
+                            'gasoline' => __('Gasolina'),
+                            'ethanol' => __('Etanol'),
                             'flex' => 'Flex',
                             'diesel' => 'Diesel',
-                            'electric' => 'Eléctrico',
-                            'hybrid' => 'Híbrido',
+                            'electric' => __('Eléctrico'),
+                            'hybrid' => __('Híbrido'),
                         ])
                         ->default('flex'),
                     Forms\Components\Select::make('vehicle.transmission')
-                        ->label('Transmisión')
+                        ->label(__('Transmisión'))
                         ->options([
                             'manual' => 'Manual',
-                            'automatic' => 'Automática',
+                            'automatic' => __('Automática'),
                             'cvt' => 'CVT',
                         ])
                         ->default('manual'),
                     Forms\Components\Textarea::make('vehicle.notes')
-                        ->label('Observaciones técnicas')
+                        ->label(__('Observaciones técnicas'))
                         ->rows(2)
                         ->columnSpan(3),
                 ]),
@@ -149,20 +161,20 @@ class CustomerResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                    ->label(__('Nombre'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('phone')
-                    ->label('Teléfono')
+                    ->label(__('Teléfono'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('vehicles_count')
-                    ->label('Vehículos')
+                    ->label(__('Vehículos'))
                     ->counts('vehicles')
                     ->badge()
                     ->color('info'),
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->colors([
                         'success' => 'active',
                         'danger'  => 'inactive',
@@ -170,22 +182,22 @@ class CustomerResource extends Resource
                         'info'    => 'prospect',
                     ]),
                 Tables\Columns\TextColumn::make('last_visit_at')
-                    ->label('Última visita')
+                    ->label(__('Última visita'))
                     ->dateTime('d/m/Y')
                     ->sortable()
-                    ->placeholder('Nunca'),
+                    ->placeholder(__('Nunca')),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Registro')
+                    ->label(__('Registro'))
                     ->date('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->options(CustomerStatus::class),
                 Tables\Filters\Filter::make('inactive')
-                    ->label('Inactivos (6+ meses)')
+                    ->label(__('Inactivos (6+ meses)'))
                     ->query(fn(Builder $q) => $q
                         ->where(fn($q) => $q
                             ->whereNull('last_visit_at')
@@ -193,7 +205,7 @@ class CustomerResource extends Resource
                         )
                     ),
                 Tables\Filters\Filter::make('birthday_today')
-                    ->label('Cumpleañeros de hoy')
+                    ->label(__('Cumpleañeros de hoy'))
                     ->query(fn(Builder $q) => $q->whereRaw(
                         "DATE_FORMAT(birthday, '%m-%d') = ?",
                         [now()->format('m-d')]
@@ -203,7 +215,7 @@ class CustomerResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('new_work_order')
-                    ->label('Nueva OS')
+                    ->label(__('Nueva OS'))
                     ->icon('heroicon-o-wrench')
                     ->color('warning')
                     ->url(fn(Customer $record) => WorkOrderResource::getUrl('create', ['customer_id' => $record->id])),
@@ -219,23 +231,23 @@ class CustomerResource extends Resource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\Section::make('Resumen del cliente')
+            Infolists\Components\Section::make(__('Resumen del cliente'))
                 ->columns(4)
                 ->schema([
                     Infolists\Components\TextEntry::make('vehicles_count')
-                        ->label('Vehículos')
+                        ->label(__('Vehículos'))
                         ->state(fn (Customer $record): int => $record->vehicles()->count())
                         ->badge(),
                     Infolists\Components\TextEntry::make('work_orders_count')
-                        ->label('Órdenes de servicio')
+                        ->label(__('Órdenes de servicio'))
                         ->state(fn (Customer $record): int => $record->workOrders()->count())
                         ->badge(),
                     Infolists\Components\TextEntry::make('pending_reminders_count')
-                        ->label('Recordatorios pendientes')
+                        ->label(__('Recordatorios pendientes'))
                         ->state(fn (Customer $record): int => $record->reminders()->where('status', 'pending')->count())
                         ->badge(),
                     Infolists\Components\TextEntry::make('health_state')
-                        ->label('Salud de relación')
+                        ->label(__('Salud de relación'))
                         ->badge()
                         ->state(function (Customer $record): string {
                             if (! $record->last_visit_at) {
@@ -246,21 +258,21 @@ class CustomerResource extends Resource
                         })
                         ->color(fn (string $state): string => $state === 'Activa' ? 'success' : 'danger'),
                 ]),
-            Infolists\Components\Section::make('Cliente')
+            Infolists\Components\Section::make(__('Cliente'))
                 ->columns(3)
                 ->schema([
-                    Infolists\Components\TextEntry::make('name')->label('Nombre'),
-                    Infolists\Components\TextEntry::make('phone')->label('Teléfono'),
+                    Infolists\Components\TextEntry::make('name')->label(__('Nombre')),
+                    Infolists\Components\TextEntry::make('phone')->label(__('Teléfono')),
                     Infolists\Components\TextEntry::make('email')->label('E-mail'),
                     Infolists\Components\TextEntry::make('status')
-                        ->label('Estado')
+                        ->label(__('Estado'))
                         ->badge(),
                     Infolists\Components\TextEntry::make('last_visit_at')
-                        ->label('Última Visita')
+                        ->label(__('Última Visita'))
                         ->dateTime('d/m/Y')
-                        ->placeholder('Nunca'),
+                        ->placeholder(__('Nunca')),
                     Infolists\Components\TextEntry::make('birthday')
-                        ->label('Cumpleaños')
+                        ->label(__('Cumpleaños'))
                         ->date('d/m'),
                 ]),
         ]);

@@ -17,12 +17,12 @@ enum ReminderType: string implements HasLabel, HasColor
     public function getLabel(): string
     {
         return match($this) {
-            self::OilChange       => 'Cambio de aceite',
-            self::BrakeInspection => 'Inspección de frenos',
-            self::TireRotation    => 'Rotación de neumáticos',
-            self::Alignment       => 'Alineación/balanceo',
-            self::Checkup         => 'Revisión general',
-            self::Custom          => 'Personalizado',
+            self::OilChange       => __('Cambio de aceite'),
+            self::BrakeInspection => __('Inspección de frenos'),
+            self::TireRotation    => __('Rotación de neumáticos'),
+            self::Alignment       => __('Alineación/balanceo'),
+            self::Checkup         => __('Revisión general'),
+            self::Custom          => __('Personalizado'),
         };
     }
 

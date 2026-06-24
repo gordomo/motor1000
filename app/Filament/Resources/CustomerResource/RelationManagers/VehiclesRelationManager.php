@@ -7,38 +7,43 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class VehiclesRelationManager extends RelationManager
 {
     protected static string $relationship = 'vehicles';
-    protected static ?string $title = 'Vehículos';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('Vehículos');
+    }
 
     public function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('license_plate')->label('Patente')->required(),
-            Forms\Components\TextInput::make('brand')->label('Marca')->required(),
-            Forms\Components\TextInput::make('model')->label('Modelo')->required(),
-            Forms\Components\TextInput::make('year')->label('Año')->numeric()->required(),
-            Forms\Components\TextInput::make('color')->label('Color'),
-            Forms\Components\TextInput::make('vin')->label('Chasis'),
-            Forms\Components\TextInput::make('mileage')->label('Kilometraje actual')->numeric(),
+            Forms\Components\TextInput::make('license_plate')->label(__('Patente'))->required(),
+            Forms\Components\TextInput::make('brand')->label(__('Marca'))->required(),
+            Forms\Components\TextInput::make('model')->label(__('Modelo'))->required(),
+            Forms\Components\TextInput::make('year')->label(__('Año'))->numeric()->required(),
+            Forms\Components\TextInput::make('color')->label(__('Color')),
+            Forms\Components\TextInput::make('vin')->label(__('Chasis')),
+            Forms\Components\TextInput::make('mileage')->label(__('Kilometraje actual'))->numeric(),
             Forms\Components\Select::make('fuel_type')
-                ->label('Combustible')
+                ->label(__('Combustible'))
                 ->options([
-                    'gasoline' => 'Gasolina',
-                    'ethanol'  => 'Etanol',
+                    'gasoline' => __('Gasolina'),
+                    'ethanol'  => __('Etanol'),
                     'flex'     => 'Flex',
-                    'diesel'   => 'Diésel',
-                    'electric' => 'Eléctrico',
-                    'hybrid'   => 'Híbrido',
+                    'diesel'   => __('Diésel'),
+                    'electric' => __('Eléctrico'),
+                    'hybrid'   => __('Híbrido'),
                 ])
                 ->default('flex'),
             Forms\Components\Select::make('transmission')
-                ->label('Transmisión')
+                ->label(__('Transmisión'))
                 ->options([
                     'manual'    => 'Manual',
-                    'automatic' => 'Automático',
+                    'automatic' => __('Automático'),
                     'cvt'       => 'CVT',
                 ])
                 ->default('manual'),

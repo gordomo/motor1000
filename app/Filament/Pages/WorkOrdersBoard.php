@@ -15,15 +15,24 @@ class WorkOrdersBoard extends Page
 
     protected static ?string $navigationIcon = 'heroicon-o-view-columns';
 
-    protected static ?string $navigationGroup = 'Taller';
-
-    protected static ?string $navigationLabel = 'Tablero OS';
-
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $title = 'Tablero de Órdenes';
-
     protected static string $view = 'filament.pages.work-orders-board';
+
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Tablero de Órdenes');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Tablero OS');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
 
     public array $columns = [];
 
@@ -31,12 +40,12 @@ class WorkOrdersBoard extends Page
     {
         return [
             Actions\Action::make('list')
-                ->label('Ver listado')
+                ->label(__('Ver listado'))
                 ->icon('heroicon-o-list-bullet')
                 ->color('gray')
                 ->url(WorkOrderResource::getUrl('index')),
             Actions\Action::make('create')
-                ->label('Nueva orden')
+                ->label(__('Nueva orden'))
                 ->icon('heroicon-o-plus')
                 ->color('primary')
                 ->url(WorkOrderResource::getUrl('create')),
@@ -82,7 +91,7 @@ class WorkOrdersBoard extends Page
         $order->update($payload);
 
         Notification::make()
-            ->title("{$order->number} movida a {$status->getLabel()}")
+            ->title(__(':number movida a :status', ['number' => $order->number, 'status' => $status->getLabel()]))
             ->success()
             ->send();
 
@@ -107,12 +116,12 @@ class WorkOrdersBoard extends Page
                     'items' => collect($orders->get($status->value, []))->map(fn (WorkOrder $order) => [
                         'id' => $order->id,
                         'number' => $order->number,
-                        'customer' => $order->customer?->name ?? 'Cliente no disponible',
+                        'customer' => $order->customer?->name ?? __('Cliente no disponible'),
                         'vehicle' => trim(($order->vehicle?->brand ?? '') . ' ' . ($order->vehicle?->model ?? '')),
-                        'plate' => $order->vehicle?->license_plate ?? 'Sin placa',
-                        'mechanic' => $order->mechanic?->name ?? 'Sin asignar',
+                        'plate' => $order->vehicle?->license_plate ?? __('Sin placa'),
+                        'mechanic' => $order->mechanic?->name ?? __('Sin asignar'),
                         'priority' => $order->priority,
-                        'estimated_at' => $order->estimated_at?->format('d/m H:i') ?? 'Sin fecha',
+                        'estimated_at' => $order->estimated_at?->format('d/m H:i') ?? __('Sin fecha'),
                         'editUrl' => WorkOrderResource::getUrl('edit', ['record' => $order]),
                         'viewUrl' => WorkOrderResource::getUrl('view', ['record' => $order]),
                     ])->values()->all(),

@@ -14,10 +14,22 @@ class AppointmentResource extends Resource
 {
     protected static ?string $model = Appointment::class;
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationGroup = 'Taller';
-    protected static ?string $modelLabel = 'Cita';
-    protected static ?string $pluralModelLabel = 'Citas';
     protected static ?int $navigationSort = 3;
+
+    public static function getModelLabel(): string
+    {
+        return __('Cita');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Citas');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -31,13 +43,13 @@ class AppointmentResource extends Resource
         return $form->schema([
             Forms\Components\Section::make()->columns(2)->schema([
                 Forms\Components\Select::make('customer_id')
-                    ->label('Cliente')
+                    ->label(__('Cliente'))
                     ->relationship('customer', 'name')
                     ->searchable()->preload()->required()
                     ->reactive()
                     ->afterStateUpdated(fn($set) => $set('vehicle_id', null)),
                 Forms\Components\Select::make('vehicle_id')
-                    ->label('Vehículo')
+                    ->label(__('Vehículo'))
                     ->options(function (Forms\Get $get): array {
                         $customerId = $get('customer_id');
 
@@ -55,35 +67,35 @@ class AppointmentResource extends Resource
                             ->toArray();
                     })
                     ->disabled(fn (Forms\Get $get): bool => blank($get('customer_id')))
-                    ->helperText(fn (Forms\Get $get): ?string => blank($get('customer_id')) ? 'Selecciona primero un cliente.' : null)
+                    ->helperText(fn (Forms\Get $get): ?string => blank($get('customer_id')) ? __('Selecciona primero un cliente.') : null)
                     ->searchable(),
                 Forms\Components\Select::make('mechanic_id')
-                    ->label('Mecánico')
+                    ->label(__('Mecánico'))
                     ->relationship('mechanic', 'name')
                     ->searchable()->preload(),
                 Forms\Components\TextInput::make('title')
-                    ->label('Título')
+                    ->label(__('Título'))
                     ->required()
                     ->default(fn (): string => request()->query('title', 'Servicio agendado')),
                 Forms\Components\DateTimePicker::make('scheduled_at')
-                    ->label('Fecha/Hora')
+                    ->label(__('Fecha/Hora'))
                     ->required()
                     ->default(fn (): ?string => request()->query('scheduled_at')),
                 Forms\Components\TextInput::make('duration_minutes')
-                    ->label('Duración (min)')
+                    ->label(__('Duración (min)'))
                     ->numeric()
                     ->default(fn (): int => max(15, (int) request()->query('duration_minutes', 60))),
                 Forms\Components\Select::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->options([
-                        'scheduled'   => 'Programada',
-                        'confirmed'   => 'Confirmado',
-                        'in_progress' => 'En progreso',
-                        'completed'   => 'Completado',
-                        'cancelled'   => 'Cancelado',
-                        'no_show'     => 'No asistió',
+                        'scheduled'   => __('Programada'),
+                        'confirmed'   => __('Confirmado'),
+                        'in_progress' => __('En progreso'),
+                        'completed'   => __('Completado'),
+                        'cancelled'   => __('Cancelado'),
+                        'no_show'     => __('No asistió'),
                     ])->default('scheduled'),
-                Forms\Components\Textarea::make('description')->label('Descripción')->columnSpan(2),
+                Forms\Components\Textarea::make('description')->label(__('Descripción'))->columnSpan(2),
             ]),
         ]);
     }
@@ -92,18 +104,18 @@ class AppointmentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('scheduled_at')->label('Fecha/Hora')->dateTime('d/m/Y H:i')->sortable(),
-                Tables\Columns\TextColumn::make('customer.name')->label('Cliente')->searchable(),
-                Tables\Columns\TextColumn::make('vehicle.license_plate')->label('Vehículo')->placeholder('—'),
-                Tables\Columns\TextColumn::make('mechanic.name')->label('Mecánico')->placeholder('—'),
-                Tables\Columns\TextColumn::make('title')->label('Servicio'),
-                Tables\Columns\BadgeColumn::make('status')->label('Estado'),
+                Tables\Columns\TextColumn::make('scheduled_at')->label(__('Fecha/Hora'))->dateTime('d/m/Y H:i')->sortable(),
+                Tables\Columns\TextColumn::make('customer.name')->label(__('Cliente'))->searchable(),
+                Tables\Columns\TextColumn::make('vehicle.license_plate')->label(__('Vehículo'))->placeholder('—'),
+                Tables\Columns\TextColumn::make('mechanic.name')->label(__('Mecánico'))->placeholder('—'),
+                Tables\Columns\TextColumn::make('title')->label(__('Servicio')),
+                Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(['scheduled' => 'Programada', 'confirmed' => 'Confirmado', 'completed' => 'Completado', 'cancelled' => 'Cancelado']),
+                    ->options(['scheduled' => __('Programada'), 'confirmed' => __('Confirmado'), 'completed' => __('Completado'), 'cancelled' => __('Cancelado')]),
                 Tables\Filters\Filter::make('today')
-                    ->label('Hoy')
+                    ->label(__('Hoy'))
                     ->query(fn($q) => $q->whereDate('scheduled_at', today())),
             ])
             ->actions([

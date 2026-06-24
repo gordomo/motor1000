@@ -16,10 +16,10 @@ enum QuoteStatus: string implements HasLabel, HasColor, HasIcon
     public function getLabel(): string
     {
         return match($this) {
-            self::Draft    => 'Borrador',
-            self::Sent     => 'Enviado',
-            self::Accepted => 'Aceptado',
-            self::Rejected => 'Rechazado',
+            self::Draft    => __('Borrador'),
+            self::Sent     => __('Enviado'),
+            self::Accepted => __('Aceptado'),
+            self::Rejected => __('Rechazado'),
         };
     }
 

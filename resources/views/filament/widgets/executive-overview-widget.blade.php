@@ -2,14 +2,14 @@
     <section class="fi-section p-4">
         <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Resumen operativo</p>
-                <h2 class="text-2xl font-bold text-zinc-900">Centro de control del taller</h2>
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">{{ __('Resumen operativo') }}</p>
+                <h2 class="text-2xl font-bold text-zinc-900">{{ __('Centro de control del taller') }}</h2>
             </div>
             @if (is_null($revenueVariation))
-                <x-ui.status-badge label="Sin comparativa mensual" tone="slate" />
+                <x-ui.status-badge :label="__('Sin comparativa mensual')" tone="slate" />
             @else
                 <x-ui.status-badge
-                    :label="($revenueVariation >= 0 ? '+' : '') . number_format($revenueVariation, 1, ',', '.') . '% vs mes anterior'"
+                    :label="($revenueVariation >= 0 ? '+' : '') . number_format($revenueVariation, 1, ',', '.') . __('% vs mes anterior')"
                     :tone="$revenueVariation >= 0 ? 'green' : 'red'"
                 />
             @endif

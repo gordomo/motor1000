@@ -15,10 +15,22 @@ class InventoryItemResource extends Resource
 {
     protected static ?string $model = InventoryItem::class;
     protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?string $navigationGroup = 'Taller';
-    protected static ?string $modelLabel = 'Ítem de inventario';
-    protected static ?string $pluralModelLabel = 'Inventario';
     protected static ?int $navigationSort = 5;
+
+    public static function getModelLabel(): string
+    {
+        return __('Ítem de inventario');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Inventario');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -32,22 +44,22 @@ class InventoryItemResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make()->columns(3)->schema([
-                Forms\Components\TextInput::make('code')->label('Código'),
-                Forms\Components\TextInput::make('name')->label('Nombre')->required()->columnSpan(2),
-                Forms\Components\TextInput::make('brand')->label('Marca'),
-                Forms\Components\TextInput::make('category')->label('Categoría'),
+                Forms\Components\TextInput::make('code')->label(__('Código')),
+                Forms\Components\TextInput::make('name')->label(__('Nombre'))->required()->columnSpan(2),
+                Forms\Components\TextInput::make('brand')->label(__('Marca')),
+                Forms\Components\TextInput::make('category')->label(__('Categoría')),
                 Forms\Components\Select::make('unit')
-                    ->label('Unidad')
-                    ->options(['un' => 'Unidad', 'kg' => 'Kg', 'lt' => 'Litro', 'm' => 'Metro', 'cx' => 'Caja'])
+                    ->label(__('Unidad'))
+                    ->options(['un' => __('Unidad'), 'kg' => __('Kg'), 'lt' => __('Litro'), 'm' => __('Metro'), 'cx' => __('Caja')])
                     ->default('un'),
-                Forms\Components\TextInput::make('cost_price')->label('Precio de costo')->numeric()->prefix('$'),
-                Forms\Components\TextInput::make('sale_price')->label('Precio de venta')->numeric()->prefix('$'),
-                Forms\Components\TextInput::make('stock_quantity')->label('Inventario actual')->numeric()->default(0),
-                Forms\Components\TextInput::make('min_stock')->label('Inventario mínimo')->numeric()->default(0),
-                Forms\Components\TextInput::make('location')->label('Ubicación (Estantería)'),
-                Forms\Components\TextInput::make('supplier')->label('Proveedor'),
-                Forms\Components\Toggle::make('is_active')->label('Activo')->default(true),
-                Forms\Components\Textarea::make('notes')->label('Observaciones')->columnSpan(3),
+                Forms\Components\TextInput::make('cost_price')->label(__('Precio de costo'))->numeric()->prefix('$'),
+                Forms\Components\TextInput::make('sale_price')->label(__('Precio de venta'))->numeric()->prefix('$'),
+                Forms\Components\TextInput::make('stock_quantity')->label(__('Inventario actual'))->numeric()->default(0),
+                Forms\Components\TextInput::make('min_stock')->label(__('Inventario mínimo'))->numeric()->default(0),
+                Forms\Components\TextInput::make('location')->label(__('Ubicación (Estantería)')),
+                Forms\Components\TextInput::make('supplier')->label(__('Proveedor')),
+                Forms\Components\Toggle::make('is_active')->label(__('Activo'))->default(true),
+                Forms\Components\Textarea::make('notes')->label(__('Observaciones'))->columnSpan(3),
             ]),
         ]);
     }
@@ -56,21 +68,21 @@ class InventoryItemResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')->label('Código')->searchable(),
-                Tables\Columns\TextColumn::make('name')->label('Nombre')->searchable()->weight('bold'),
-                Tables\Columns\TextColumn::make('category')->label('Categoría'),
-                Tables\Columns\TextColumn::make('stock_quantity')->label('Inventario')
+                Tables\Columns\TextColumn::make('code')->label(__('Código'))->searchable(),
+                Tables\Columns\TextColumn::make('name')->label(__('Nombre'))->searchable()->weight('bold'),
+                Tables\Columns\TextColumn::make('category')->label(__('Categoría')),
+                Tables\Columns\TextColumn::make('stock_quantity')->label(__('Inventario'))
                     ->numeric(2)
                     ->color(fn(InventoryItem $r) => $r->isLowStock() ? 'danger' : 'success'),
-                Tables\Columns\TextColumn::make('min_stock')->label('Mín.')->numeric(2),
-                Tables\Columns\TextColumn::make('sale_price')->label('Precio de venta')->money('ARS'),
-                Tables\Columns\IconColumn::make('is_active')->label('Activo')->boolean(),
+                Tables\Columns\TextColumn::make('min_stock')->label(__('Mín.'))->numeric(2),
+                Tables\Columns\TextColumn::make('sale_price')->label(__('Precio de venta'))->money('ARS'),
+                Tables\Columns\IconColumn::make('is_active')->label(__('Activo'))->boolean(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('low_stock')
-                    ->label('Inventario bajo')
+                    ->label(__('Inventario bajo'))
                     ->query(fn(Builder $q) => $q->whereColumn('stock_quantity', '<=', 'min_stock')),
-                Tables\Filters\TernaryFilter::make('is_active')->label('Activo'),
+                Tables\Filters\TernaryFilter::make('is_active')->label(__('Activo')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -21,10 +21,22 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Configuraciones';
-    protected static ?string $modelLabel = 'Usuario';
-    protected static ?string $pluralModelLabel = 'Equipo';
     protected static ?int $navigationSort = 10;
+
+    public static function getModelLabel(): string
+    {
+        return __('Usuario');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Equipo');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Configuraciones');
+    }
 
     // ─── Autorización: solo admin/manager del taller gestionan el equipo ────────
     public static function canViewAny(): bool
@@ -59,42 +71,42 @@ class UserResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Datos del usuario')
+            Forms\Components\Section::make(__('Datos del usuario'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\TextInput::make('name')
-                        ->label('Nombre')
+                        ->label(__('Nombre'))
                         ->required()
                         ->maxLength(255),
                     Forms\Components\TextInput::make('email')
-                        ->label('Correo electrónico')
+                        ->label(__('Correo electrónico'))
                         ->email()
                         ->required()
                         ->unique(User::class, 'email', ignoreRecord: true)
                         ->maxLength(255),
                     Forms\Components\TextInput::make('phone')
-                        ->label('Teléfono')
+                        ->label(__('Teléfono'))
                         ->tel()
                         ->maxLength(50),
                     Forms\Components\Select::make('roles')
-                        ->label('Rol')
+                        ->label(__('Rol'))
                         ->relationship('roles', 'name')
                         ->getOptionLabelFromRecordUsing(fn ($record): string => Roles::label($record->name))
                         ->multiple()
                         ->preload()
                         ->required()
-                        ->helperText('Administrador y Gerente gestionan todo; Recepcionista carga sin borrar; Mecánico solo órdenes.'),
+                        ->helperText(__('Administrador y Gerente gestionan todo; Recepcionista carga sin borrar; Mecánico solo órdenes.')),
                     Forms\Components\TextInput::make('password')
-                        ->label('Contraseña')
+                        ->label(__('Contraseña'))
                         ->password()
                         ->revealable()
                         ->required(fn (string $operation): bool => $operation === 'create')
                         ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null)
                         ->dehydrated(fn (?string $state) => filled($state))
                         ->maxLength(255)
-                        ->helperText('Dejar vacío para mantener la contraseña actual al editar.'),
+                        ->helperText(__('Dejar vacío para mantener la contraseña actual al editar.')),
                     Forms\Components\Toggle::make('is_active')
-                        ->label('Activo')
+                        ->label(__('Activo'))
                         ->default(true),
                 ]),
         ]);
@@ -105,32 +117,32 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                    ->label(__('Nombre'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Correo')
+                    ->label(__('Correo'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('roles.name')
-                    ->label('Rol')
+                    ->label(__('Rol'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => Roles::label($state)),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Activo')
+                    ->label(__('Activo'))
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Alta')
+                    ->label(__('Alta'))
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')->label('Activo'),
+                Tables\Filters\TernaryFilter::make('is_active')->label(__('Activo')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('Editar'),
-                Tables\Actions\DeleteAction::make()->label('Eliminar'),
+                Tables\Actions\EditAction::make()->label(__('Editar')),
+                Tables\Actions\DeleteAction::make()->label(__('Eliminar')),
             ])
             ->defaultSort('name');
     }

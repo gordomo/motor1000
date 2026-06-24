@@ -15,10 +15,22 @@ class ReminderResource extends Resource
 {
     protected static ?string $model = Reminder::class;
     protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
-    protected static ?string $navigationGroup = 'CRM';
-    protected static ?string $modelLabel = 'Recordatorio';
-    protected static ?string $pluralModelLabel = 'Recordatorios';
     protected static ?int $navigationSort = 3;
+
+    public static function getModelLabel(): string
+    {
+        return __('Recordatorio');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Recordatorios');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('CRM');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -39,34 +51,34 @@ class ReminderResource extends Resource
         return $form->schema([
             Forms\Components\Section::make()->columns(2)->schema([
                 Forms\Components\Select::make('customer_id')
-                    ->label('Cliente')
+                    ->label(__('Cliente'))
                     ->relationship('customer', 'name')
                     ->searchable()->preload()->required(),
                 Forms\Components\Select::make('vehicle_id')
-                    ->label('Vehículo')
+                    ->label(__('Vehículo'))
                     ->relationship('vehicle', 'license_plate')
                     ->searchable()->preload(),
                 Forms\Components\Select::make('type')
-                    ->label('Tipo')
+                    ->label(__('Tipo'))
                     ->options(ReminderType::class)
                     ->required(),
                 Forms\Components\Select::make('trigger_type')
-                    ->label('Tipo de disparador')
-                    ->options(['date' => 'Fecha', 'mileage' => 'KM', 'months_since_last' => 'Meses desde el último servicio'])
+                    ->label(__('Tipo de disparador'))
+                    ->options(['date' => __('Fecha'), 'mileage' => __('KM'), 'months_since_last' => __('Meses desde el último servicio')])
                     ->default('date')->required()->reactive(),
-                Forms\Components\TextInput::make('title')->label('Título')->required(),
+                Forms\Components\TextInput::make('title')->label(__('Título'))->required(),
                 Forms\Components\DateTimePicker::make('due_at')
-                    ->label('Fecha de vencimiento')
+                    ->label(__('Fecha de vencimiento'))
                     ->visible(fn(Forms\Get $get) => $get('trigger_type') === 'date'),
                 Forms\Components\TextInput::make('due_mileage')
-                    ->label('KM de Vencimiento')
+                    ->label(__('KM de Vencimiento'))
                     ->numeric()
                     ->visible(fn(Forms\Get $get) => $get('trigger_type') === 'mileage'),
                 Forms\Components\Select::make('status')
-                    ->label('Estado')
-                    ->options(['pending' => 'Pendiente', 'sent' => 'Enviado', 'dismissed' => 'Descartado', 'completed' => 'Completado'])
+                    ->label(__('Estado'))
+                    ->options(['pending' => __('Pendiente'), 'sent' => __('Enviado'), 'dismissed' => __('Descartado'), 'completed' => __('Completado')])
                     ->default('pending'),
-                Forms\Components\Textarea::make('description')->label('Descripción')->columnSpan(2),
+                Forms\Components\Textarea::make('description')->label(__('Descripción'))->columnSpan(2),
             ]),
         ]);
     }
@@ -75,19 +87,19 @@ class ReminderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer.name')->label('Cliente')->searchable(),
-                Tables\Columns\TextColumn::make('vehicle.license_plate')->label('Vehículo')->placeholder('—'),
-                Tables\Columns\BadgeColumn::make('type')->label('Tipo'),
-                Tables\Columns\TextColumn::make('title')->label('Recordatorio'),
-                Tables\Columns\TextColumn::make('due_at')->label('Vencimiento')->dateTime('d/m/Y')->sortable(),
-                Tables\Columns\BadgeColumn::make('status')->label('Estado'),
+                Tables\Columns\TextColumn::make('customer.name')->label(__('Cliente'))->searchable(),
+                Tables\Columns\TextColumn::make('vehicle.license_plate')->label(__('Vehículo'))->placeholder('—'),
+                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo')),
+                Tables\Columns\TextColumn::make('title')->label(__('Recordatorio')),
+                Tables\Columns\TextColumn::make('due_at')->label(__('Vencimiento'))->dateTime('d/m/Y')->sortable(),
+                Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(['pending' => 'Pendiente', 'sent' => 'Enviado', 'dismissed' => 'Descartado', 'completed' => 'Completado']),
+                    ->options(['pending' => __('Pendiente'), 'sent' => __('Enviado'), 'dismissed' => __('Descartado'), 'completed' => __('Completado')]),
                 Tables\Filters\SelectFilter::make('type')->options(ReminderType::class),
                 Tables\Filters\Filter::make('overdue')
-                    ->label('Vencidos')
+                    ->label(__('Vencidos'))
                     ->query(fn($q) => $q->where('due_at', '<', now())->where('status', 'pending')),
             ])
             ->actions([

@@ -14,15 +14,24 @@ class AppointmentsCalendar extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Taller';
-
-    protected static ?string $navigationLabel = 'Calendario de Citas';
-
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $title = 'Calendario de Citas';
-
     protected static string $view = 'filament.pages.appointments-calendar';
+
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Calendario de Citas');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Calendario de Citas');
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
 
     public array $events = [];
 
@@ -46,7 +55,7 @@ class AppointmentsCalendar extends Page
             ->map(function (\App\Models\WorkOrder $order): array {
                 $start = $order->estimated_at;
                 $customer = $order->customer?->name;
-                $title = 'Entrega ' . $order->number . ($customer ? ' - ' . $customer : '');
+                $title = __('Entrega ') . $order->number . ($customer ? ' - ' . $customer : '');
 
                 return [
                     'id' => 'wo-' . $order->id,
@@ -58,9 +67,9 @@ class AppointmentsCalendar extends Page
                     'color' => '#f59e0b',
                     'url' => \App\Filament\Resources\WorkOrderResource::getUrl('view', ['record' => $order]),
                     'extendedProps' => [
-                        'estado' => 'Entrega prevista',
-                        'mecanico' => $order->mechanic?->name ?: 'Sin asignar',
-                        'vehiculo' => $order->vehicle?->license_plate ?: 'Sin vehículo',
+                        'estado' => __('Entrega prevista'),
+                        'mecanico' => $order->mechanic?->name ?: __('Sin asignar'),
+                        'vehiculo' => $order->vehicle?->license_plate ?: __('Sin vehículo'),
                     ],
                 ];
             })
@@ -79,16 +88,16 @@ class AppointmentsCalendar extends Page
                 $end = $appointment->ends_at ?? $start?->copy()->addMinutes((int) ($appointment->duration_minutes ?: 60));
 
                 $statusLabel = match ($appointment->status) {
-                    'scheduled' => 'Programada',
-                    'confirmed' => 'Confirmada',
-                    'in_progress' => 'En progreso',
-                    'completed' => 'Completada',
-                    'cancelled' => 'Cancelada',
-                    'no_show' => 'No asistió',
+                    'scheduled' => __('Programada'),
+                    'confirmed' => __('Confirmada'),
+                    'in_progress' => __('En progreso'),
+                    'completed' => __('Completada'),
+                    'cancelled' => __('Cancelada'),
+                    'no_show' => __('No asistió'),
                     default => ucfirst((string) $appointment->status),
                 };
 
-                $title = $appointment->title ?: 'Cita';
+                $title = $appointment->title ?: __('Cita');
                 $customer = $appointment->customer?->name;
 
                 if ($customer) {
@@ -104,8 +113,8 @@ class AppointmentsCalendar extends Page
                     'url' => AppointmentResource::getUrl('edit', ['record' => $appointment]),
                     'extendedProps' => [
                         'estado' => $statusLabel,
-                        'mecanico' => $appointment->mechanic?->name ?: 'Sin asignar',
-                        'vehiculo' => $appointment->vehicle?->license_plate ?: 'Sin vehículo',
+                        'mecanico' => $appointment->mechanic?->name ?: __('Sin asignar'),
+                        'vehiculo' => $appointment->vehicle?->license_plate ?: __('Sin vehículo'),
                     ],
                 ];
             })
@@ -119,7 +128,7 @@ class AppointmentsCalendar extends Page
             $appointment = Appointment::query()->findOrFail($appointmentId);
 
             if (in_array($appointment->status, ['completed', 'cancelled'], true)) {
-                throw new \RuntimeException('No se puede reprogramar una cita completada o cancelada.');
+                throw new \RuntimeException(__('No se puede reprogramar una cita completada o cancelada.'));
             }
 
             $startAt = Carbon::parse($start);
@@ -128,7 +137,7 @@ class AppointmentsCalendar extends Page
                 : $startAt->copy()->addMinutes((int) ($appointment->duration_minutes ?: 60));
 
             if ($endAt->lessThanOrEqualTo($startAt)) {
-                throw new \RuntimeException('La fecha de fin debe ser mayor a la fecha de inicio.');
+                throw new \RuntimeException(__('La fecha de fin debe ser mayor a la fecha de inicio.'));
             }
 
             $duration = max(1, $startAt->diffInMinutes($endAt));
@@ -143,13 +152,13 @@ class AppointmentsCalendar extends Page
             $this->skipRender();
 
             Notification::make()
-                ->title('Cita reprogramada')
-                ->body('Los cambios se guardaron correctamente.')
+                ->title(__('Cita reprogramada'))
+                ->body(__('Los cambios se guardaron correctamente.'))
                 ->success()
                 ->send();
         } catch (Throwable $e) {
             Notification::make()
-                ->title('No se pudo reprogramar la cita')
+                ->title(__('No se pudo reprogramar la cita'))
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
@@ -162,12 +171,12 @@ class AppointmentsCalendar extends Page
     {
         return [
             Actions\Action::make('list')
-                ->label('Ver listado')
+                ->label(__('Ver listado'))
                 ->icon('heroicon-o-list-bullet')
                 ->color('gray')
                 ->url(AppointmentResource::getUrl('index')),
             Actions\Action::make('create')
-                ->label('Nueva cita')
+                ->label(__('Nueva cita'))
                 ->icon('heroicon-o-plus')
                 ->color('primary')
                 ->url(AppointmentResource::getUrl('create')),

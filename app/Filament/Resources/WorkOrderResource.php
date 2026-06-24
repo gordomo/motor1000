@@ -26,10 +26,22 @@ class WorkOrderResource extends Resource
 {
     protected static ?string $model = WorkOrder::class;
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $navigationGroup = 'Taller';
-    protected static ?string $modelLabel = 'Orden de Servicio';
-    protected static ?string $pluralModelLabel = 'Órdenes de Servicio';
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Orden de Servicio');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Órdenes de Servicio');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -50,11 +62,11 @@ class WorkOrderResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make('Identificación')
+            Forms\Components\Section::make(__('Identificación'))
                 ->columns(2)
                 ->schema([
                     Forms\Components\Select::make('customer_id')
-                        ->label('Cliente')
+                        ->label(__('Cliente'))
                         ->relationship('customer', 'name')
                         ->searchable()
                         ->preload()
@@ -62,7 +74,7 @@ class WorkOrderResource extends Resource
                         ->reactive()
                         ->afterStateUpdated(fn($set) => $set('vehicle_id', null)),
                     Forms\Components\Select::make('vehicle_id')
-                        ->label('Vehículo')
+                        ->label(__('Vehículo'))
                         ->options(function (Forms\Get $get) {
                             $customerId = $get('customer_id');
                             if (! $customerId) return [];
@@ -73,7 +85,7 @@ class WorkOrderResource extends Resource
                         ->searchable()
                         ->required(),
                     Forms\Components\Select::make('mechanic_id')
-                        ->label('Mecánico')
+                        ->label(__('Mecánico'))
                         // Se usa options() en vez de relationship(...closure) para evitar el
                         // error "qualifyColumn() on null" de Filament al modificar la query de
                         // la relación (mismo problema que rompía el alta de presupuestos).
@@ -82,54 +94,54 @@ class WorkOrderResource extends Resource
                         ->preload()
                         ->nullable(),
                     Forms\Components\Select::make('priority')
-                        ->label('Prioridad')
+                        ->label(__('Prioridad'))
                         ->options([
-                            'low'    => 'Baja',
-                            'normal' => 'Normal',
-                            'high'   => 'Alta',
-                            'urgent' => 'Urgente',
+                            'low'    => __('Baja'),
+                            'normal' => __('Normal'),
+                            'high'   => __('Alta'),
+                            'urgent' => __('Urgente'),
                         ])
                         ->default('normal')
                         ->required(),
                     Forms\Components\TextInput::make('mileage_in')
-                        ->label('KM Entrada')
+                        ->label(__('KM Entrada'))
                         ->numeric(),
                     Forms\Components\DateTimePicker::make('estimated_at')
-                        ->label('Previsión de Entrega'),
+                        ->label(__('Previsión de Entrega')),
                 ]),
-            Forms\Components\Section::make('Descripción')
+            Forms\Components\Section::make(__('Descripción'))
                 ->schema([
                     Forms\Components\Textarea::make('complaint')
-                        ->label('Queja del cliente')
+                        ->label(__('Queja del cliente'))
                         ->required()
                         ->rows(3),
                     Forms\Components\Textarea::make('diagnosis')
-                        ->label('Diagnóstico')
+                        ->label(__('Diagnóstico'))
                         ->rows(3),
                     Forms\Components\Textarea::make('internal_notes')
-                        ->label('Notas internas')
+                        ->label(__('Notas internas'))
                         ->rows(2),
                     Forms\Components\Textarea::make('customer_notes')
-                        ->label('Observaciones para el cliente')
+                        ->label(__('Observaciones para el cliente'))
                         ->rows(2)
-                        ->helperText('Visible para el cliente en el portal'),
+                        ->helperText(__('Visible para el cliente en el portal')),
                 ]),
-            Forms\Components\Section::make('Checklist de revisión')
+            Forms\Components\Section::make(__('Checklist de revisión'))
                 ->collapsible()
                 ->collapsed()
                 ->schema([
                     Forms\Components\Repeater::make('checklist')
-                        ->label('Puntos a revisar')
+                        ->label(__('Puntos a revisar'))
                         ->schema([
                             Forms\Components\TextInput::make('item')
-                                ->label('Ítem')
+                                ->label(__('Ítem'))
                                 ->required()
                                 ->maxLength(120),
                             Forms\Components\Toggle::make('done')
-                                ->label('Revisado')
+                                ->label(__('Revisado'))
                                 ->default(false),
                             Forms\Components\TextInput::make('note')
-                                ->label('Observaciones')
+                                ->label(__('Observaciones'))
                                 ->maxLength(255),
                         ])
                         ->columns(3)
@@ -141,56 +153,56 @@ class WorkOrderResource extends Resource
                         ])
                         ->addActionLabel('Agregar punto'),
                 ]),
-            Forms\Components\Section::make('Ítems de la OS')
+            Forms\Components\Section::make(__('Ítems de la OS'))
                 ->schema([
                     Forms\Components\Repeater::make('items')
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('type')
-                                ->label('Tipo')
-                                ->options(['labor' => 'Mano de obra', 'part' => 'Pieza', 'other' => 'Otro'])
+                                ->label(__('Tipo'))
+                                ->options(['labor' => __('Mano de obra'), 'part' => __('Pieza'), 'other' => __('Otro')])
                                 ->default('labor')
                                 ->required(),
                             Forms\Components\TextInput::make('description')
-                                ->label('Descripción')
+                                ->label(__('Descripción'))
                                 ->required(),
                             Forms\Components\TextInput::make('quantity')
-                                ->label('Cant.')
+                                ->label(__('Cant.'))
                                 ->numeric()
                                 ->default(1)
                                 ->minValue(0.01),
                             Forms\Components\TextInput::make('unit_price')
-                                ->label('Precio unit.')
+                                ->label(__('Precio unit.'))
                                 ->numeric()
                                 ->prefix('$'),
                         ])
                         ->columns(4)
                         ->addActionLabel('Agregar ítem'),
                 ]),
-            Forms\Components\Section::make('Financiero')
+            Forms\Components\Section::make(__('Financiero'))
                 ->columns(3)
                 ->collapsed()
                 ->schema([
                     Forms\Components\TextInput::make('discount')
-                        ->label('Descuento ($)')
+                        ->label(__('Descuento ($)'))
                         ->numeric()
                         ->default(0)
                         ->prefix('$'),
                     Forms\Components\Select::make('payment_method')
-                        ->label('Forma de pago')
+                        ->label(__('Forma de pago'))
                         ->options([
-                            'cash'         => 'Efectivo',
-                            'credit_card'  => 'Tarjeta de Crédito',
-                            'debit_card'   => 'Tarjeta de Débito',
-                            'pix'          => 'PIX',
-                            'bank_slip'    => 'Boleto',
+                            'cash'         => __('Efectivo'),
+                            'credit_card'  => __('Tarjeta de Crédito'),
+                            'debit_card'   => __('Tarjeta de Débito'),
+                            'pix'          => __('PIX'),
+                            'bank_slip'    => __('Boleto'),
                         ]),
                     Forms\Components\Select::make('payment_status')
-                        ->label('Estado de pago')
+                        ->label(__('Estado de pago'))
                         ->options([
-                            'pending' => 'Pendiente',
-                            'partial' => 'Parcial',
-                            'paid'    => 'Pago',
+                            'pending' => __('Pendiente'),
+                            'partial' => __('Parcial'),
+                            'paid'    => __('Pago'),
                         ])
                         ->default('pending'),
                 ]),
@@ -202,24 +214,24 @@ class WorkOrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('number')
-                    ->label('Nº OS')
+                    ->label(__('Nº OS'))
                     ->weight('bold')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('customer.name')
-                    ->label('Cliente')
+                    ->label(__('Cliente'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('vehicle.license_plate')
-                    ->label('Vehículo')
+                    ->label(__('Vehículo'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('mechanic.name')
-                    ->label('Mecánico')
-                    ->placeholder('No asignado'),
+                    ->label(__('Mecánico'))
+                    ->placeholder(__('No asignado')),
                 Tables\Columns\BadgeColumn::make('status')
-                    ->label('Estado'),
+                    ->label(__('Estado')),
                 Tables\Columns\BadgeColumn::make('priority')
-                    ->label('Prioridad')
+                    ->label(__('Prioridad'))
                     ->colors([
                         'gray'    => 'low',
                         'primary' => 'normal',
@@ -227,41 +239,41 @@ class WorkOrderResource extends Resource
                         'danger'  => 'urgent',
                     ]),
                 Tables\Columns\TextColumn::make('total')
-                    ->label('Total')
+                    ->label(__('Total'))
                     ->money('ARS')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('estimated_at')
-                    ->label('Previsión')
+                    ->label(__('Previsión'))
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Apertura')
+                    ->label(__('Apertura'))
                     ->dateTime('d/m/Y')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->options([
-                        'received' => 'Recibido',
-                        'diagnosis' => 'Diagnóstico',
-                        'waiting_parts' => 'Esperando piezas',
-                        'repairing' => 'En reparación',
-                        'completed' => 'Completado',
-                        'delivered' => 'Entregado',
+                        'received' => __('Recibido'),
+                        'diagnosis' => __('Diagnóstico'),
+                        'waiting_parts' => __('Esperando piezas'),
+                        'repairing' => __('En reparación'),
+                        'completed' => __('Completado'),
+                        'delivered' => __('Entregado'),
                     ]),
                 Tables\Filters\SelectFilter::make('mechanic_id')
-                    ->label('Mecánico')
+                    ->label(__('Mecánico'))
                     ->options(fn () => Mechanic::query()
                         ->where('is_active', true)
                         ->orderBy('name')
                         ->pluck('name', 'id')
                         ->toArray()),
                 Tables\Filters\SelectFilter::make('priority')
-                    ->label('Prioridad')
-                    ->options(['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente']),
+                    ->label(__('Prioridad'))
+                    ->options(['low' => __('Baja'), 'normal' => __('Normal'), 'high' => __('Alta'), 'urgent' => __('Urgente')]),
                 Tables\Filters\Filter::make('overdue')
-                    ->label('Atrasadas')
+                    ->label(__('Atrasadas'))
                     ->query(fn(Builder $q) => $q
                         ->whereNotNull('estimated_at')
                         ->where('estimated_at', '<', now())
@@ -272,13 +284,13 @@ class WorkOrderResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('pdf')
-                    ->label('PDF')
+                    ->label(__('PDF'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
                     ->url(fn (WorkOrder $record): string => route('work-orders.pdf', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\Action::make('advance_status')
-                    ->label('Avanzar')
+                    ->label(__('Avanzar'))
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('success')
                     ->requiresConfirmation()

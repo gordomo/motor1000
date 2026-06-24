@@ -18,12 +18,12 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
     public function getLabel(): string
     {
         return match($this) {
-            self::Received     => 'Recibido',
-            self::Diagnosis    => 'Diagnóstico',
-            self::WaitingParts => 'Esperando piezas',
-            self::Repairing    => 'En reparación',
-            self::Completed    => 'Completado',
-            self::Delivered    => 'Entregado',
+            self::Received     => __('Recibido'),
+            self::Diagnosis    => __('Diagnóstico'),
+            self::WaitingParts => __('Esperando piezas'),
+            self::Repairing    => __('En reparación'),
+            self::Completed    => __('Completado'),
+            self::Delivered    => __('Entregado'),
         };
     }
 

@@ -9,9 +9,13 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class UpcomingRemindersWidget extends BaseWidget
 {
-    protected static ?string $heading = 'Recordatorios Próximos';
     protected static ?int $sort = 4;
     protected int|string|array $columnSpan = 'full';
+
+    public function getHeading(): ?string
+    {
+        return __('Recordatorios Próximos');
+    }
 
     public function table(Table $table): Table
     {
@@ -27,11 +31,11 @@ class UpcomingRemindersWidget extends BaseWidget
                     ->orderBy('due_at')
             )
             ->columns([
-                Tables\Columns\TextColumn::make('customer.name')->label('Cliente')->searchable(),
-                Tables\Columns\TextColumn::make('vehicle.license_plate')->label('Vehículo')->placeholder('—'),
-                Tables\Columns\BadgeColumn::make('type')->label('Tipo'),
-                Tables\Columns\TextColumn::make('title')->label('Recordatorio'),
-                Tables\Columns\TextColumn::make('due_at')->label('Vencimiento')->dateTime('d/m/Y')->sortable(),
+                Tables\Columns\TextColumn::make('customer.name')->label(__('Cliente'))->searchable(),
+                Tables\Columns\TextColumn::make('vehicle.license_plate')->label(__('Vehículo'))->placeholder('—'),
+                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo')),
+                Tables\Columns\TextColumn::make('title')->label(__('Recordatorio')),
+                Tables\Columns\TextColumn::make('due_at')->label(__('Vencimiento'))->dateTime('d/m/Y')->sortable(),
             ]);
     }
 }

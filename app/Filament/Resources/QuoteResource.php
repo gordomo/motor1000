@@ -21,10 +21,22 @@ class QuoteResource extends Resource
 {
     protected static ?string $model = Quote::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationGroup = 'Taller';
-    protected static ?string $modelLabel = 'Presupuesto';
-    protected static ?string $pluralModelLabel = 'Presupuestos';
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Taller');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Presupuesto');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Presupuestos');
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -42,17 +54,17 @@ class QuoteResource extends Resource
         return $form->schema([
 
             // ── Encabezado ──────────────────────────────────────────────────
-            Forms\Components\Section::make('Identificación')
+            Forms\Components\Section::make(__('Identificación'))
                 ->columns(3)
                 ->schema([
                     Forms\Components\TextInput::make('code')
-                        ->label('Nº Presupuesto')
+                        ->label(__('Nº Presupuesto'))
                         ->disabled()
-                        ->placeholder('Se genera automáticamente')
+                        ->placeholder(__('Se genera automáticamente'))
                         ->columnSpan(1),
 
                     Forms\Components\Select::make('customer_id')
-                        ->label('Cliente')
+                        ->label(__('Cliente'))
                         ->relationship('customer', 'name')
                         ->searchable()
                         ->preload()
@@ -62,7 +74,7 @@ class QuoteResource extends Resource
                         ->columnSpan(1),
 
                     Forms\Components\Select::make('vehicle_id')
-                        ->label('Vehículo')
+                        ->label(__('Vehículo'))
                         ->options(function (Get $get): array {
                             $customerId = $get('customer_id');
                             if (! $customerId) return [];
@@ -77,30 +89,30 @@ class QuoteResource extends Resource
                         ->columnSpan(1),
 
                     Forms\Components\Select::make('status')
-                        ->label('Estado')
+                        ->label(__('Estado'))
                         ->options(QuoteStatus::class)
                         ->default(QuoteStatus::Draft)
                         ->required()
                         ->columnSpan(1),
 
                     Forms\Components\DateTimePicker::make('created_at')
-                        ->label('Fecha')
+                        ->label(__('Fecha'))
                         ->disabled()
                         ->columnSpan(1),
                 ]),
 
             // ── Falla detectada ─────────────────────────────────────────────
-            Forms\Components\Section::make('Diagnóstico')
+            Forms\Components\Section::make(__('Diagnóstico'))
                 ->schema([
                     Forms\Components\Textarea::make('detected_fault')
-                        ->label('Falla detectada')
-                        ->placeholder('Describa el problema reportado por el cliente o detectado en la inspección...')
+                        ->label(__('Falla detectada'))
+                        ->placeholder(__('Describa el problema reportado por el cliente o detectado en la inspección...'))
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
 
             // ── Checklist 20 puntos ─────────────────────────────────────────
-            Forms\Components\Section::make('Check List de inspección visual (20 puntos)')
+            Forms\Components\Section::make(__('Check List de inspección visual (20 puntos)'))
                 ->collapsible()
                 ->schema([
                     Forms\Components\Repeater::make('checklist')
@@ -118,16 +130,16 @@ class QuoteResource extends Resource
                             Forms\Components\Hidden::make('categoria'),
 
                             Forms\Components\TextInput::make('nombre_item')
-                                ->label('Punto')
+                                ->label(__('Punto'))
                                 ->disabled()
                                 ->columnSpan(4),
 
                             Forms\Components\Radio::make('estado')
-                                ->label('Estado')
+                                ->label(__('Estado'))
                                 ->options([
-                                    'BIEN'    => 'BIEN',
-                                    'REGULAR' => 'REGULAR',
-                                    'MAL'     => 'MAL',
+                                    'BIEN'    => __('BIEN'),
+                                    'REGULAR' => __('REGULAR'),
+                                    'MAL'     => __('MAL'),
                                 ])
                                 ->inline()
                                 ->reactive()
@@ -135,15 +147,15 @@ class QuoteResource extends Resource
                                 ->columnSpan(4),
 
                             Forms\Components\TextInput::make('aclaracion')
-                                ->label('Aclaración')
-                                ->placeholder('Describa la anomalía...')
+                                ->label(__('Aclaración'))
+                                ->placeholder(__('Describa la anomalía...'))
                                 ->hidden(fn (Get $get): bool => ! in_array($get('estado'), ['REGULAR', 'MAL']))
                                 ->columnSpan(4),
                         ]),
                 ]),
 
             // ── Items del presupuesto ────────────────────────────────────────
-            Forms\Components\Section::make('Items del presupuesto')
+            Forms\Components\Section::make(__('Items del presupuesto'))
                 ->schema([
                     Forms\Components\Repeater::make('items')
                         ->label('')
@@ -151,22 +163,22 @@ class QuoteResource extends Resource
                         ->defaultItems(1)
                         ->schema([
                             Forms\Components\Select::make('tipo')
-                                ->label('Tipo')
+                                ->label(__('Tipo'))
                                 ->options([
-                                    'repuesto'    => 'Repuesto',
-                                    'mano_de_obra' => 'Mano de obra',
-                                    'otro'        => 'Otro',
+                                    'repuesto'    => __('Repuesto'),
+                                    'mano_de_obra' => __('Mano de obra'),
+                                    'otro'        => __('Otro'),
                                 ])
                                 ->required()
                                 ->columnSpan(2),
 
                             Forms\Components\TextInput::make('descripcion')
-                                ->label('Descripción')
+                                ->label(__('Descripción'))
                                 ->required()
                                 ->columnSpan(4),
 
                             Forms\Components\TextInput::make('cantidad')
-                                ->label('Cant.')
+                                ->label(__('Cant.'))
                                 ->numeric()
                                 ->default(1)
                                 ->minValue(1)
@@ -177,7 +189,7 @@ class QuoteResource extends Resource
                                 ->columnSpan(2),
 
                             Forms\Components\TextInput::make('precio_unitario')
-                                ->label('P. Unitario')
+                                ->label(__('P. Unitario'))
                                 ->numeric()
                                 ->prefix('$')
                                 ->reactive()
@@ -187,7 +199,7 @@ class QuoteResource extends Resource
                                 ->columnSpan(2),
 
                             Forms\Components\TextInput::make('total')
-                                ->label('Total')
+                                ->label(__('Total'))
                                 ->numeric()
                                 ->prefix('$')
                                 ->disabled()
@@ -204,11 +216,11 @@ class QuoteResource extends Resource
 
                     Forms\Components\Grid::make(4)->schema([
                         Forms\Components\TextInput::make('subtotal')
-                            ->label('Subtotal')
+                            ->label(__('Subtotal'))
                             ->numeric()->prefix('$')->disabled(),
 
                         Forms\Components\TextInput::make('tax')
-                            ->label('Impuestos')
+                            ->label(__('Impuestos'))
                             ->numeric()->prefix('$')->default(0)
                             ->reactive()
                             ->afterStateUpdated(function (Get $get, Set $set) {
@@ -216,7 +228,7 @@ class QuoteResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('discount')
-                            ->label('Descuento')
+                            ->label(__('Descuento'))
                             ->numeric()->prefix('$')->default(0)
                             ->reactive()
                             ->afterStateUpdated(function (Get $get, Set $set) {
@@ -224,7 +236,7 @@ class QuoteResource extends Resource
                             }),
 
                         Forms\Components\TextInput::make('total')
-                            ->label('TOTAL')
+                            ->label(__('TOTAL'))
                             ->numeric()->prefix('$')->disabled()
                             ->extraInputAttributes(['class' => 'font-bold text-lg']),
                     ]),

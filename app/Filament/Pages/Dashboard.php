@@ -11,8 +11,17 @@ use Filament\Pages\Dashboard as BaseDashboard;
 class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';
-    protected static ?string $title = 'Centro de Operaciones';
     protected static ?int $navigationSort = -1;
+
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return __('Centro de Operaciones');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Centro de Operaciones');
+    }
 
     public function getWidgets(): array
     {

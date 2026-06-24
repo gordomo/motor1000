@@ -18,59 +18,65 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $modelLabel = 'Usuario';
+    public static function getModelLabel(): string
+    {
+        return __('Usuario');
+    }
 
-    protected static ?string $pluralModelLabel = 'Usuarios';
+    public static function getPluralModelLabel(): string
+    {
+        return __('Usuarios');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Datos del usuario')
+                Forms\Components\Section::make(__('Datos del usuario'))
                     ->schema([
                         Forms\Components\Select::make('tenant_id')
-                            ->label('Taller')
+                            ->label(__('Taller'))
                             ->relationship('tenant', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable()
-                            ->helperText('Dejar vacío si es super administrador.'),
+                            ->helperText(__('Dejar vacío si es super administrador.')),
                         Forms\Components\TextInput::make('name')
-                            ->label('Nombre')
+                            ->label(__('Nombre'))
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('email')
-                            ->label('Correo electrónico')
+                            ->label(__('Correo electrónico'))
                             ->email()
                             ->required()
                             ->unique(User::class, 'email', ignoreRecord: true)
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
-                            ->label('Teléfono')
+                            ->label(__('Teléfono'))
                             ->tel()
                             ->maxLength(50),
                         Forms\Components\TextInput::make('password')
-                            ->label('Contraseña')
+                            ->label(__('Contraseña'))
                             ->password()
                             ->revealable()
                             ->required(fn (string $operation): bool => $operation === 'create')
                             ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null)
                             ->dehydrated(fn (?string $state) => filled($state))
                             ->maxLength(255)
-                            ->helperText('Dejar vacío para mantener la contraseña actual al editar.'),
+                            ->helperText(__('Dejar vacío para mantener la contraseña actual al editar.')),
                         Forms\Components\Select::make('roles')
-                            ->label('Roles / permisos')
+                            ->label(__('Roles / permisos'))
                             ->relationship('roles', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record): string => \App\Support\Roles::label($record->name))
                             ->multiple()
                             ->preload()
-                            ->helperText('Define qué puede hacer el usuario dentro del panel del taller.'),
+                            ->helperText(__('Define qué puede hacer el usuario dentro del panel del taller.')),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Activo')
+                            ->label(__('Activo'))
                             ->default(true),
                         Forms\Components\Toggle::make('is_super_admin')
-                            ->label('Super administrador')
-                            ->helperText('Los super admins solo acceden al panel /admin, no al panel del taller.'),
+                            ->label(__('Super administrador'))
+                            ->helperText(__('Los super admins solo acceden al panel /admin, no al panel del taller.')),
                     ])->columns(2),
             ]);
     }
@@ -80,47 +86,47 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                    ->label(__('Nombre'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Correo')
+                    ->label(__('Correo'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('tenant.name')
-                    ->label('Taller')
+                    ->label(__('Taller'))
                     ->searchable()
                     ->sortable()
                     ->default('—'),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Activo')
+                    ->label(__('Activo'))
                     ->boolean(),
                 Tables\Columns\IconColumn::make('is_super_admin')
-                    ->label('Super admin')
+                    ->label(__('Super admin'))
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Creado')
+                    ->label(__('Creado'))
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('tenant_id')
-                    ->label('Taller')
+                    ->label(__('Taller'))
                     ->relationship('tenant', 'name')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Activo'),
+                    ->label(__('Activo')),
                 Tables\Filters\TernaryFilter::make('is_super_admin')
-                    ->label('Super admin'),
+                    ->label(__('Super admin')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('Editar'),
-                Tables\Actions\DeleteAction::make()->label('Eliminar'),
+                Tables\Actions\EditAction::make()->label(__('Editar')),
+                Tables\Actions\DeleteAction::make()->label(__('Eliminar')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar seleccionados'),
+                    Tables\Actions\DeleteBulkAction::make()->label(__('Eliminar seleccionados')),
                 ]),
             ]);
     }

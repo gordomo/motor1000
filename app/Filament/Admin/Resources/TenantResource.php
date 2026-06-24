@@ -17,18 +17,24 @@ class TenantResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
-    protected static ?string $modelLabel = 'Taller';
+    public static function getModelLabel(): string
+    {
+        return __('Taller');
+    }
 
-    protected static ?string $pluralModelLabel = 'Talleres';
+    public static function getPluralModelLabel(): string
+    {
+        return __('Talleres');
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Información del taller')
+                Forms\Components\Section::make(__('Información del taller'))
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Nombre')
+                            ->label(__('Nombre'))
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -36,97 +42,97 @@ class TenantResource extends Resource
                                 $set('slug', Str::slug($state ?? ''))
                             ),
                         Forms\Components\TextInput::make('slug')
-                            ->label('Slug (URL)')
+                            ->label(__('Slug (URL)'))
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('email')
-                            ->label('Correo electrónico')
+                            ->label(__('Correo electrónico'))
                             ->email()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
-                            ->label('Teléfono')
+                            ->label(__('Teléfono'))
                             ->tel()
                             ->maxLength(50),
                         Forms\Components\TextInput::make('whatsapp')
-                            ->label('WhatsApp')
+                            ->label(__('WhatsApp'))
                             ->tel()
                             ->maxLength(50),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Marca y colores')
+                Forms\Components\Section::make(__('Marca y colores'))
                     ->schema([
                         Forms\Components\FileUpload::make('logo_path')
-                            ->label('Logo del taller')
+                            ->label(__('Logo del taller'))
                             ->image()
                             ->directory('logos')
                             ->maxSize(5120)
-                            ->helperText('PNG, JPG o WebP. Max 5 MB. Recomendado: 300x300 px.'),
+                            ->helperText(__('PNG, JPG o WebP. Max 5 MB. Recomendado: 300x300 px.')),
                         Forms\Components\ColorPicker::make('primary_color')
-                            ->label('Color principal')
+                            ->label(__('Color principal'))
                             ->default('#0f766e')
-                            ->helperText('Usado en botones, links y acentos.'),
+                            ->helperText(__('Usado en botones, links y acentos.')),
                         Forms\Components\ColorPicker::make('secondary_color')
-                            ->label('Color secundario')
+                            ->label(__('Color secundario'))
                             ->default('#f5f5f5')
-                            ->helperText('Usado en fondos y superficies.'),
+                            ->helperText(__('Usado en fondos y superficies.')),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Dirección')
+                Forms\Components\Section::make(__('Dirección'))
                     ->schema([
                         Forms\Components\TextInput::make('address')
-                            ->label('Dirección')
+                            ->label(__('Dirección'))
                             ->maxLength(255),
                         Forms\Components\TextInput::make('city')
-                            ->label('Ciudad')
+                            ->label(__('Ciudad'))
                             ->maxLength(100),
                         Forms\Components\TextInput::make('state')
-                            ->label('Provincia/Estado')
+                            ->label(__('Provincia/Estado'))
                             ->maxLength(100),
                         Forms\Components\TextInput::make('zip')
-                            ->label('Código postal')
+                            ->label(__('Código postal'))
                             ->maxLength(20),
                         Forms\Components\TextInput::make('country')
-                            ->label('País')
+                            ->label(__('País'))
                             ->default('AR')
                             ->maxLength(10),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Configuración')
+                Forms\Components\Section::make(__('Configuración'))
                     ->schema([
                         Forms\Components\Select::make('timezone')
-                            ->label('Zona horaria')
+                            ->label(__('Zona horaria'))
                             ->options([
-                                'America/Argentina/Buenos_Aires' => 'Buenos Aires (UTC-3)',
-                                'America/Mexico_City'            => 'Ciudad de México (UTC-6)',
-                                'America/Bogota'                 => 'Bogotá (UTC-5)',
-                                'America/Santiago'               => 'Santiago (UTC-4)',
-                                'America/Lima'                   => 'Lima (UTC-5)',
-                                'Europe/Madrid'                  => 'Madrid (UTC+1/+2)',
+                                'America/Argentina/Buenos_Aires' => __('Buenos Aires (UTC-3)'),
+                                'America/Mexico_City'            => __('Ciudad de México (UTC-6)'),
+                                'America/Bogota'                 => __('Bogotá (UTC-5)'),
+                                'America/Santiago'               => __('Santiago (UTC-4)'),
+                                'America/Lima'                   => __('Lima (UTC-5)'),
+                                'Europe/Madrid'                  => __('Madrid (UTC+1/+2)'),
                             ])
                             ->default('America/Argentina/Buenos_Aires')
                             ->required(),
                         Forms\Components\Select::make('currency')
-                            ->label('Moneda')
+                            ->label(__('Moneda'))
                             ->options([
-                                'ARS' => 'ARS — Peso argentino',
-                                'MXN' => 'MXN — Peso mexicano',
-                                'COP' => 'COP — Peso colombiano',
-                                'CLP' => 'CLP — Peso chileno',
-                                'PEN' => 'PEN — Sol peruano',
-                                'EUR' => 'EUR — Euro',
-                                'USD' => 'USD — Dólar',
+                                'ARS' => __('ARS — Peso argentino'),
+                                'MXN' => __('MXN — Peso mexicano'),
+                                'COP' => __('COP — Peso colombiano'),
+                                'CLP' => __('CLP — Peso chileno'),
+                                'PEN' => __('PEN — Sol peruano'),
+                                'EUR' => __('EUR — Euro'),
+                                'USD' => __('USD — Dólar'),
                             ])
                             ->default('ARS')
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Activo')
+                            ->label(__('Activo'))
                             ->default(true),
                         Forms\Components\DateTimePicker::make('trial_ends_at')
-                            ->label('Fin del período de prueba')
+                            ->label(__('Fin del período de prueba'))
                             ->nullable(),
                         Forms\Components\DateTimePicker::make('subscribed_at')
-                            ->label('Fecha de suscripción')
+                            ->label(__('Fecha de suscripción'))
                             ->nullable(),
                     ])->columns(2),
             ]);
@@ -137,46 +143,46 @@ class TenantResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                    ->label(__('Nombre'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label(__('Slug'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Correo')
+                    ->label(__('Correo'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('users_count')
-                    ->label('Usuarios')
+                    ->label(__('Usuarios'))
                     ->counts('users')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Activo')
+                    ->label(__('Activo'))
                     ->boolean(),
                 Tables\Columns\TextColumn::make('trial_ends_at')
-                    ->label('Prueba hasta')
+                    ->label(__('Prueba hasta'))
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Creado')
+                    ->label(__('Creado'))
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Estado')
-                    ->trueLabel('Activos')
-                    ->falseLabel('Inactivos'),
+                    ->label(__('Estado'))
+                    ->trueLabel(__('Activos'))
+                    ->falseLabel(__('Inactivos')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('Editar'),
-                Tables\Actions\DeleteAction::make()->label('Eliminar'),
+                Tables\Actions\EditAction::make()->label(__('Editar')),
+                Tables\Actions\DeleteAction::make()->label(__('Eliminar')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar seleccionados'),
+                    Tables\Actions\DeleteBulkAction::make()->label(__('Eliminar seleccionados')),
                 ]),
             ]);
     }
