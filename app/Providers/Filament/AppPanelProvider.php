@@ -37,8 +37,11 @@ class AppPanelProvider extends PanelProvider
                 'gray'    => Color::Zinc,
             ])
             ->font('Geist')
-            ->brandName('Motor1000')
-            ->brandLogo(asset('images/motor1000-mark.svg'))
+            // Marca dinámica: muestra el nombre y logo del taller actual (con
+            // fallback a Motor1000 si el taller no cargó logo). Se resuelve por
+            // request, cuando el middleware ya fijó el tenant.
+            ->brandName(fn (): string => \App\Support\CurrentTenant::get()?->name ?? 'Motor1000')
+            ->brandLogo(fn (): string => \App\Helpers\TenantBranding::logoPath() ?? asset('images/motor1000-mark.svg'))
             ->brandLogoHeight('1.9rem')
             // Falla #1: el tema custom (theme-overrides.blade.php) está diseñado para
             // superficies claras. Con el modo oscuro activo, Filament emitía colores de
