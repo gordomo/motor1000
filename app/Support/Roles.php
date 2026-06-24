@@ -8,11 +8,10 @@ class Roles
      * Roles que puede tener el staff de un taller (no incluye super-admin,
      * que es un flag en la tabla users, no un rol).
      */
-    public const WORKSHOP = ['admin', 'manager', 'receptionist', 'mechanic'];
+    public const WORKSHOP = ['admin', 'receptionist', 'mechanic'];
 
     private const LABELS = [
         'admin'        => 'Administrador',
-        'manager'      => 'Gerente',
         'receptionist' => 'Recepcionista',
         'mechanic'     => 'Mecánico',
     ];

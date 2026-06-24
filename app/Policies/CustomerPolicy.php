@@ -9,7 +9,7 @@ class CustomerPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'manager', 'receptionist']);
+        return $user->hasAnyRole(['admin', 'receptionist']);
     }
 
     public function view(User $user, Customer $customer): bool
@@ -19,18 +19,18 @@ class CustomerPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'manager', 'receptionist']);
+        return $user->hasAnyRole(['admin', 'receptionist']);
     }
 
     public function update(User $user, Customer $customer): bool
     {
         return $user->tenant_id === $customer->tenant_id
-            && $user->hasAnyRole(['admin', 'manager', 'receptionist']);
+            && $user->hasAnyRole(['admin', 'receptionist']);
     }
 
     public function delete(User $user, Customer $customer): bool
     {
         return $user->tenant_id === $customer->tenant_id
-            && $user->hasAnyRole(['admin', 'manager']);
+            && $user->hasAnyRole(['admin', 'receptionist']);
     }
 }

@@ -38,10 +38,10 @@ class UserResource extends Resource
         return __('Configuraciones');
     }
 
-    // ─── Autorización: solo admin/manager del taller gestionan el equipo ────────
+    // ─── Autorización: solo el admin del taller gestiona el equipo ──────────────
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['admin', 'manager']) ?? false;
+        return auth()->user()?->hasRole('admin') ?? false;
     }
 
     public static function canCreate(): bool
@@ -95,7 +95,7 @@ class UserResource extends Resource
                         ->multiple()
                         ->preload()
                         ->required()
-                        ->helperText(__('Administrador y Gerente gestionan todo; Recepcionista carga sin borrar; Mecánico solo órdenes.')),
+                        ->helperText(__('Administrador: control total y configuración. Recepcionista: opera y puede eliminar. Mecánico: solo órdenes.')),
                     Forms\Components\TextInput::make('password')
                         ->label(__('Contraseña'))
                         ->password()

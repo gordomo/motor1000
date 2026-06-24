@@ -24,9 +24,12 @@ class ProductionSeeder extends Seeder
     public function run(): void
     {
         // Roles del taller (necesarios para asignar permisos a los usuarios).
-        foreach (['admin', 'manager', 'receptionist', 'mechanic'] as $role) {
+        foreach (['admin', 'receptionist', 'mechanic'] as $role) {
             Role::findOrCreate($role);
         }
+
+        // El rol 'manager' fue eliminado del modelo de roles.
+        Role::where('name', 'manager')->delete();
 
         $email = env('SUPER_ADMIN_EMAIL', 'morimartin@gmail.com');
         $name  = env('SUPER_ADMIN_NAME', 'Super Admin');

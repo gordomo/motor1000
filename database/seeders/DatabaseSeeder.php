@@ -20,9 +20,11 @@ class DatabaseSeeder extends Seeder
     {
         // Create roles
         $adminRole    = Role::firstOrCreate(['name' => 'admin']);
-        $managerRole  = Role::firstOrCreate(['name' => 'manager']);
         $mechanicRole = Role::firstOrCreate(['name' => 'mechanic']);
         $receptRole   = Role::firstOrCreate(['name' => 'receptionist']);
+
+        // El rol 'manager' fue eliminado del modelo de roles.
+        Role::where('name', 'manager')->delete();
 
         // Create demo tenant (workshop)
         $tenant = Tenant::updateOrCreate(
@@ -68,18 +70,18 @@ class DatabaseSeeder extends Seeder
         );
         $admin->assignRole($adminRole);
 
-        // Manager user
-        $manager = User::updateOrCreate(
-            ['email' => 'gerente@motor1000.test'],
+        // Receptionist user
+        $receptionist = User::updateOrCreate(
+            ['email' => 'recepcion@motor1000.test'],
             [
                 'tenant_id'         => $tenant->id,
-                'name'              => 'Gerente',
+                'name'              => 'Recepción',
                 'email_verified_at' => now(),
                 'password'          => Hash::make('password'),
                 'is_active'         => true,
             ]
         );
-        $manager->assignRole($managerRole);
+        $receptionist->assignRole($receptRole);
 
         // Mechanics
         $mechanicNames = ['João Silva', 'Carlos Pereira', 'André Souza'];
@@ -177,7 +179,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('✅ Demo data seeded exitosamente!');
         $this->command->info('🛡️  Super Admin (/admin): super@motor1000.test / password');
-        $this->command->info('👤 Admin taller (/painel): admin@motor1000.test / password');
-        $this->command->info('👤 Manager taller (/painel): gerente@motor1000.test / password');
+        $this->command->info('👤 Admin taller (/panel): admin@motor1000.test / password');
+        $this->command->info('👤 Recepción (/panel): recepcion@motor1000.test / password');
     }
 }

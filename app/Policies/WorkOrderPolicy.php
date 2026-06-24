@@ -9,7 +9,7 @@ class WorkOrderPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'manager', 'mechanic', 'receptionist']);
+        return $user->hasAnyRole(['admin', 'mechanic', 'receptionist']);
     }
 
     public function view(User $user, WorkOrder $workOrder): bool
@@ -19,18 +19,18 @@ class WorkOrderPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'manager', 'receptionist']);
+        return $user->hasAnyRole(['admin', 'receptionist']);
     }
 
     public function update(User $user, WorkOrder $workOrder): bool
     {
         return $user->tenant_id === $workOrder->tenant_id
-            && $user->hasAnyRole(['admin', 'manager', 'mechanic', 'receptionist']);
+            && $user->hasAnyRole(['admin', 'mechanic', 'receptionist']);
     }
 
     public function delete(User $user, WorkOrder $workOrder): bool
     {
         return $user->tenant_id === $workOrder->tenant_id
-            && $user->hasAnyRole(['admin', 'manager']);
+            && $user->hasAnyRole(['admin', 'receptionist']);
     }
 }
