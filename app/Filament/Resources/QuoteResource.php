@@ -243,7 +243,7 @@ class QuoteResource extends Resource
                 ]),
 
             // ── Notas ────────────────────────────────────────────────────────
-            Forms\Components\Section::make('Notas internas')
+            Forms\Components\Section::make(__('Notas internas'))
                 ->collapsed()
                 ->schema([
                     Forms\Components\Textarea::make('notes')
@@ -261,45 +261,45 @@ class QuoteResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Nº')
+                    ->label(__('Nº'))
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('customer.name')
-                    ->label('Cliente')
+                    ->label(__('Cliente'))
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('vehicle.license_plate')
-                    ->label('Patente')
+                    ->label(__('Patente'))
                     ->searchable()
                     ->badge()
                     ->color('gray'),
 
                 Tables\Columns\TextColumn::make('vehicle.brand')
-                    ->label('Vehículo')
+                    ->label(__('Vehículo'))
                     ->formatStateUsing(fn ($state, $record) =>
                         "{$record->vehicle?->brand} {$record->vehicle?->model}"
                     ),
 
                 Tables\Columns\TextColumn::make('total')
-                    ->label('Total')
+                    ->label(__('Total'))
                     ->money('ARS')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->badge(),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Fecha')
+                    ->label(__('Fecha'))
                     ->date('d/m/Y')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Estado')
+                    ->label(__('Estado'))
                     ->options(QuoteStatus::class),
             ])
             ->actions([
@@ -308,22 +308,22 @@ class QuoteResource extends Resource
 
                 // Botón "Generar OT" solo si está Aceptado y no tiene OT aún
                 Tables\Actions\Action::make('generate_work_order')
-                    ->label('Generar OT')
+                    ->label(__('Generar OT'))
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->color('success')
                     ->visible(fn (Quote $record): bool =>
                         $record->isAccepted() && ! $record->hasWorkOrder()
                     )
                     ->requiresConfirmation()
-                    ->modalHeading('Generar Orden de Trabajo')
-                    ->modalDescription('¿Confirma que desea generar la Orden de Trabajo a partir de este presupuesto aceptado?')
+                    ->modalHeading(__('Generar Orden de Trabajo'))
+                    ->modalDescription(__('¿Confirma que desea generar la Orden de Trabajo a partir de este presupuesto aceptado?'))
                     ->form([
                         Forms\Components\Select::make('mechanic_id')
-                            ->label('Mecánico asignado')
+                            ->label(__('Mecánico asignado'))
                             ->options(fn () => Mechanic::where('is_active', true)->pluck('name', 'id'))
                             ->searchable(),
                         Forms\Components\DateTimePicker::make('estimated_at')
-                            ->label('Fecha promesa de entrega'),
+                            ->label(__('Fecha promesa de entrega')),
                     ])
                     ->action(function (Quote $record, array $data): void {
                         $items = collect($record->items ?? [])->map(fn ($i) => [
@@ -361,7 +361,7 @@ class QuoteResource extends Resource
 
                 // Botón PDF
                 Tables\Actions\Action::make('pdf')
-                    ->label('PDF')
+                    ->label(__('PDF'))
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')
                     ->url(fn (Quote $record): string => route('quotes.pdf', $record))
@@ -369,7 +369,7 @@ class QuoteResource extends Resource
 
                 // Botón WhatsApp
                 Tables\Actions\Action::make('whatsapp')
-                    ->label('WhatsApp')
+                    ->label(__('WhatsApp'))
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->url(function (Quote $record): string {

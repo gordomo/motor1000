@@ -54,12 +54,12 @@ class VehiclesRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('license_plate')->label('Patente')->weight('bold'),
-                Tables\Columns\TextColumn::make('brand')->label('Marca'),
-                Tables\Columns\TextColumn::make('model')->label('Modelo'),
-                Tables\Columns\TextColumn::make('year')->label('Año'),
-                Tables\Columns\TextColumn::make('mileage')->label('Kilometraje')->numeric(),
-                Tables\Columns\TextColumn::make('last_service_at')->label('Último servicio')->date('d/m/Y')->placeholder('Nunca'),
+                Tables\Columns\TextColumn::make('license_plate')->label(__('Patente'))->weight('bold'),
+                Tables\Columns\TextColumn::make('brand')->label(__('Marca')),
+                Tables\Columns\TextColumn::make('model')->label(__('Modelo')),
+                Tables\Columns\TextColumn::make('year')->label(__('Año')),
+                Tables\Columns\TextColumn::make('mileage')->label(__('Kilometraje'))->numeric(),
+                Tables\Columns\TextColumn::make('last_service_at')->label(__('Último servicio'))->date('d/m/Y')->placeholder(__('Nunca')),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()

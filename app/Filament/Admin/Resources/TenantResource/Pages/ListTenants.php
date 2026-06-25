@@ -13,7 +13,7 @@ class ListTenants extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('Nuevo taller'),
+            Actions\CreateAction::make()->label(__('Nuevo taller')),
         ];
     }
 }

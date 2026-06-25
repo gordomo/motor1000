@@ -82,7 +82,7 @@ class WorkshopSettings extends Page implements HasForms
                             ->tel()
                             ->maxLength(50),
                         Forms\Components\TextInput::make('whatsapp')
-                            ->label('WhatsApp')
+                            ->label(__('WhatsApp'))
                             ->tel()
                             ->maxLength(50),
                     ]),

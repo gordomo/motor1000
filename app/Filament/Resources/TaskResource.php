@@ -169,7 +169,7 @@ class TaskResource extends Resource
                         'done'        => 'Completada',
                         'canceled'    => 'Cancelada',
                     ])
-                    ->label('Estado'),
+                    ->label(__('Estado')),
 
                 Tables\Filters\SelectFilter::make('priority')
                     ->options([
@@ -178,19 +178,19 @@ class TaskResource extends Resource
                         'high'   => 'Alta',
                         'urgent' => 'Urgente',
                     ])
-                    ->label('Prioridad'),
+                    ->label(__('Prioridad')),
 
                 Tables\Filters\Filter::make('overdue')
-                    ->label('Vencidas')
+                    ->label(__('Vencidas'))
                     ->query(fn (Builder $q) => $q->where('due_at', '<', now())->whereNotIn('status', ['done', 'canceled'])),
 
                 Tables\Filters\Filter::make('mine')
-                    ->label('Mis tareas')
+                    ->label(__('Mis tareas'))
                     ->query(fn (Builder $q) => $q->where('assigned_to', auth()->id())),
             ])
             ->actions([
                 Tables\Actions\Action::make('complete')
-                    ->label('Completar')
+                    ->label(__('Completar'))
                     ->icon('heroicon-o-check')
                     ->color('success')
                     ->visible(fn (Task $r) => ! in_array($r->status, ['done', 'canceled']))

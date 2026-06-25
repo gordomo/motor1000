@@ -15,7 +15,7 @@ class ListAppointments extends ListRecords
     {
         return [
             Actions\Action::make('calendar')
-                ->label('Ver calendario')
+                ->label(__('Ver calendario'))
                 ->icon('heroicon-o-calendar-days')
                 ->color('gray')
                 ->url(AppointmentsCalendar::getUrl()),

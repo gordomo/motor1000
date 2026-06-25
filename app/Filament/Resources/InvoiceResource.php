@@ -243,7 +243,7 @@ class InvoiceResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('pdf')
-                    ->label('PDF')
+                    ->label(__('PDF'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
                     ->url(fn (Invoice $record): string => route('invoices.pdf', $record))
@@ -275,20 +275,20 @@ class InvoiceResource extends Resource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\Section::make('Factura')
+            Infolists\Components\Section::make(__('Factura'))
                 ->columns(3)
                 ->schema([
-                    Infolists\Components\TextEntry::make('number')->label('Número'),
-                    Infolists\Components\TextEntry::make('customer.name')->label('Cliente'),
+                    Infolists\Components\TextEntry::make('number')->label(__('Número')),
+                    Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
                     Infolists\Components\TextEntry::make('status')
                         ->badge()
-                        ->label('Estado'),
-                    Infolists\Components\TextEntry::make('subtotal')->money('ARS')->label('Subtotal'),
-                    Infolists\Components\TextEntry::make('tax')->money('ARS')->label('Impuestos'),
-                    Infolists\Components\TextEntry::make('discount')->money('ARS')->label('Descuento'),
-                    Infolists\Components\TextEntry::make('total')->money('ARS')->label('Total'),
-                    Infolists\Components\TextEntry::make('due_at')->dateTime('d/m/Y')->label('Vencimiento'),
-                    Infolists\Components\TextEntry::make('paid_at')->dateTime('d/m/Y')->placeholder('—')->label('Pagado el'),
+                        ->label(__('Estado')),
+                    Infolists\Components\TextEntry::make('subtotal')->money('ARS')->label(__('Subtotal')),
+                    Infolists\Components\TextEntry::make('tax')->money('ARS')->label(__('Impuestos')),
+                    Infolists\Components\TextEntry::make('discount')->money('ARS')->label(__('Descuento')),
+                    Infolists\Components\TextEntry::make('total')->money('ARS')->label(__('Total')),
+                    Infolists\Components\TextEntry::make('due_at')->dateTime('d/m/Y')->label(__('Vencimiento')),
+                    Infolists\Components\TextEntry::make('paid_at')->dateTime('d/m/Y')->placeholder('—')->label(__('Pagado el')),
                 ]),
         ]);
     }

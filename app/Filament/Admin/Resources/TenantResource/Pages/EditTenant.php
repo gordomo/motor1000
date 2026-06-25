@@ -13,7 +13,7 @@ class EditTenant extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make()->label('Eliminar'),
+            Actions\DeleteAction::make()->label(__('Eliminar')),
         ];
     }
 }

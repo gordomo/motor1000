@@ -17,7 +17,7 @@ class ListWorkOrders extends ListRecords
     {
         return [
             Actions\Action::make('kanban')
-                ->label('Ver tablero Kanban')
+                ->label(__('Ver tablero Kanban'))
                 ->icon('heroicon-o-view-columns')
                 ->color('gray')
                 ->url(WorkOrdersBoard::getUrl()),

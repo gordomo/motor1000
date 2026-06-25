@@ -57,11 +57,11 @@ class CustomerResource extends Resource
                         ->tel()
                         ->maxLength(20),
                     Forms\Components\TextInput::make('whatsapp')
-                        ->label('WhatsApp')
+                        ->label(__('WhatsApp'))
                         ->tel()
                         ->maxLength(20),
                     Forms\Components\TextInput::make('email')
-                        ->label('E-mail')
+                        ->label(__('E-mail'))
                         ->email()
                         ->maxLength(255),
                     Forms\Components\DatePicker::make('birthday')
@@ -263,7 +263,7 @@ class CustomerResource extends Resource
                 ->schema([
                     Infolists\Components\TextEntry::make('name')->label(__('Nombre')),
                     Infolists\Components\TextEntry::make('phone')->label(__('Teléfono')),
-                    Infolists\Components\TextEntry::make('email')->label('E-mail'),
+                    Infolists\Components\TextEntry::make('email')->label(__('E-mail')),
                     Infolists\Components\TextEntry::make('status')
                         ->label(__('Estado'))
                         ->badge(),

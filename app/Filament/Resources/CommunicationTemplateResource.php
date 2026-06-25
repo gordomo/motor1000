@@ -65,7 +65,7 @@ class CommunicationTemplateResource extends Resource
 
                     Forms\Components\TextInput::make('event')
                         ->maxLength(100)
-                        ->placeholder('ex: work_order.completed')
+                        ->placeholder(__('ex: work_order.completed'))
                         ->label(__('Evento')),
 
                     Forms\Components\Toggle::make('is_active')

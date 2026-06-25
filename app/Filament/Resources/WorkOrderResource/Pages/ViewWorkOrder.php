@@ -14,7 +14,7 @@ class ViewWorkOrder extends ViewRecord
     {
         return [
             Actions\Action::make('pdf')
-                ->label('Descargar PDF')
+                ->label(__('Descargar PDF'))
                 ->icon('heroicon-o-document-arrow-down')
                 ->url(fn (): string => route('work-orders.pdf', $this->record))
                 ->openUrlInNewTab(),

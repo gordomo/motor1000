@@ -151,7 +151,7 @@ class WorkOrderResource extends Resource
                             ['item' => 'Frenos', 'done' => false, 'note' => null],
                             ['item' => 'Presión de neumáticos', 'done' => false, 'note' => null],
                         ])
-                        ->addActionLabel('Agregar punto'),
+                        ->addActionLabel(__('Agregar punto')),
                 ]),
             Forms\Components\Section::make(__('Ítems de la OS'))
                 ->schema([
@@ -177,7 +177,7 @@ class WorkOrderResource extends Resource
                                 ->prefix('$'),
                         ])
                         ->columns(4)
-                        ->addActionLabel('Agregar ítem'),
+                        ->addActionLabel(__('Agregar ítem')),
                 ]),
             Forms\Components\Section::make(__('Financiero'))
                 ->columns(3)
@@ -307,7 +307,7 @@ class WorkOrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\BulkAction::make('download_pdfs_zip')
-                        ->label('Descargar PDFs (ZIP)')
+                        ->label(__('Descargar PDFs (ZIP)'))
                         ->icon('heroicon-o-archive-box-arrow-down')
                         ->color('gray')
                         ->deselectRecordsAfterCompletion()
@@ -321,38 +321,38 @@ class WorkOrderResource extends Resource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
-            Infolists\Components\Section::make('OS')
+            Infolists\Components\Section::make(__('OS'))
                 ->columns(3)
                 ->schema([
-                    Infolists\Components\TextEntry::make('number')->label('Número')->weight('bold'),
-                    Infolists\Components\TextEntry::make('status')->label('Estado')->badge(),
-                    Infolists\Components\TextEntry::make('priority')->label('Prioridad')->badge(),
-                    Infolists\Components\TextEntry::make('customer.name')->label('Cliente'),
-                    Infolists\Components\TextEntry::make('vehicle.display_name')->label('Vehículo'),
-                    Infolists\Components\TextEntry::make('mechanic.name')->label('Mecánico')->placeholder('No asignado'),
-                    Infolists\Components\TextEntry::make('complaint')->label('Queja')->columnSpan(3),
-                    Infolists\Components\TextEntry::make('diagnosis')->label('Diagnóstico')->columnSpan(3)->placeholder('—'),
+                    Infolists\Components\TextEntry::make('number')->label(__('Número'))->weight('bold'),
+                    Infolists\Components\TextEntry::make('status')->label(__('Estado'))->badge(),
+                    Infolists\Components\TextEntry::make('priority')->label(__('Prioridad'))->badge(),
+                    Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
+                    Infolists\Components\TextEntry::make('vehicle.display_name')->label(__('Vehículo')),
+                    Infolists\Components\TextEntry::make('mechanic.name')->label(__('Mecánico'))->placeholder(__('No asignado')),
+                    Infolists\Components\TextEntry::make('complaint')->label(__('Queja'))->columnSpan(3),
+                    Infolists\Components\TextEntry::make('diagnosis')->label(__('Diagnóstico'))->columnSpan(3)->placeholder('—'),
                     Infolists\Components\RepeatableEntry::make('checklist')
-                        ->label('Checklist de revisión')
+                        ->label(__('Checklist de revisión'))
                         ->schema([
-                            Infolists\Components\TextEntry::make('item')->label('Ítem'),
+                            Infolists\Components\TextEntry::make('item')->label(__('Ítem')),
                             Infolists\Components\IconEntry::make('done')
-                                ->label('Revisado')
+                                ->label(__('Revisado'))
                                 ->boolean(),
                             Infolists\Components\TextEntry::make('note')
-                                ->label('Observaciones')
+                                ->label(__('Observaciones'))
                                 ->placeholder('—'),
                         ])
                         ->columns(3)
                         ->columnSpan(3),
                 ]),
-            Infolists\Components\Section::make('Financiero')
+            Infolists\Components\Section::make(__('Financiero'))
                 ->columns(4)
                 ->schema([
-                    Infolists\Components\TextEntry::make('labor_cost')->label('Mano de obra')->money('ARS'),
-                    Infolists\Components\TextEntry::make('parts_cost')->label('Piezas')->money('ARS'),
-                    Infolists\Components\TextEntry::make('discount')->label('Descuento')->money('ARS'),
-                    Infolists\Components\TextEntry::make('total')->label('Total')->money('ARS')->weight('bold'),
+                    Infolists\Components\TextEntry::make('labor_cost')->label(__('Mano de obra'))->money('ARS'),
+                    Infolists\Components\TextEntry::make('parts_cost')->label(__('Piezas'))->money('ARS'),
+                    Infolists\Components\TextEntry::make('discount')->label(__('Descuento'))->money('ARS'),
+                    Infolists\Components\TextEntry::make('total')->label(__('Total'))->money('ARS')->weight('bold'),
                 ]),
         ]);
     }
