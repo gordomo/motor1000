@@ -21,6 +21,7 @@ class Appointment extends Model
         'title',
         'description',
         'status',
+        'source',
         'scheduled_at',
         'ends_at',
         'duration_minutes',

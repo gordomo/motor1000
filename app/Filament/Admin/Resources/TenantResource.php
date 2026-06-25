@@ -135,6 +135,31 @@ class TenantResource extends Resource
                             ->label(__('Fecha de suscripción'))
                             ->nullable(),
                     ])->columns(2),
+
+                Forms\Components\Section::make(__('Reservas online (turnero)'))
+                    ->description(__('Para que esta sucursal acepte turnos desde la landing de su marca.'))
+                    ->schema([
+                        Forms\Components\Toggle::make('accepts_online_booking')
+                            ->label(__('Acepta reservas online'))
+                            ->helperText(__('Si está activo, esta sucursal aparece en el turnero de la landing.'))
+                            ->default(false),
+                        Forms\Components\TextInput::make('brand_slug')
+                            ->label(__('Marca (brand)'))
+                            ->helperText(__('Agrupa las sucursales de un mismo cliente. Ej: 341boxes'))
+                            ->maxLength(60),
+                        Forms\Components\TextInput::make('public_api_key')
+                            ->label(__('API key pública de la marca'))
+                            ->helperText(__('Se usa en la landing para pedir turnos. Generala en UNA sucursal de la marca.'))
+                            ->disabled()
+                            ->dehydrated()
+                            ->default(fn (): string => Str::random(48))
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('regen_api_key')
+                                    ->icon('heroicon-m-arrow-path')
+                                    ->label(__('Generar'))
+                                    ->action(fn (Forms\Set $set) => $set('public_api_key', Str::random(48)))
+                            ),
+                    ])->columns(2),
             ]);
     }
 

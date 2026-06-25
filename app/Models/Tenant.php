@@ -14,6 +14,9 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'slug',
+        'brand_slug',
+        'accepts_online_booking',
+        'public_api_key',
         'email',
         'phone',
         'whatsapp',
@@ -35,8 +38,9 @@ class Tenant extends Model
     ];
 
     protected $casts = [
-        'settings'       => 'array',
-        'is_active'      => 'boolean',
+        'settings'                => 'array',
+        'is_active'               => 'boolean',
+        'accepts_online_booking'  => 'boolean',
         'trial_ends_at'  => 'datetime',
         'subscribed_at'  => 'datetime',
     ];
