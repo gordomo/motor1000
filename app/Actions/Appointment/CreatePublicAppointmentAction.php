@@ -5,6 +5,7 @@ namespace App\Actions\Appointment;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Tenant;
+use App\Services\Booking\SlotAvailability;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,10 @@ use Illuminate\Validation\ValidationException;
  */
 class CreatePublicAppointmentAction
 {
+    public function __construct(private SlotAvailability $availability)
+    {
+    }
+
     /**
      * @param  array<string,mixed>  $data
      * @param  Collection<int,Tenant>  $branches  Sucursales bookeables de la marca.
@@ -32,22 +37,14 @@ class CreatePublicAppointmentAction
             throw ValidationException::withMessages(['fecha' => 'Fecha u hora inválida.']);
         }
 
-        if ($scheduledAt->isPast()) {
-            throw ValidationException::withMessages(['hora' => 'Ese horario ya pasó. Elegí uno futuro.']);
-        }
-
         // Tenant = sucursal: lo fijamos para que el scope multi-tenant aplique.
         app()->instance('current.tenant', $branch);
 
-        // v1: 1 turno por slot.
-        $taken = Appointment::query()
-            ->where('tenant_id', $branch->id)
-            ->where('scheduled_at', $scheduledAt)
-            ->whereNotIn('status', ['cancelled', 'no_show'])
-            ->exists();
-
-        if ($taken) {
-            throw ValidationException::withMessages(['hora' => 'Ese horario ya fue reservado. Elegí otro.']);
+        // Disponibilidad real según la config del taller: el horario debe estar
+        // dentro de la grilla (horarios + duración de franja), dentro de la
+        // ventana de anticipación y con capacidad libre (turnos < slot_capacity).
+        if (! $this->availability->canBook($branch, $scheduledAt)) {
+            throw ValidationException::withMessages(['hora' => 'Ese horario no está disponible. Elegí otro.']);
         }
 
         $customer = $this->resolveCustomer($branch, $data);

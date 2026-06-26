@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\PublicAppointmentController;
+use App\Http\Controllers\Api\PublicAvailabilityController;
 use App\Http\Controllers\Api\PublicBranchController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,5 +15,6 @@ Route::middleware(['brand.apikey', 'throttle:public-booking'])
     ->prefix('public')
     ->group(function () {
         Route::get('/branches', [PublicBranchController::class, 'index']);
+        Route::get('/availability', [PublicAvailabilityController::class, 'index']);
         Route::post('/appointments', [PublicAppointmentController::class, 'store']);
     });

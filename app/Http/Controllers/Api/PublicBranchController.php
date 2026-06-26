@@ -22,14 +22,24 @@ class PublicBranchController extends Controller
 
         return response()->json([
             'ok' => true,
-            'branches' => $branches->map(fn (Tenant $t) => [
-                'id'        => $t->id,
-                'nombre'    => $t->name,
-                'direccion' => $t->address,
-                'ciudad'    => $t->city,
-                'whatsapp'  => $t->whatsapp,
-                'timezone'  => $t->timezone,
-            ])->values(),
+            'branches' => $branches->map(function (Tenant $t) {
+                $cfg = $t->bookingConfig();
+
+                return [
+                    'id'        => $t->id,
+                    'nombre'    => $t->name,
+                    'direccion' => $t->address,
+                    'ciudad'    => $t->city,
+                    'whatsapp'  => $t->whatsapp,
+                    'timezone'  => $t->timezone,
+                    'booking'   => [
+                        'slot_minutes'      => $cfg['slot_minutes'],
+                        'min_advance_hours' => $cfg['min_advance_hours'],
+                        'max_advance_days'  => $cfg['max_advance_days'],
+                        'hours'             => $cfg['hours'],
+                    ],
+                ];
+            })->values(),
         ]);
     }
 }

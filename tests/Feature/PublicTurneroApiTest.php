@@ -21,8 +21,8 @@ beforeEach(function () {
         'timezone'               => 'America/Argentina/Buenos_Aires',
     ]);
 
-    // fecha/hora futuras válidas
-    $this->fecha = Carbon::now($this->branch->timezone)->addDays(2)->format('Y-m-d');
+    // Próximo martes (siempre futuro y día abierto por defecto), 10:00 dentro de horario.
+    $this->fecha = Carbon::now($this->branch->timezone)->next(Carbon::TUESDAY)->format('Y-m-d');
     $this->hora  = '10:00';
 
     $this->payload = [
@@ -111,4 +111,42 @@ it('rechaza una sucursal que no es de la marca', function () {
     $this->postJson('/api/public/appointments', $payload, apiKey())
         ->assertStatus(422)
         ->assertJsonValidationErrors('branch_id');
+});
+
+it('devuelve disponibilidad de un día con el horario libre', function () {
+    $res = $this->getJson("/api/public/availability?branch_id={$this->branch->id}&date={$this->fecha}", apiKey());
+    $res->assertOk()->assertJsonPath('ok', true);
+    $slots = collect($res->json('slots'));
+    expect($slots)->not->toBeEmpty();
+    expect($slots->firstWhere('time', '10:00')['available'])->toBeTrue();
+});
+
+it('marca el horario como no disponible cuando se llena la capacidad', function () {
+    // capacidad 1 (default): tras reservar 10:00, deja de estar disponible.
+    $this->postJson('/api/public/appointments', $this->payload, apiKey())->assertCreated();
+
+    $res = $this->getJson("/api/public/availability?branch_id={$this->branch->id}&date={$this->fecha}", apiKey());
+    $slots = collect($res->json('slots'));
+    expect($slots->firstWhere('time', '10:00')['available'])->toBeFalse();
+});
+
+it('respeta una capacidad mayor a 1 por franja', function () {
+    $this->branch->update(['booking_settings' => ['slot_capacity' => 2]]);
+
+    $this->postJson('/api/public/appointments', $this->payload, apiKey())->assertCreated();
+    // segundo turno en el mismo slot: permitido (capacidad 2)
+    $otro = array_merge($this->payload, ['nombre' => 'Otro', 'whatsapp' => '+54 9 341 999 0000']);
+    $this->postJson('/api/public/appointments', $otro, apiKey())->assertCreated();
+    // tercero: rechazado
+    $tercero = array_merge($this->payload, ['nombre' => 'Tercero', 'whatsapp' => '+54 9 341 111 2222']);
+    $this->postJson('/api/public/appointments', $tercero, apiKey())
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('hora');
+});
+
+it('rechaza un horario fuera del horario de atención', function () {
+    $fuera = array_merge($this->payload, ['hora' => '20:00']); // cierra 17:00
+    $this->postJson('/api/public/appointments', $fuera, apiKey())
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('hora');
 });
