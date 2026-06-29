@@ -34,6 +34,13 @@ class AdminPanelProvider extends PanelProvider
                 TenantResource::class,
                 UserResource::class,
             ])
+            ->pages([
+                \Filament\Pages\Dashboard::class,
+            ])
+            ->widgets([
+                \App\Filament\Admin\Widgets\PlatformStatsWidget::class,
+                \App\Filament\Admin\Widgets\TenantsReportWidget::class,
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
