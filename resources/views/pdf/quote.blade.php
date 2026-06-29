@@ -162,7 +162,19 @@
 @endif
 
 {{-- ── Items / Cotización ───────────────────────────────────────────────────── --}}
-@php $items = collect($quote->items ?? []); @endphp
+@php
+    // Calculamos los montos desde cantidad × precio_unitario (campos siempre
+    // guardados), para que el PDF sume bien aunque los totales agregados no
+    // se hayan persistido.
+    $items = collect($quote->items ?? [])->map(function ($i) {
+        $i['_total'] = (float) ($i['cantidad'] ?? 1) * (float) ($i['precio_unitario'] ?? 0);
+        return $i;
+    });
+    $subtotalCalc = (float) $items->sum('_total');
+    $taxCalc      = (float) ($quote->tax ?? 0);
+    $discountCalc = (float) ($quote->discount ?? 0);
+    $totalCalc    = max(0, $subtotalCalc + $taxCalc - $discountCalc);
+@endphp
 @if($items->isNotEmpty())
 <h2>Detalle de Cotización</h2>
 <table class="items-table" style="margin-bottom:8px;">
@@ -182,32 +194,32 @@
             <td>{{ $item['descripcion'] ?? '' }}</td>
             <td class="text-right">{{ $item['cantidad'] ?? 1 }}</td>
             <td class="text-right">$ {{ number_format($item['precio_unitario'] ?? 0, 2, ',', '.') }}</td>
-            <td class="text-right">$ {{ number_format($item['total'] ?? 0, 2, ',', '.') }}</td>
+            <td class="text-right">$ {{ number_format($item['_total'], 2, ',', '.') }}</td>
         </tr>
         @endforeach
     </tbody>
     <tfoot>
-        @if($quote->subtotal != $quote->total)
+        @if($subtotalCalc != $totalCalc)
         <tr>
             <td colspan="4" class="text-right" style="padding:4px 8px; color:#6b7280;">Subtotal</td>
-            <td class="text-right" style="padding:4px 8px;">$ {{ number_format($quote->subtotal, 2, ',', '.') }}</td>
+            <td class="text-right" style="padding:4px 8px;">$ {{ number_format($subtotalCalc, 2, ',', '.') }}</td>
         </tr>
-        @if($quote->tax > 0)
+        @if($taxCalc > 0)
         <tr>
             <td colspan="4" class="text-right" style="padding:4px 8px; color:#6b7280;">Impuestos</td>
-            <td class="text-right" style="padding:4px 8px;">$ {{ number_format($quote->tax, 2, ',', '.') }}</td>
+            <td class="text-right" style="padding:4px 8px;">$ {{ number_format($taxCalc, 2, ',', '.') }}</td>
         </tr>
         @endif
-        @if($quote->discount > 0)
+        @if($discountCalc > 0)
         <tr>
             <td colspan="4" class="text-right" style="padding:4px 8px; color:#6b7280;">Descuento</td>
-            <td class="text-right" style="padding:4px 8px;">- $ {{ number_format($quote->discount, 2, ',', '.') }}</td>
+            <td class="text-right" style="padding:4px 8px;">- $ {{ number_format($discountCalc, 2, ',', '.') }}</td>
         </tr>
         @endif
         @endif
         <tr class="total-row">
             <td colspan="4" class="text-right">TOTAL</td>
-            <td class="text-right">$ {{ number_format($quote->total, 2, ',', '.') }}</td>
+            <td class="text-right">$ {{ number_format($totalCalc, 2, ',', '.') }}</td>
         </tr>
     </tfoot>
 </table>
