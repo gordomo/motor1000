@@ -132,6 +132,7 @@ class QuoteResource extends Resource
                             Forms\Components\TextInput::make('nombre_item')
                                 ->label(__('Punto'))
                                 ->disabled()
+                                ->dehydrated() // que persista aunque esté disabled (lo usa el PDF)
                                 ->columnSpan(4),
 
                             Forms\Components\Radio::make('estado')

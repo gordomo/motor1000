@@ -128,6 +128,9 @@
 @php
     $checklist = collect($quote->checklist ?? []);
     $checklistFilled = $checklist->filter(fn($p) => ! empty($p['estado']));
+    // Algunos presupuestos viejos no guardaron 'nombre_item' (el campo estaba
+    // disabled en el form). Lo recuperamos por id_punto del checklist base.
+    $nombresPorPunto = collect(\App\Models\Quote::defaultChecklist())->keyBy('id_punto');
 @endphp
 @if($checklistFilled->isNotEmpty())
 <h2>Check List de Inspección Visual</h2>
@@ -143,11 +146,11 @@
         @foreach($checklistFilled as $punto)
         <tr>
             <td>
-                <span style="color:#6b7280; font-size:10px;">{{ $punto['categoria'] }}</span><br>
-                {{ $punto['nombre_item'] }}
+                <span style="color:#6b7280; font-size:10px;">{{ $punto['categoria'] ?? '' }}</span><br>
+                {{ $punto['nombre_item'] ?? ($nombresPorPunto[$punto['id_punto'] ?? null]['nombre_item'] ?? '') }}
             </td>
-            <td style="text-align:center;" class="estado-{{ $punto['estado'] }}">
-                {{ $punto['estado'] }}
+            <td style="text-align:center;" class="estado-{{ $punto['estado'] ?? '' }}">
+                {{ $punto['estado'] ?? '' }}
             </td>
             <td class="aclaracion-cell">
                 {{ $punto['aclaracion'] ?? '' }}
