@@ -46,8 +46,11 @@
 <table class="header-grid" style="margin-bottom:16px; border-bottom:2px solid #1e3a5f; padding-bottom:12px;">
     <tr>
         <td style="width:65%">
-            @if($quote->tenant->logo_path)
-                <img src="{{ public_path('storage/' . $quote->tenant->logo_path) }}"
+            @php
+                $logoFile = $quote->tenant->logo_path ? public_path('storage/' . $quote->tenant->logo_path) : null;
+            @endphp
+            @if($logoFile && file_exists($logoFile))
+                <img src="{{ $logoFile }}"
                      alt="{{ $quote->tenant->name }}" style="max-height:60px; max-width:160px; margin-bottom:6px;">
             @else
                 <h1>{{ $quote->tenant->name }}</h1>
@@ -96,13 +99,17 @@
             <div class="info-box">
                 <div class="label" style="margin-bottom:6px;">Vehículo</div>
                 <table>
+                    @if($quote->vehicle)
                     <tr><td class="label">Patente</td><td><strong>{{ $quote->vehicle->license_plate }}</strong></td></tr>
                     <tr><td class="label">Marca/Modelo</td><td>{{ $quote->vehicle->brand }} {{ $quote->vehicle->model }}</td></tr>
                     <tr><td class="label">Año</td><td>{{ $quote->vehicle->year }}</td></tr>
                     @if($quote->vehicle->vin)
                     <tr><td class="label">VIN/Chasis</td><td>{{ $quote->vehicle->vin }}</td></tr>
                     @endif
-                    <tr><td class="label">Kilometraje</td><td>{{ number_format($quote->vehicle->mileage, 0, ',', '.') }} km</td></tr>
+                    <tr><td class="label">Kilometraje</td><td>{{ number_format((int) $quote->vehicle->mileage, 0, ',', '.') }} km</td></tr>
+                    @else
+                    <tr><td colspan="2">Sin vehículo asociado</td></tr>
+                    @endif
                 </table>
             </div>
         </td>
