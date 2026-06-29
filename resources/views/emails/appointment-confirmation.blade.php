@@ -1,3 +1,9 @@
+@php
+    $tenant  = $appt->tenant;
+    $logo    = $tenant?->logo_path ? asset('storage/' . $tenant->logo_path) : null;
+    $primary = $tenant?->primary_color ?: '#1e3a5f';
+    $marca   = $tenant?->name ?? 'Taller';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,8 +17,15 @@
             <td align="center">
                 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e5e7eb;">
                     <tr>
-                        <td style="background:#1e3a5f; padding:20px 28px;">
-                            <span style="color:#ffffff; font-size:18px; font-weight:bold;">{{ $appt->tenant->name ?? 'Taller' }}</span>
+                        <td style="height:4px; background:{{ $primary }}; line-height:4px; font-size:0;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="background:#ffffff; padding:18px 28px; border-bottom:1px solid #e5e7eb; text-align:center;">
+                            @if($logo)
+                                <img src="{{ $logo }}" alt="{{ $marca }}" style="max-height:48px; max-width:200px;">
+                            @else
+                                <span style="color:{{ $primary }}; font-size:20px; font-weight:bold;">{{ $marca }}</span>
+                            @endif
                         </td>
                     </tr>
                     <tr>
@@ -37,7 +50,7 @@
                             </table>
 
                             <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 8px;">
-                                <tr><td style="border-radius:8px; background:#e11d2a;">
+                                <tr><td style="border-radius:8px; background:{{ $primary }};">
                                     <a href="{{ $confirmUrl }}" target="_blank"
                                        style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:bold; color:#ffffff; text-decoration:none;">
                                         Confirmar mi turno
