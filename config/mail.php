@@ -47,8 +47,10 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
-            // El mail server propio usa cert autofirmado: no verificamos el peer
-            // (evita "tlsv1 alert unknown ca" al conectar por SSL/STARTTLS).
+            // El mail server propio usa cert autofirmado. Symfony Mailer respeta
+            // 'verify_peer' como opción del DSN: lo apagamos para no rechazar el
+            // cert (poner MAIL_VERIFY_PEER=true si algún día se usa un cert válido).
+            'verify_peer' => env('MAIL_VERIFY_PEER', false),
             'stream' => [
                 'ssl' => [
                     'allow_self_signed' => true,
