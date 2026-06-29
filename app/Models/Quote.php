@@ -76,6 +76,22 @@ class Quote extends Model
     // ─── Boot ─────────────────────────────────────────────────────────────────
     protected static function booted(): void
     {
+        // Calcula los totales del lado del servidor (los campos del form son
+        // disabled y no se persisten). Garantiza item.total, subtotal y total.
+        static::saving(function (Quote $quote) {
+            $items = collect($quote->items ?? [])->map(function ($i) {
+                $cant = (float) ($i['cantidad'] ?? 0);
+                $pu   = (float) ($i['precio_unitario'] ?? 0);
+                $i['total'] = round($cant * $pu, 2);
+                return $i;
+            });
+
+            $quote->items = $items->all();
+            $subtotal = (float) $items->sum(fn ($i) => $i['total']);
+            $quote->subtotal = $subtotal;
+            $quote->total = max(0, $subtotal + (float) $quote->tax - (float) $quote->discount);
+        });
+
         static::creating(function (Quote $quote) {
             if (! $quote->code) {
                 $quote->code = static::generateCode($quote->tenant_id);
