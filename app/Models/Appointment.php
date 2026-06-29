@@ -22,6 +22,7 @@ class Appointment extends Model
         'description',
         'status',
         'source',
+        'client_confirmed_at',
         'scheduled_at',
         'ends_at',
         'duration_minutes',
@@ -29,9 +30,10 @@ class Appointment extends Model
     ];
 
     protected $casts = [
-        'scheduled_at'    => 'datetime',
-        'ends_at'         => 'datetime',
-        'reminder_sent'   => 'boolean',
+        'scheduled_at'        => 'datetime',
+        'ends_at'             => 'datetime',
+        'client_confirmed_at' => 'datetime',
+        'reminder_sent'       => 'boolean',
     ];
 
     public function tenant(): BelongsTo

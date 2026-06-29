@@ -2,12 +2,15 @@
 
 namespace App\Actions\Appointment;
 
+use App\Mail\AppointmentConfirmationMail;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Tenant;
 use App\Services\Booking\SlotAvailability;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -61,7 +64,7 @@ class CreatePublicAppointmentAction
         }
         $descParts[] = 'Turno solicitado desde la web.';
 
-        return Appointment::create([
+        $appointment = Appointment::create([
             'tenant_id'        => $branch->id,
             'customer_id'      => $customer->id,
             'title'            => $title !== '' ? $title : 'Turno web',
@@ -72,6 +75,18 @@ class CreatePublicAppointmentAction
             'ends_at'          => $scheduledAt->copy()->addMinutes(30),
             'duration_minutes' => 30,
         ]);
+
+        // Mail de confirmación al cliente (doble opt-in). Si el envío falla, NO
+        // debe romper la reserva: la cita ya quedó creada.
+        try {
+            if ($customer->email) {
+                Mail::to($customer->email)->queue(new AppointmentConfirmationMail($appointment));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo encolar el mail de confirmación de turno: ' . $e->getMessage());
+        }
+
+        return $appointment;
     }
 
     /**
@@ -104,20 +119,30 @@ class CreatePublicAppointmentAction
      */
     private function resolveCustomer(Tenant $branch, array $data): Customer
     {
+        $email = trim((string) ($data['email'] ?? ''));
         $digits = preg_replace('/\D/', '', (string) $data['whatsapp']);
 
-        if ($digits !== '') {
-            $customer = Customer::query()
-                ->where('tenant_id', $branch->id)
-                ->where(function ($q) use ($digits) {
-                    $q->whereRaw("REPLACE(REPLACE(REPLACE(COALESCE(whatsapp,''),' ',''),'-',''),'+','') LIKE ?", ["%{$digits}%"])
+        // Buscamos por email (exacto) o por WhatsApp/teléfono.
+        $customer = Customer::query()
+            ->where('tenant_id', $branch->id)
+            ->where(function ($q) use ($email, $digits) {
+                if ($email !== '') {
+                    $q->orWhere('email', $email);
+                }
+                if ($digits !== '') {
+                    $q->orWhereRaw("REPLACE(REPLACE(REPLACE(COALESCE(whatsapp,''),' ',''),'-',''),'+','') LIKE ?", ["%{$digits}%"])
                         ->orWhereRaw("REPLACE(REPLACE(REPLACE(COALESCE(phone,''),' ',''),'-',''),'+','') LIKE ?", ["%{$digits}%"]);
-                })
-                ->first();
+                }
+            })
+            ->first();
 
-            if ($customer) {
-                return $customer;
+        if ($customer) {
+            // Completamos el email si el cliente existía sin él.
+            if ($email !== '' && ! $customer->email) {
+                $customer->update(['email' => $email, 'email_opted_in' => true]);
             }
+
+            return $customer;
         }
 
         return Customer::create([
@@ -125,8 +150,10 @@ class CreatePublicAppointmentAction
             'name'              => $data['nombre'],
             'whatsapp'          => $data['whatsapp'],
             'phone'             => $data['whatsapp'],
+            'email'             => $email !== '' ? $email : null,
             'status'            => 'active',
             'whatsapp_opted_in' => true,
+            'email_opted_in'    => true,
         ]);
     }
 }

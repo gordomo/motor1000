@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ConfirmAppointmentController;
 use App\Http\Controllers\WorkOrderPdfController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\QuotePdfController;
@@ -63,6 +64,11 @@ Route::get('/quotes/{quote}/pdf', [QuotePdfController::class, '__invoke'])
     ->name('quotes.pdf');
 Route::get('/quotes/{quote}/pdf/stream', [QuotePdfController::class, 'stream'])
     ->name('quotes.pdf.stream');
+
+// Confirmación de turno por el cliente (link firmado del email, sin login)
+Route::get('/turno/{appointment}/confirmar', ConfirmAppointmentController::class)
+    ->name('public.appointments.confirm')
+    ->middleware('signed');
 
 // Página pública del vehículo (por QR, sin login)
 Route::get('/v/{token}', [VehiclePublicController::class, '__invoke'])

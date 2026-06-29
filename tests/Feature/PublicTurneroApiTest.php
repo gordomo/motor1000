@@ -32,6 +32,7 @@ beforeEach(function () {
         'hora'       => $this->hora,
         'nombre'     => 'Juan Pérez',
         'whatsapp'   => '+54 9 341 555 1234',
+        'email'      => 'juan@example.com',
         'vehiculo'   => 'Ford Ka 2015',
         'comentario' => 'ruido al frenar',
         '_hp'        => '',
@@ -149,4 +150,36 @@ it('rechaza un horario fuera del horario de atención', function () {
     $this->postJson('/api/public/appointments', $fuera, apiKey())
         ->assertStatus(422)
         ->assertJsonValidationErrors('hora');
+});
+
+it('requiere email válido', function () {
+    $bad = array_merge($this->payload, ['email' => 'no-es-email']);
+    $this->postJson('/api/public/appointments', $bad, apiKey())
+        ->assertStatus(422)->assertJsonValidationErrors('email');
+});
+
+it('encola el mail de confirmación al crear el turno', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+    $this->postJson('/api/public/appointments', $this->payload, apiKey())->assertCreated();
+    \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\AppointmentConfirmationMail::class);
+});
+
+it('el link firmado confirma el turno (scheduled -> confirmed)', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+    $res = $this->postJson('/api/public/appointments', $this->payload, apiKey())->assertCreated();
+    $id = $res->json('id');
+    $appt = \App\Models\Appointment::withoutGlobalScopes()->find($id);
+    expect($appt->status)->toBe('scheduled')->and($appt->client_confirmed_at)->toBeNull();
+
+    $url = \Illuminate\Support\Facades\URL::temporarySignedRoute('public.appointments.confirm', now()->addDay(), ['appointment' => $id]);
+    $this->get($url)->assertOk()->assertSee('Turno confirmado');
+
+    $appt->refresh();
+    expect($appt->status)->toBe('confirmed')->and($appt->client_confirmed_at)->not->toBeNull();
+});
+
+it('rechaza el confirm sin firma válida', function () {
+    \Illuminate\Support\Facades\Mail::fake();
+    $res = $this->postJson('/api/public/appointments', $this->payload, apiKey())->assertCreated();
+    $this->get('/turno/' . $res->json('id') . '/confirmar')->assertStatus(403);
 });

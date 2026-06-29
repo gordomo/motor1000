@@ -110,6 +110,10 @@ class AppointmentResource extends Resource
                 Tables\Columns\TextColumn::make('mechanic.name')->label(__('Mecánico'))->placeholder('—'),
                 Tables\Columns\TextColumn::make('title')->label(__('Servicio')),
                 Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
+                Tables\Columns\IconColumn::make('client_confirmed_at')
+                    ->label(__('Confirmó cliente'))
+                    ->boolean()
+                    ->tooltip(fn ($record): ?string => $record->client_confirmed_at?->format('d/m/Y H:i')),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

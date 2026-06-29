@@ -22,6 +22,7 @@ class StorePublicAppointmentRequest extends FormRequest
             'hora'       => ['required', 'date_format:H:i'],
             'nombre'     => ['required', 'string', 'max:255'],
             'whatsapp'   => ['required', 'string', 'max:50'],
+            'email'      => ['required', 'email:rfc', 'max:255'],
             'vehiculo'   => ['nullable', 'string', 'max:255'],
             'comentario' => ['nullable', 'string', 'max:1000'],
             // Honeypot anti-spam: debe llegar vacío.
@@ -37,6 +38,8 @@ class StorePublicAppointmentRequest extends FormRequest
             'hora.date_format'   => 'Hora inválida.',
             'nombre.required'    => 'Ingresá tu nombre.',
             'whatsapp.required'  => 'Ingresá un WhatsApp de contacto.',
+            'email.required'     => 'Ingresá un email para confirmar el turno.',
+            'email.email'        => 'El email no es válido.',
             '_hp.max'            => 'Solicitud rechazada.',
         ];
     }
