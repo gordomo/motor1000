@@ -3,8 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AppointmentResource\Pages;
+use App\Mail\AppointmentConfirmationMail;
 use App\Models\Appointment;
 use Filament\Forms;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -123,6 +126,30 @@ class AppointmentResource extends Resource
                     ->query(fn($q) => $q->whereDate('scheduled_at', today())),
             ])
             ->actions([
+                Tables\Actions\Action::make('reenviar_confirmacion')
+                    ->label(__('Reenviar confirmación'))
+                    ->icon('heroicon-o-envelope')
+                    ->color('gray')
+                    ->visible(fn (Appointment $record): bool => filled($record->customer?->email))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('Reenviar email de confirmación'))
+                    ->modalDescription(fn (Appointment $record): string => __('Se enviará a ') . $record->customer?->email)
+                    ->action(function (Appointment $record): void {
+                        try {
+                            Mail::to($record->customer->email)->queue(new AppointmentConfirmationMail($record));
+                            Notification::make()
+                                ->title(__('Confirmación reenviada'))
+                                ->body(__('Email encolado a ') . $record->customer->email)
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title(__('No se pudo reenviar'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
