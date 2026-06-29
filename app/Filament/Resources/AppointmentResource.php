@@ -130,16 +130,29 @@ class AppointmentResource extends Resource
                     ->label(__('Reenviar confirmación'))
                     ->icon('heroicon-o-envelope')
                     ->color('gray')
-                    ->visible(fn (Appointment $record): bool => filled($record->customer?->email))
-                    ->requiresConfirmation()
+                    ->visible(fn (Appointment $record): bool => $record->customer !== null)
                     ->modalHeading(__('Reenviar email de confirmación'))
-                    ->modalDescription(fn (Appointment $record): string => __('Se enviará a ') . $record->customer?->email)
-                    ->action(function (Appointment $record): void {
+                    ->modalSubmitActionLabel(__('Reenviar'))
+                    ->fillForm(fn (Appointment $record): array => ['email' => $record->customer?->email])
+                    ->form([
+                        Forms\Components\TextInput::make('email')
+                            ->label(__('Enviar a este email'))
+                            ->email()
+                            ->required()
+                            ->helperText(__('Verificá el email. Si lo corregís, también se actualiza en la ficha del cliente.')),
+                    ])
+                    ->action(function (Appointment $record, array $data): void {
                         try {
-                            Mail::to($record->customer->email)->queue(new AppointmentConfirmationMail($record));
+                            // Si corrigieron el email, lo guardamos en el cliente.
+                            if ($record->customer && $data['email'] !== $record->customer->email) {
+                                $record->customer->update(['email' => $data['email']]);
+                            }
+
+                            Mail::to($data['email'])->queue(new AppointmentConfirmationMail($record));
+
                             Notification::make()
                                 ->title(__('Confirmación reenviada'))
-                                ->body(__('Email encolado a ') . $record->customer->email)
+                                ->body(__('Email encolado a ') . $data['email'])
                                 ->success()
                                 ->send();
                         } catch (\Throwable $e) {

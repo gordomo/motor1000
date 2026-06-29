@@ -31,6 +31,9 @@ it('reenvía la confirmación por mail desde el CRM', function () {
     Filament::setCurrentPanel(Filament::getPanel('app'));
 
     Mail::fake();
-    Livewire::test(ListAppointments::class)->callTableAction('reenviar_confirmacion', $a);
+    Livewire::test(ListAppointments::class)
+        ->callTableAction('reenviar_confirmacion', $a, data: ['email' => 'corregido@example.com']);
     Mail::assertQueued(AppointmentConfirmationMail::class);
+    // si se corrigió el email, queda guardado en el cliente
+    expect($c->fresh()->email)->toBe('corregido@example.com');
 });
