@@ -183,7 +183,7 @@ class QuoteResource extends Resource
                                 ->numeric()
                                 ->default(1)
                                 ->minValue(1)
-                                ->reactive()
+                                ->live(onBlur: true)
                                 ->afterStateUpdated(function (Get $get, Set $set) {
                                     $set('total', (float)$get('cantidad') * (float)$get('precio_unitario'));
                                 })
@@ -193,7 +193,7 @@ class QuoteResource extends Resource
                                 ->label(__('P. Unitario'))
                                 ->numeric()
                                 ->prefix('$')
-                                ->reactive()
+                                ->live(onBlur: true)
                                 ->afterStateUpdated(function (Get $get, Set $set) {
                                     $set('total', (float)$get('cantidad') * (float)$get('precio_unitario'));
                                 })
@@ -223,7 +223,7 @@ class QuoteResource extends Resource
                         Forms\Components\TextInput::make('tax')
                             ->label(__('Impuestos'))
                             ->numeric()->prefix('$')->default(0)
-                            ->reactive()
+                            ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set) {
                                 $set('total', max(0, (float)$get('subtotal') + (float)$get('tax') - (float)($get('discount') ?? 0)));
                             }),
@@ -231,7 +231,7 @@ class QuoteResource extends Resource
                         Forms\Components\TextInput::make('discount')
                             ->label(__('Descuento'))
                             ->numeric()->prefix('$')->default(0)
-                            ->reactive()
+                            ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set) {
                                 $set('total', max(0, (float)$get('subtotal') + (float)($get('tax') ?? 0) - (float)$get('discount')));
                             }),
