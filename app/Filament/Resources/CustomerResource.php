@@ -55,6 +55,7 @@ class CustomerResource extends Resource
                     Forms\Components\TextInput::make('phone')
                         ->label(__('Teléfono'))
                         ->tel()
+                        ->required()
                         ->maxLength(20),
                     Forms\Components\TextInput::make('whatsapp')
                         ->label(__('WhatsApp'))
@@ -214,6 +215,11 @@ class CustomerResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('new_appointment')
+                    ->label(__('Nuevo turno'))
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('info')
+                    ->url(fn (Customer $record) => \App\Filament\Resources\AppointmentResource::getUrl('create', ['customer_id' => $record->id])),
                 Tables\Actions\Action::make('new_work_order')
                     ->label(__('Nueva OS'))
                     ->icon('heroicon-o-wrench')

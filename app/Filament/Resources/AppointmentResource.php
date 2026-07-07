@@ -49,8 +49,16 @@ class AppointmentResource extends Resource
                     ->label(__('Cliente'))
                     ->relationship('customer', 'name')
                     ->searchable()->preload()->required()
+                    ->default(fn (): ?int => request()->integer('customer_id') ?: null)
                     ->reactive()
-                    ->afterStateUpdated(fn($set) => $set('vehicle_id', null)),
+                    ->afterStateUpdated(fn($set) => $set('vehicle_id', null))
+                    // Buscar rápido y, si no existe, crear un cliente mínimo al vuelo.
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->label(__('Nombre'))->required()->maxLength(255),
+                        Forms\Components\TextInput::make('phone')->label(__('Teléfono'))->tel()->required()->maxLength(20),
+                        Forms\Components\TextInput::make('whatsapp')->label('WhatsApp')->tel()->maxLength(20),
+                    ])
+                    ->createOptionModalHeading(__('Nuevo cliente')),
                 Forms\Components\Select::make('vehicle_id')
                     ->label(__('Vehículo'))
                     ->options(function (Forms\Get $get): array {
@@ -78,12 +86,13 @@ class AppointmentResource extends Resource
                     ->searchable()->preload(),
                 Forms\Components\TextInput::make('title')
                     ->label(__('Título'))
-                    ->required()
-                    ->default(fn (): string => request()->query('title', 'Servicio agendado')),
+                    ->placeholder(__('Ej: Service, revisión...'))
+                    ->default(fn (): string => request()->query('title', 'Turno')),
                 Forms\Components\DateTimePicker::make('scheduled_at')
                     ->label(__('Fecha/Hora'))
                     ->required()
-                    ->default(fn (): ?string => request()->query('scheduled_at')),
+                    ->seconds(false)
+                    ->default(fn (): string => request()->query('scheduled_at') ?? now()->format('Y-m-d H:i:s')),
                 Forms\Components\TextInput::make('duration_minutes')
                     ->label(__('Duración (min)'))
                     ->numeric()
