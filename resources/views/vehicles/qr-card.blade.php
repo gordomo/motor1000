@@ -56,20 +56,20 @@
 
     <div class="card">
         <div class="card-header">
-            @if($vehicle->tenant->logo_path)
+            @if($vehicle->tenant?->logo_path)
                 <img src="{{ asset('storage/' . $vehicle->tenant->logo_path) }}"
                      alt="{{ $vehicle->tenant->name }}" class="logo">
             @else
-                <div class="taller-name">{{ $vehicle->tenant->name }}</div>
+                <div class="taller-name">{{ $vehicle->tenant?->name ?? 'Taller' }}</div>
             @endif
             <div class="taller-sub">
-                @if($vehicle->tenant->phone) {{ $vehicle->tenant->phone }} @endif
+                @if($vehicle->tenant?->phone) {{ $vehicle->tenant->phone }} @endif
             </div>
         </div>
 
         <div class="plate">{{ $vehicle->license_plate }}</div>
         <div class="vehicle-name">{{ $vehicle->brand }} {{ $vehicle->model }}</div>
-        <div class="vehicle-detail">Año {{ $vehicle->year }} · {{ number_format($vehicle->mileage, 0, ',', '.') }} km</div>
+        <div class="vehicle-detail">Año {{ $vehicle->year }} · {{ number_format((int) $vehicle->mileage, 0, ',', '.') }} km</div>
 
         <div class="qr-container">
             @if($qrSvg)
@@ -85,7 +85,7 @@
         <div class="url-box">{{ $publicUrl }}</div>
 
         <div class="owner">
-            Propietario: <strong>{{ $vehicle->customer->name }}</strong>
+            Propietario: <strong>{{ $vehicle->customer?->name ?? '—' }}</strong>
         </div>
     </div>
 

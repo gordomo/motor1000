@@ -375,10 +375,12 @@ class QuoteResource extends Resource
                     ->color('success')
                     ->url(function (Quote $record): string {
                         $pdfUrl  = route('quotes.pdf.stream', $record);
+                        // ?-> porque Customer usa SoftDeletes y la relación puede venir null.
+                        $name = $record->customer?->name ?? '';
                         $msg = urlencode(
-                            "Hola {$record->customer->name}, le enviamos el presupuesto {$record->code} de {$record->vehicle?->display_name}.\n\nPuede verlo aquí: {$pdfUrl}"
+                            "Hola {$name}, le enviamos el presupuesto {$record->code} de {$record->vehicle?->display_name}.\n\nPuede verlo aquí: {$pdfUrl}"
                         );
-                        $phone = preg_replace('/\D/', '', $record->customer->whatsapp ?? $record->customer->phone ?? '');
+                        $phone = preg_replace('/\D/', '', $record->customer?->whatsapp ?? $record->customer?->phone ?? '');
                         return "https://wa.me/{$phone}?text={$msg}";
                     })
                     ->openUrlInNewTab(),

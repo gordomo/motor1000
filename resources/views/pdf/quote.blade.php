@@ -47,17 +47,17 @@
     <tr>
         <td style="width:65%">
             @php
-                $logoFile = $quote->tenant->logo_path ? public_path('storage/' . $quote->tenant->logo_path) : null;
+                $logoFile = $quote->tenant?->logo_path ? public_path('storage/' . $quote->tenant->logo_path) : null;
             @endphp
             @if($logoFile && file_exists($logoFile))
                 <img src="{{ $logoFile }}"
                      alt="{{ $quote->tenant->name }}" style="max-height:60px; max-width:160px; margin-bottom:6px;">
             @else
-                <h1>{{ $quote->tenant->name }}</h1>
+                <h1>{{ $quote->tenant?->name ?? 'Taller' }}</h1>
             @endif
             <div style="color:#6b7280; font-size:10px;">
-                {{ $quote->tenant->phone ?? '' }}
-                @if($quote->tenant->email) &nbsp;·&nbsp; {{ $quote->tenant->email }} @endif
+                {{ $quote->tenant?->phone ?? '' }}
+                @if($quote->tenant?->email) &nbsp;·&nbsp; {{ $quote->tenant->email }} @endif
             </div>
         </td>
         <td style="text-align:right;">
@@ -82,14 +82,16 @@
             <div class="info-box">
                 <div class="label" style="margin-bottom:6px;">Cliente</div>
                 <table>
-                    <tr><td class="label">Nombre</td><td>{{ $quote->customer->name }}</td></tr>
-                    @if($quote->customer->phone)
+                    {{-- ?-> porque Customer usa SoftDeletes: si el cliente fue borrado
+                         la relación devuelve null y el PDF fallaba con un 500. --}}
+                    <tr><td class="label">Nombre</td><td>{{ $quote->customer?->name ?? '—' }}</td></tr>
+                    @if($quote->customer?->phone)
                     <tr><td class="label">Teléfono</td><td>{{ $quote->customer->phone }}</td></tr>
                     @endif
-                    @if($quote->customer->tax_id)
+                    @if($quote->customer?->tax_id)
                     <tr><td class="label">{{ strtoupper($quote->customer->tax_id_type ?? 'DNI') }}</td><td>{{ $quote->customer->tax_id }}</td></tr>
                     @endif
-                    @if($quote->customer->address)
+                    @if($quote->customer?->address)
                     <tr><td class="label">Dirección</td><td>{{ $quote->customer->address }}</td></tr>
                     @endif
                 </table>
@@ -233,9 +235,9 @@
 
 {{-- ── Footer ──────────────────────────────────────────────────────────────── --}}
 <div class="footer">
-    {{ $quote->tenant->name }}
-    @if($quote->tenant->phone) &nbsp;·&nbsp; {{ $quote->tenant->phone }} @endif
-    @if($quote->tenant->email) &nbsp;·&nbsp; {{ $quote->tenant->email }} @endif
+    {{ $quote->tenant?->name ?? 'Taller' }}
+    @if($quote->tenant?->phone) &nbsp;·&nbsp; {{ $quote->tenant->phone }} @endif
+    @if($quote->tenant?->email) &nbsp;·&nbsp; {{ $quote->tenant->email }} @endif
     &nbsp;·&nbsp; Presupuesto válido por 30 días desde la fecha de emisión.
 </div>
 

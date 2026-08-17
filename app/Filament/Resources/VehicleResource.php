@@ -61,7 +61,15 @@ class VehicleResource extends Resource
                 Forms\Components\TextInput::make('year')->label(__('Año'))->numeric()->required(),
                 Forms\Components\TextInput::make('color')->label(__('Color')),
                 Forms\Components\TextInput::make('vin')->label(__('Chasis (VIN)')),
-                Forms\Components\TextInput::make('mileage')->label(__('KM actual'))->numeric()->default(0),
+                Forms\Components\TextInput::make('mileage')
+                    ->label(__('KM actual'))
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(0)
+                    // vehicles.mileage es NOT NULL DEFAULT 0: el default de la columna solo
+                    // aplica si se omite del INSERT, no si llega NULL explícito. Con el campo
+                    // vacío (alta o edición) MySQL rechazaba el guardado con un 500.
+                    ->dehydrateStateUsing(fn (?string $state): int => (int) $state),
                 Forms\Components\TextInput::make('engine')->label(__('Motor')),
                 Forms\Components\Select::make('fuel_type')
                     ->label(__('Combustible'))

@@ -113,17 +113,24 @@ class CustomerResource extends Resource
                 ->visibleOn('create')
                 ->columns(3)
                 ->schema([
+                    // Patente, marca, modelo y año son NOT NULL en la tabla vehicles: o se
+                    // cargan los cuatro o ninguno. Antes, si faltaba uno, CreateCustomer
+                    // descartaba el vehículo en silencio y el usuario creía haberlo guardado.
                     Forms\Components\TextInput::make('vehicle.license_plate')
                         ->label(__('Patente / Matrícula'))
                         ->maxLength(10)
+                        ->requiredWith('vehicle.brand,vehicle.model,vehicle.year')
                         ->extraInputAttributes(['style' => 'text-transform:uppercase']),
                     Forms\Components\TextInput::make('vehicle.brand')
-                        ->label(__('Marca')),
+                        ->label(__('Marca'))
+                        ->requiredWith('vehicle.license_plate,vehicle.model,vehicle.year'),
                     Forms\Components\TextInput::make('vehicle.model')
-                        ->label(__('Modelo')),
+                        ->label(__('Modelo'))
+                        ->requiredWith('vehicle.license_plate,vehicle.brand,vehicle.year'),
                     Forms\Components\TextInput::make('vehicle.year')
                         ->label(__('Año'))
-                        ->numeric(),
+                        ->numeric()
+                        ->requiredWith('vehicle.license_plate,vehicle.brand,vehicle.model'),
                     Forms\Components\TextInput::make('vehicle.vin')
                         ->label(__('Número de chasis (VIN)')),
                     Forms\Components\TextInput::make('vehicle.mileage')

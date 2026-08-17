@@ -27,7 +27,14 @@ class VehiclesRelationManager extends RelationManager
             Forms\Components\TextInput::make('year')->label(__('Año'))->numeric()->required(),
             Forms\Components\TextInput::make('color')->label(__('Color')),
             Forms\Components\TextInput::make('vin')->label(__('Chasis')),
-            Forms\Components\TextInput::make('mileage')->label(__('Kilometraje actual'))->numeric(),
+            Forms\Components\TextInput::make('mileage')
+                ->label(__('Kilometraje actual'))
+                ->numeric()
+                ->minValue(0)
+                ->default(0)
+                // Ver VehicleResource: la columna es NOT NULL, un campo vacío mandaba
+                // NULL y rompía el alta del vehículo desde la ficha del cliente.
+                ->dehydrateStateUsing(fn (?string $state): int => (int) $state),
             Forms\Components\Select::make('fuel_type')
                 ->label(__('Combustible'))
                 ->options([

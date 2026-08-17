@@ -47,10 +47,10 @@
 
 {{-- ── Header ─────────────────────────────────────────────────────────────── --}}
 <div class="header">
-    @if($vehicle->tenant->logo_path)
+    @if($vehicle->tenant?->logo_path)
         <img src="{{ asset('storage/' . $vehicle->tenant->logo_path) }}" alt="{{ $vehicle->tenant->name }}">
     @else
-        <h1>{{ $vehicle->tenant->name }}</h1>
+        <h1>{{ $vehicle->tenant?->name ?? 'Taller' }}</h1>
     @endif
     <p>Historial del vehículo</p>
 </div>
@@ -64,7 +64,7 @@
             <div class="info-item"><div class="lbl">Marca</div><div class="val">{{ $vehicle->brand }}</div></div>
             <div class="info-item"><div class="lbl">Modelo</div><div class="val">{{ $vehicle->model }}</div></div>
             <div class="info-item"><div class="lbl">Año</div><div class="val">{{ $vehicle->year }}</div></div>
-            <div class="info-item"><div class="lbl">Kilometraje</div><div class="val">{{ number_format($vehicle->mileage, 0, ',', '.') }} km</div></div>
+            <div class="info-item"><div class="lbl">Kilometraje</div><div class="val">{{ number_format((int) $vehicle->mileage, 0, ',', '.') }} km</div></div>
             @if($vehicle->vin)
             <div class="info-item" style="grid-column:span 2"><div class="lbl">VIN / Chasis</div><div class="val">{{ $vehicle->vin }}</div></div>
             @endif
@@ -75,8 +75,8 @@
     <div class="card">
         <div class="card-title">Propietario</div>
         <div class="info-grid">
-            <div class="info-item"><div class="lbl">Nombre</div><div class="val">{{ $vehicle->customer->name }}</div></div>
-            @if($vehicle->customer->phone)
+            <div class="info-item"><div class="lbl">Nombre</div><div class="val">{{ $vehicle->customer?->name ?? '—' }}</div></div>
+            @if($vehicle->customer?->phone)
             <div class="info-item"><div class="lbl">Teléfono</div><div class="val">{{ $vehicle->customer->phone }}</div></div>
             @endif
         </div>
@@ -111,7 +111,7 @@
                 </div>
                 <div>
                     @php
-                        $color = match($q->status->value) {
+                        $color = match($q->status?->value) {
                             'draft'    => 'gray',
                             'sent'     => 'warning',
                             'accepted' => 'success',
@@ -119,7 +119,7 @@
                             default    => 'gray',
                         };
                     @endphp
-                    <span class="badge badge-{{ $color }}">{{ $q->status->getLabel() }}</span>
+                    <span class="badge badge-{{ $color }}">{{ $q->status?->getLabel() ?? '—' }}</span>
                     @if($q->total > 0)
                     <div style="font-size:13px; font-weight:700; text-align:right; margin-top:4px;">
                         $ {{ number_format($q->total, 2, ',', '.') }}
@@ -146,7 +146,7 @@
                     @endif
                 </div>
                 @php
-                    $woColor = match($wo->status->value) {
+                    $woColor = match($wo->status?->value) {
                         'received'      => 'gray',
                         'diagnosis'     => 'warning',
                         'waiting_parts' => 'warning',
@@ -156,7 +156,7 @@
                         default         => 'gray',
                     };
                 @endphp
-                <span class="badge badge-{{ $woColor }}">{{ $wo->status->getLabel() }}</span>
+                <span class="badge badge-{{ $woColor }}">{{ $wo->status?->getLabel() ?? '—' }}</span>
             </div>
         </div>
         @empty
