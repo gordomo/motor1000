@@ -147,13 +147,11 @@
                 </div>
                 @php
                     $woColor = match($wo->status?->value) {
-                        'received'      => 'gray',
-                        'diagnosis'     => 'warning',
-                        'waiting_parts' => 'warning',
-                        'repairing'     => 'info',
-                        'completed'     => 'success',
-                        'delivered'     => 'success',
-                        default         => 'gray',
+                        'received'  => 'gray',
+                        'repairing' => 'info',
+                        'completed' => 'success',
+                        'delivered' => 'success',
+                        default     => 'gray',
                     };
                 @endphp
                 <span class="badge badge-{{ $woColor }}">{{ $wo->status?->getLabel() ?? '—' }}</span>

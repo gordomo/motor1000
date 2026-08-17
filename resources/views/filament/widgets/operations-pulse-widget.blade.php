@@ -63,7 +63,8 @@
                 @forelse ($activity as $event)
                     <x-ui.activity-item
                         icon="history"
-                        :title="($event->workOrder?->number ?? __('OS')) . ' → ' . ucfirst(str_replace('_', ' ', (string) ($event->to_status ?? __('sin estado'))))"
+                        {{-- labelFor tolera estados retirados del enum que siguen en el historial --}}
+                        :title="($event->workOrder?->number ?? __('OS')) . ' → ' . \App\Enums\WorkOrderStatus::labelFor($event->to_status)"
                         :subtitle="$event->user?->name ?? __('Sistema')"
                         :time="$event->created_at?->format('d/m H:i')"
                     />

@@ -83,7 +83,14 @@ class WorkOrderResource extends Resource
                                 ->mapWithKeys(fn($v) => [$v->id => $v->display_name]);
                         })
                         ->searchable()
-                        ->required(),
+                        ->required()
+                        ->live()
+                        // Precarga el KM del vehículo elegido (pedido 11).
+                        ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                            if ($state && $km = Vehicle::find($state)?->mileage) {
+                                $set('mileage_in', $km);
+                            }
+                        }),
                     Forms\Components\Select::make('mechanic_id')
                         ->label(__('Mecánico'))
                         // Se usa options() en vez de relationship(...closure) para evitar el
@@ -105,7 +112,11 @@ class WorkOrderResource extends Resource
                         ->required(),
                     Forms\Components\TextInput::make('mileage_in')
                         ->label(__('KM Entrada'))
-                        ->numeric(),
+                        ->numeric()
+                        ->minValue(0)
+                        // Pedido 11: obligatorio al abrir la orden.
+                        ->required()
+                        ->helperText(__('Se toma del vehículo y actualiza su kilometraje si es mayor.')),
                     Forms\Components\DateTimePicker::make('estimated_at')
                         ->label(__('Previsión de Entrega')),
                 ]),
@@ -254,14 +265,10 @@ class WorkOrderResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('Estado'))
-                    ->options([
-                        'received' => __('Recibido'),
-                        'diagnosis' => __('Diagnóstico'),
-                        'waiting_parts' => __('Esperando piezas'),
-                        'repairing' => __('En reparación'),
-                        'completed' => __('Completado'),
-                        'delivered' => __('Entregado'),
-                    ]),
+                    // Derivado del enum: antes estaba hardcodeado y se desincronizaba.
+                    ->options(fn (): array => collect(WorkOrderStatus::cases())
+                        ->mapWithKeys(fn (WorkOrderStatus $s): array => [$s->value => $s->getLabel()])
+                        ->all()),
                 Tables\Filters\SelectFilter::make('mechanic_id')
                     ->label(__('Mecánico'))
                     ->options(fn () => Mechanic::query()

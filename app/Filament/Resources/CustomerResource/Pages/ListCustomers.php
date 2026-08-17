@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CustomerResource\Pages;
 
 use App\Filament\Resources\CustomerResource;
+use App\Models\Customer;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Pages\ListRecords\Tab;
@@ -22,19 +23,30 @@ class ListCustomers extends ListRecords
     public function getTabs(): array
     {
         return [
+            // OJO: el parámetro del closure TIENE que llamarse $query. Filament lo
+            // inyecta por nombre (Tab::modifyQuery pasa ['query' => $query]); con
+            // cualquier otro nombre cae al resolutor por tipo y arma un Builder sin
+            // modelo, que rompe la pestaña. Las pestañas de este archivo usaban $q.
             'all'      => Tab::make('Todos'),
-            'active'   => Tab::make('Activos')->modifyQueryUsing(fn(Builder $q) => $q->where('status', 'active')),
-            'vip'      => Tab::make('VIP')->modifyQueryUsing(fn(Builder $q) => $q->where('status', 'vip')),
+            // Pedido 9: clientes reales (ya trajeron el auto) vs. solo cargados.
+            'con_ordenes' => Tab::make('Con trabajo hecho')
+                ->modifyQueryUsing(fn (Builder $query) => $query->has('workOrders'))
+                ->badge(fn () => Customer::query()->has('workOrders')->count()),
+            'sin_ordenes' => Tab::make('Nunca vinieron')
+                ->modifyQueryUsing(fn (Builder $query) => $query->doesntHave('workOrders'))
+                ->badge(fn () => Customer::query()->doesntHave('workOrders')->count()),
+            'active'   => Tab::make('Activos')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active')),
+            'vip'      => Tab::make('VIP')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'vip')),
             'inactive' => Tab::make('Inactivos')
-                ->modifyQueryUsing(fn(Builder $q) => $q
-                    ->where(fn($q) => $q
-                        ->whereNull('last_visit_at')
-                        ->orWhere('last_visit_at', '<', now()->subMonths(6))
-                    )
-                )
-                ->badge(fn() => \App\Models\Customer::where(
-                    fn($q) => $q->whereNull('last_visit_at')
-                        ->orWhere('last_visit_at', '<', now()->subMonths(6))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where(fn (Builder $sub) => $sub
+                    ->whereNull('last_visit_at')
+                    ->orWhere('last_visit_at', '<', now()->subMonths(6))
+                ))
+                ->badge(fn () => Customer::query()->where(fn (Builder $sub) => $sub
+                    ->whereNull('last_visit_at')
+                    ->orWhere('last_visit_at', '<', now()->subMonths(6))
                 )->count()),
         ];
     }

@@ -108,7 +108,9 @@
                     @if($quote->vehicle->vin)
                     <tr><td class="label">VIN/Chasis</td><td>{{ $quote->vehicle->vin }}</td></tr>
                     @endif
-                    <tr><td class="label">Kilometraje</td><td>{{ number_format((int) $quote->vehicle->mileage, 0, ',', '.') }} km</td></tr>
+                    {{-- El KM del presupuesto (pedido 11); el del vehículo es el respaldo
+                         para los presupuestos anteriores a que existiera el campo. --}}
+                    <tr><td class="label">Kilometraje</td><td>{{ number_format((int) ($quote->mileage ?: $quote->vehicle->mileage), 0, ',', '.') }} km</td></tr>
                     @else
                     <tr><td colspan="2">Sin vehículo asociado</td></tr>
                     @endif

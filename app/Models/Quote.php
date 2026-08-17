@@ -19,6 +19,7 @@ class Quote extends Model
         'code',
         'customer_id',
         'vehicle_id',
+        'mileage',
         'detected_fault',
         'status',
         'checklist',
@@ -35,6 +36,7 @@ class Quote extends Model
 
     protected $casts = [
         'status'      => QuoteStatus::class,
+        'mileage'     => 'integer',
         'checklist'   => 'array',
         'items'       => 'array',
         'subtotal'    => 'decimal:2',
@@ -113,6 +115,16 @@ class Quote extends Model
                 if ($quote->status === QuoteStatus::Rejected && ! $quote->rejected_at) {
                     $quote->rejected_at = $now;
                 }
+            }
+        });
+
+        // Pedido 11: el KM del presupuesto mantiene actualizado el del vehículo.
+        // Solo hacia arriba, igual que en la orden de trabajo.
+        static::saved(function (Quote $quote) {
+            $km = (int) $quote->mileage;
+
+            if ($km > 0 && ($vehicle = $quote->vehicle) && $km > (int) $vehicle->mileage) {
+                $vehicle->updateQuietly(['mileage' => $km]);
             }
         });
     }

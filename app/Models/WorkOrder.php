@@ -73,6 +73,31 @@ class WorkOrder extends Model
                 ]);
             }
         });
+
+        // Pedido 11: el KM de la orden mantiene actualizado el del vehículo.
+        // Solo hacia arriba: un KM menor es un error de tipeo, no un dato nuevo.
+        static::saved(function (WorkOrder $order) {
+            $order->syncVehicleMileage();
+        });
+    }
+
+    /**
+     * Sube el kilometraje del vehículo al de la orden si este es mayor.
+     * Nunca lo baja: el odómetro no vuelve atrás.
+     */
+    public function syncVehicleMileage(): void
+    {
+        $km = (int) ($this->mileage_out ?: $this->mileage_in);
+
+        if ($km <= 0) {
+            return;
+        }
+
+        $vehicle = $this->vehicle;
+
+        if ($vehicle && $km > (int) $vehicle->mileage) {
+            $vehicle->updateQuietly(['mileage' => $km]);
+        }
     }
 
     public static function generateNumber(int $tenantId): string

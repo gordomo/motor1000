@@ -69,7 +69,9 @@
 
         <div class="plate">{{ $vehicle->license_plate }}</div>
         <div class="vehicle-name">{{ $vehicle->brand }} {{ $vehicle->model }}</div>
-        <div class="vehicle-detail">Año {{ $vehicle->year }} · {{ number_format((int) $vehicle->mileage, 0, ',', '.') }} km</div>
+        {{-- Pedido 10: sin kilometraje. La ficha se imprime y se pega en el auto, y el
+             KM queda viejo enseguida. Sigue visible en la pantalla del vehículo. --}}
+        <div class="vehicle-detail">Año {{ $vehicle->year }}</div>
 
         <div class="qr-container">
             @if($qrSvg)

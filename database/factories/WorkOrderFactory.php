@@ -15,7 +15,7 @@ class WorkOrderFactory extends Factory
 
     public function definition(): array
     {
-        $status = fake()->randomElement(['received', 'diagnosis', 'repairing', 'completed', 'delivered']);
+        $status = fake()->randomElement(['received', 'repairing', 'completed', 'delivered']);
 
         return [
             'tenant_id'    => Tenant::factory(),

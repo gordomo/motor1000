@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WorkOrderResource\Pages;
 
+use App\Enums\WorkOrderStatus;
 use App\Filament\Pages\WorkOrdersBoard;
 use App\Filament\Resources\WorkOrderResource;
 use Filament\Actions;
@@ -27,20 +28,15 @@ class ListWorkOrders extends ListRecords
 
     public function getTabs(): array
     {
-        return [
-            'all' => Tab::make('Todas'),
-            'received' => Tab::make('Recibido')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'received')),
-            'diagnosis' => Tab::make('Diagnóstico')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'diagnosis')),
-            'waiting_parts' => Tab::make('Esperando piezas')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'waiting_parts')),
-            'repairing' => Tab::make('En reparación')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'repairing')),
-            'completed' => Tab::make('Completado')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'completed')),
-            'delivered' => Tab::make('Entregado')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'delivered')),
-        ];
+        // Una pestaña por estado del enum: antes estaban hardcodeadas y quedaban
+        // pestañas vacías al retirar un estado del flujo.
+        $tabs = ['all' => Tab::make(__('Todas'))];
+
+        foreach (WorkOrderStatus::cases() as $status) {
+            $tabs[$status->value] = Tab::make($status->getLabel())
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', $status->value));
+        }
+
+        return $tabs;
     }
 }

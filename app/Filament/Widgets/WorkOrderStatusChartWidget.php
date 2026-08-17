@@ -42,8 +42,6 @@ class WorkOrderStatusChartWidget extends ChartWidget
             $values[] = $data[$status->value] ?? 0;
             $colors[] = match($status->getColor()) {
                 'gray'    => '#9ca3af',
-                'warning' => '#f59e0b',
-                'orange'  => '#fb923c',
                 'info'    => '#60a5fa',
                 'success' => '#10b981',
                 'primary' => '#94a3b8',

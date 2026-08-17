@@ -86,6 +86,21 @@ class QuoteResource extends Resource
                         ->searchable()
                         ->required()
                         ->reactive()
+                        // Precarga el KM del vehículo elegido (pedido 11).
+                        ->afterStateUpdated(function ($state, Set $set): void {
+                            if ($state && $km = Vehicle::find($state)?->mileage) {
+                                $set('mileage', $km);
+                            }
+                        })
+                        ->columnSpan(1),
+
+                    Forms\Components\TextInput::make('mileage')
+                        ->label(__('Kilometraje'))
+                        ->numeric()
+                        ->minValue(0)
+                        // Pedido 11: obligatorio al presupuestar.
+                        ->required()
+                        ->suffix('km')
                         ->columnSpan(1),
 
                     Forms\Components\Select::make('status')
@@ -342,9 +357,14 @@ class QuoteResource extends Resource
                             'quote_id'    => $record->id,
                             'mechanic_id' => $data['mechanic_id'] ?? null,
                             'estimated_at' => $data['estimated_at'] ?? null,
-                            'complaint'   => $record->detected_fault,
+                            // work_orders.complaint es NOT NULL y la falla detectada del
+                            // presupuesto es opcional: sin este respaldo, generar la OT
+                            // desde un presupuesto sin falla declarada tiraba un 500.
+                            'complaint'   => $record->detected_fault
+                                ?: __('Generada desde el presupuesto :code', ['code' => $record->code]),
                             'status'      => 'received',
-                            'mileage_in'  => $record->vehicle?->mileage ?? 0,
+                            // El KM del presupuesto manda; el del vehículo es el respaldo.
+                            'mileage_in'  => $record->mileage ?: ($record->vehicle?->mileage ?? 0),
                             'discount'    => $record->discount,
                         ]);
 

@@ -181,6 +181,14 @@ class CustomerResource extends Resource
                     ->counts('vehicles')
                     ->badge()
                     ->color('info'),
+                // Pedido 9: distinguir clientes reales (con trabajo hecho) de los que
+                // solo están cargados. counts() lo resuelve en una sola query.
+                Tables\Columns\TextColumn::make('work_orders_count')
+                    ->label(__('Órdenes'))
+                    ->counts('workOrders')
+                    ->badge()
+                    ->color(fn ($state): string => $state > 0 ? 'success' : 'gray')
+                    ->sortable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(__('Estado'))
                     ->colors([
@@ -211,6 +219,17 @@ class CustomerResource extends Resource
                             ->whereNull('last_visit_at')
                             ->orWhere('last_visit_at', '<', now()->subMonths(6))
                         )
+                    ),
+                // Pedido 9: cliente "real" = tiene al menos una orden de trabajo.
+                Tables\Filters\TernaryFilter::make('con_ordenes')
+                    ->label(__('Clientes con trabajo hecho'))
+                    ->placeholder(__('Todos'))
+                    ->trueLabel(__('Solo con órdenes'))
+                    ->falseLabel(__('Nunca vinieron al taller'))
+                    ->queries(
+                        true: fn (Builder $q) => $q->has('workOrders'),
+                        false: fn (Builder $q) => $q->doesntHave('workOrders'),
+                        blank: fn (Builder $q) => $q,
                     ),
                 Tables\Filters\Filter::make('birthday_today')
                     ->label(__('Cumpleañeros de hoy'))
