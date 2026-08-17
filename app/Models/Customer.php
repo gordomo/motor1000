@@ -84,6 +84,11 @@ class Customer extends Model
         return $this->hasMany(Quote::class);
     }
 
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class);
+    }
+
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);

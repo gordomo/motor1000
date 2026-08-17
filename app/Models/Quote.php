@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\QuoteStatus;
+use App\Enums\QuoteType;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ class Quote extends Model
         'mileage',
         'detected_fault',
         'status',
+        'type',
         'checklist',
         'items',
         'subtotal',
@@ -36,6 +38,7 @@ class Quote extends Model
 
     protected $casts = [
         'status'      => QuoteStatus::class,
+        'type'        => QuoteType::class,
         'mileage'     => 'integer',
         'checklist'   => 'array',
         'items'       => 'array',
@@ -48,31 +51,16 @@ class Quote extends Model
         'rejected_at' => 'datetime',
     ];
 
-    // ─── Checklist default de 20 puntos ──────────────────────────────────────
+    /**
+     * Checklist en blanco según los puntos que tenga configurados el taller
+     * (pedido 2). Antes eran 20 puntos fijos escritos acá; ahora el catálogo vive
+     * en checklist_items y se administra desde el panel. Lo que se guarda en
+     * quotes.checklist sigue siendo un snapshot: los presupuestos ya emitidos no
+     * cambian si el taller edita sus puntos.
+     */
     public static function defaultChecklist(): array
     {
-        return [
-            ['id_punto' => 1,  'categoria' => 'Frenos',        'nombre_item' => 'Pastillas de freno delanteras',   'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 2,  'categoria' => 'Frenos',        'nombre_item' => 'Pastillas de freno traseras',      'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 3,  'categoria' => 'Frenos',        'nombre_item' => 'Líquido de frenos',                'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 4,  'categoria' => 'Suspensión',    'nombre_item' => 'Amortiguadores delanteros',        'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 5,  'categoria' => 'Suspensión',    'nombre_item' => 'Amortiguadores traseros',          'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 6,  'categoria' => 'Neumáticos',    'nombre_item' => 'Presión neumáticos',               'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 7,  'categoria' => 'Neumáticos',    'nombre_item' => 'Desgaste de neumáticos',           'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 8,  'categoria' => 'Fluidos',       'nombre_item' => 'Nivel de aceite de motor',         'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 9,  'categoria' => 'Fluidos',       'nombre_item' => 'Líquido refrigerante',             'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 10, 'categoria' => 'Fluidos',       'nombre_item' => 'Líquido de dirección',             'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 11, 'categoria' => 'Fluidos',       'nombre_item' => 'Líquido de transmisión',           'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 12, 'categoria' => 'Luces',         'nombre_item' => 'Luces delanteras (bajas/altas)',   'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 13, 'categoria' => 'Luces',         'nombre_item' => 'Luces traseras y stop',            'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 14, 'categoria' => 'Luces',         'nombre_item' => 'Luces de giro (intermitentes)',    'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 15, 'categoria' => 'Motor',         'nombre_item' => 'Correa de distribución',           'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 16, 'categoria' => 'Motor',         'nombre_item' => 'Filtro de aire',                   'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 17, 'categoria' => 'Carrocería',    'nombre_item' => 'Limpiaparabrisas',                 'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 18, 'categoria' => 'Carrocería',    'nombre_item' => 'Estado general de carrocería',     'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 19, 'categoria' => 'Seguridad',     'nombre_item' => 'Cinturones de seguridad',          'estado' => null, 'aclaracion' => ''],
-            ['id_punto' => 20, 'categoria' => 'Seguridad',     'nombre_item' => 'Bocina',                           'estado' => null, 'aclaracion' => ''],
-        ];
+        return ChecklistItem::blankChecklist();
     }
 
     // ─── Boot ─────────────────────────────────────────────────────────────────
@@ -98,7 +86,12 @@ class Quote extends Model
             if (! $quote->code) {
                 $quote->code = static::generateCode($quote->tenant_id);
             }
-            if (empty($quote->checklist)) {
+            // Solo los presupuestos con revisión arrancan con el checklist cargado
+            // (pedido 2). Sin este guard, los "sin revisión" guardaban 20 puntos
+            // vacíos que después aparecían en el PDF.
+            $type = $quote->type ?? QuoteType::ConChecklist;
+
+            if (empty($quote->checklist) && $type->requiresChecklist()) {
                 $quote->checklist = static::defaultChecklist();
             }
         });

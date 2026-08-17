@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\QuoteStatus;
+use App\Enums\QuoteType;
 use App\Filament\Resources\QuoteResource\Pages;
 use App\Models\Mechanic;
 use App\Models\Quote;
@@ -114,6 +115,19 @@ class QuoteResource extends Resource
                         ->label(__('Fecha'))
                         ->disabled()
                         ->columnSpan(1),
+
+                    // Pedido 2: define si hay que completar el checklist o no.
+                    Forms\Components\Radio::make('type')
+                        ->label(__('Tipo de presupuesto'))
+                        ->options(QuoteType::class)
+                        ->descriptions(collect(QuoteType::cases())
+                            ->mapWithKeys(fn (QuoteType $t): array => [$t->value => $t->getDescription()])
+                            ->all())
+                        ->default(QuoteType::ConChecklist)
+                        ->required()
+                        ->live()
+                        ->inline()
+                        ->columnSpan(2),
                 ]),
 
             // ── Falla detectada ─────────────────────────────────────────────
@@ -126,13 +140,16 @@ class QuoteResource extends Resource
                         ->columnSpanFull(),
                 ]),
 
-            // ── Checklist 20 puntos ─────────────────────────────────────────
-            Forms\Components\Section::make(__('Check List de inspección visual (20 puntos)'))
+            // ── Checklist de inspección visual ──────────────────────────────
+            // La cantidad de puntos ya no es fija: la configura cada taller
+            // (pedido 2). La sección se esconde en los presupuestos sin revisión.
+            Forms\Components\Section::make(__('Check List de inspección visual'))
                 ->collapsible()
+                ->visible(fn (Get $get): bool => ($get('type') ?? QuoteType::ConChecklist->value) === QuoteType::ConChecklist->value)
                 ->schema([
                     Forms\Components\Repeater::make('checklist')
                         ->label('')
-                        ->default(Quote::defaultChecklist())
+                        ->default(fn (): array => Quote::defaultChecklist())
                         ->addable(false)
                         ->deletable(false)
                         ->reorderable(false)
@@ -159,7 +176,12 @@ class QuoteResource extends Resource
                                 ])
                                 ->inline()
                                 ->reactive()
-                                ->required()
+                                // Obligatorio solo en los presupuestos con revisión.
+                                // Este único required() era lo que impedía guardar un
+                                // presupuesto sin completar los 20 puntos.
+                                ->required(fn (Get $get): bool =>
+                                    ($get('../../type') ?? QuoteType::ConChecklist->value) === QuoteType::ConChecklist->value
+                                )
                                 ->columnSpan(4),
 
                             Forms\Components\TextInput::make('aclaracion')

@@ -85,6 +85,11 @@ class Vehicle extends Model
         return $this->hasMany(Quote::class);
     }
 
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class);
+    }
+
     public function getDisplayNameAttribute(): string
     {
         return "{$this->year} {$this->brand} {$this->model} - {$this->license_plate}";

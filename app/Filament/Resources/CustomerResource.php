@@ -315,6 +315,7 @@ class CustomerResource extends Resource
         return [
             RelationManagers\VehiclesRelationManager::class,
             RelationManagers\WorkOrdersRelationManager::class,
+            RelationManagers\InspectionsRelationManager::class,
             RelationManagers\RemindersRelationManager::class,
             RelationManagers\CommunicationsRelationManager::class,
         ];

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ConfirmAppointmentController;
 use App\Http\Controllers\WorkOrderPdfController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\InspectionPdfController;
 use App\Http\Controllers\QuotePdfController;
 use App\Http\Controllers\VehiclePublicController;
 use App\Http\Controllers\VehicleQrCardController;
@@ -64,6 +65,12 @@ Route::get('/quotes/{quote}/pdf', [QuotePdfController::class, '__invoke'])
     ->name('quotes.pdf');
 Route::get('/quotes/{quote}/pdf/stream', [QuotePdfController::class, 'stream'])
     ->name('quotes.pdf.stream');
+
+// Revisión PDF (pedido 17, requiere login)
+Route::get('/inspections/{inspection}/pdf', [InspectionPdfController::class, '__invoke'])
+    ->name('inspections.pdf');
+Route::get('/inspections/{inspection}/pdf/stream', [InspectionPdfController::class, 'stream'])
+    ->name('inspections.pdf.stream');
 
 // Confirmación de turno por el cliente (link firmado del email, sin login)
 Route::get('/turno/{appointment}/confirmar', ConfirmAppointmentController::class)
