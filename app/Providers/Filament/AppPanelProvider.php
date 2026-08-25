@@ -50,6 +50,9 @@ class AppPanelProvider extends PanelProvider
             ->darkMode(false)
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
+            // Campanita del panel: la usan las alertas de stock crítico (pedido 6).
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->navigationGroups([
                 NavigationGroup::make(__('Taller'))

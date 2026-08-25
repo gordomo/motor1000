@@ -6,8 +6,10 @@ use App\Actions\WorkOrder\UpdateWorkOrderStatusAction;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Pages\WorkOrdersBoard;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Services\Inventory\WorkOrderStockService;
 use App\Services\Pdf\BulkPdfZipService;
 use App\Models\Customer;
+use App\Models\InventoryItem;
 use App\Models\Mechanic;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
@@ -137,6 +139,46 @@ class WorkOrderResource extends Resource
                         ->rows(2)
                         ->helperText(__('Visible para el cliente en el portal')),
                 ]),
+            // Pedido 3: registrar el estado del vehículo al ingreso (rayones,
+            // golpes) para evitar reclamos posteriores. Van al disco público,
+            // que en prod es un volumen y sobrevive a los rebuilds de la imagen.
+            Forms\Components\Section::make(__('Fotos del vehículo'))
+                ->description(__('Sacá fotos del estado del auto al recibirlo: es el respaldo ante un reclamo.'))
+                ->collapsible()
+                ->schema([
+                    Forms\Components\FileUpload::make('photos_in')
+                        ->label(__('Al ingreso'))
+                        ->multiple()
+                        ->image()
+                        ->reorderable()
+                        ->appendFiles()
+                        ->openable()
+                        ->downloadable()
+                        ->disk('public')
+                        ->directory('work-orders/ingreso')
+                        ->maxFiles(20)
+                        ->maxSize(20480) // 20 MB: una foto de celular entra holgada
+                        ->imagePreviewHeight('120')
+                        ->panelLayout('grid')
+                        ->helperText(__('Hasta 20 fotos. Sacalas antes de empezar a trabajar.'))
+                        ->columnSpanFull(),
+                    Forms\Components\FileUpload::make('photos_out')
+                        ->label(__('En la entrega'))
+                        ->multiple()
+                        ->image()
+                        ->reorderable()
+                        ->appendFiles()
+                        ->openable()
+                        ->downloadable()
+                        ->disk('public')
+                        ->directory('work-orders/entrega')
+                        ->maxFiles(20)
+                        ->maxSize(20480)
+                        ->imagePreviewHeight('120')
+                        ->panelLayout('grid')
+                        ->helperText(__('Opcional: cómo se entregó el vehículo.'))
+                        ->columnSpanFull(),
+                ]),
             Forms\Components\Section::make(__('Checklist de revisión'))
                 ->collapsible()
                 ->collapsed()
@@ -173,7 +215,38 @@ class WorkOrderResource extends Resource
                                 ->label(__('Tipo'))
                                 ->options(['labor' => __('Mano de obra'), 'part' => __('Pieza'), 'other' => __('Otro')])
                                 ->default('labor')
-                                ->required(),
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                                    // Cambiar de Pieza a otra cosa desvincula el repuesto,
+                                    // para no descontar stock de un ítem que ya no lo es.
+                                    if ($state !== 'part') {
+                                        $set('inventory_item_id', null);
+                                    }
+                                }),
+                            // Pedido 5: vincular la pieza al inventario para que la
+                            // orden descuente stock al completarse.
+                            Forms\Components\Select::make('inventory_item_id')
+                                ->label(__('Repuesto del inventario'))
+                                ->options(fn (): array => InventoryItem::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->get()
+                                    ->mapWithKeys(fn (InventoryItem $i): array => [
+                                        $i->id => $i->name . ' (' . rtrim(rtrim((string) $i->stock_quantity, '0'), '.') . ' ' . $i->unit . ')',
+                                    ])
+                                    ->all())
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Forms\Get $get): bool => $get('type') === 'part')
+                                ->live()
+                                ->afterStateUpdated(function ($state, Forms\Set $set): void {
+                                    if ($state && $item = InventoryItem::find($state)) {
+                                        $set('description', $item->name);
+                                        $set('unit_price', $item->sale_price);
+                                    }
+                                })
+                                ->helperText(__('Opcional. Si lo vinculás, se descuenta del stock al completar la orden.')),
                             Forms\Components\TextInput::make('description')
                                 ->label(__('Descripción'))
                                 ->required(),
@@ -304,11 +377,34 @@ class WorkOrderResource extends Resource
                     ->visible(fn(WorkOrder $r) => ! empty(WorkOrderStatus::nextStates($r->status)))
                     ->action(function (WorkOrder $record) {
                         $next = WorkOrderStatus::nextStates($record->status)[0];
+
+                        // Pedido 6: si el cierre deja stock en negativo se avisa, pero
+                        // no se bloquea: la pieza ya se usó, ocultarlo haría que el
+                        // inventario mienta. El aviso es para que alguien lo corrija.
+                        $faltantes = $next === WorkOrderStatus::Completed
+                            ? app(WorkOrderStockService::class)->shortages($record)
+                            : [];
+
                         app(UpdateWorkOrderStatusAction::class)->execute($record, $next);
+
                         Notification::make()
                             ->title("OS avanzada a: {$next->getLabel()}")
                             ->success()
                             ->send();
+
+                        if ($faltantes !== []) {
+                            $detalle = collect($faltantes)
+                                ->map(fn (array $f): string => $f['item']->description
+                                    . ' (' . __('necesita') . ' ' . $f['necesario'] . ', ' . __('hay') . ' ' . $f['disponible'] . ')')
+                                ->implode('; ');
+
+                            Notification::make()
+                                ->title(__('Stock en negativo'))
+                                ->body(__('Se descontó igual, pero revisá el inventario: :detalle', ['detalle' => $detalle]))
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }
                     }),
             ])
             ->bulkActions([
@@ -339,6 +435,23 @@ class WorkOrderResource extends Resource
                     Infolists\Components\TextEntry::make('mechanic.name')->label(__('Mecánico'))->placeholder(__('No asignado')),
                     Infolists\Components\TextEntry::make('complaint')->label(__('Queja'))->columnSpan(3),
                     Infolists\Components\TextEntry::make('diagnosis')->label(__('Diagnóstico'))->columnSpan(3)->placeholder('—'),
+                    // Pedido 3: las fotos del ingreso son la prueba ante un reclamo,
+                    // así que tienen que verse sin entrar a editar la orden.
+                    Infolists\Components\ImageEntry::make('photos_in')
+                        ->label(__('Fotos al ingreso'))
+                        ->disk('public')
+                        ->height(110)
+                        ->square()
+                        ->columnSpan(3)
+                        ->placeholder(__('Sin fotos de ingreso'))
+                        ->visible(fn ($record): bool => filled($record->photos_in)),
+                    Infolists\Components\ImageEntry::make('photos_out')
+                        ->label(__('Fotos en la entrega'))
+                        ->disk('public')
+                        ->height(110)
+                        ->square()
+                        ->columnSpan(3)
+                        ->visible(fn ($record): bool => filled($record->photos_out)),
                     Infolists\Components\RepeatableEntry::make('checklist')
                         ->label(__('Checklist de revisión'))
                         ->schema([

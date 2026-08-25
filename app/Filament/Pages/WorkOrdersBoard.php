@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Actions\WorkOrder\UpdateWorkOrderStatusAction;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Resources\WorkOrderResource;
 use App\Models\WorkOrder;
@@ -74,21 +75,10 @@ class WorkOrdersBoard extends Page
             return;
         }
 
-        $payload = ['status' => $status];
-
-        if ($status === WorkOrderStatus::Repairing && ! $order->started_at) {
-            $payload['started_at'] = now();
-        }
-
-        if ($status === WorkOrderStatus::Completed && ! $order->completed_at) {
-            $payload['completed_at'] = now();
-        }
-
-        if ($status === WorkOrderStatus::Delivered && ! $order->delivered_at) {
-            $payload['delivered_at'] = now();
-        }
-
-        $order->update($payload);
+        // El tablero actualizaba el estado por su cuenta, salteando la Action: por
+        // eso arrastrar a "Completado" no avisaba al cliente. Ahora usa el mismo
+        // camino que el botón Avanzar, que además descuenta el stock (pedido 5).
+        app(UpdateWorkOrderStatusAction::class)->execute($order, $status);
 
         Notification::make()
             ->title(__(':number movida a :status', ['number' => $order->number, 'status' => $status->getLabel()]))

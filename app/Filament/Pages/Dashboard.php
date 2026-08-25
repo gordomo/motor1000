@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\ExecutiveOverviewWidget;
+use App\Filament\Widgets\LowStockWidget;
 use App\Filament\Widgets\MonthlyRevenueChartWidget;
 use App\Filament\Widgets\OperationsPulseWidget;
 use App\Filament\Widgets\WorkOrderStatusChartWidget;
@@ -30,6 +31,7 @@ class Dashboard extends BaseDashboard
             MonthlyRevenueChartWidget::class,
             WorkOrderStatusChartWidget::class,
             OperationsPulseWidget::class,
+            LowStockWidget::class,
         ];
     }
 

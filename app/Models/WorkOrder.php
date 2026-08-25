@@ -39,6 +39,8 @@ class WorkOrder extends Model
         'completed_at',
         'delivered_at',
         'checklist',
+        'photos_in',
+        'photos_out',
         'quote_id',
     ];
 
@@ -48,6 +50,8 @@ class WorkOrder extends Model
         'completed_at'  => 'datetime',
         'delivered_at'  => 'datetime',
         'checklist'     => 'array',
+        'photos_in'     => 'array',
+        'photos_out'    => 'array',
         'labor_cost'    => 'decimal:2',
         'parts_cost'    => 'decimal:2',
         'discount'      => 'decimal:2',
@@ -153,7 +157,19 @@ class WorkOrder extends Model
     {
         $this->labor_cost = $this->items()->where('type', 'labor')->sum('total');
         $this->parts_cost = $this->items()->where('type', 'part')->sum('total');
-        $this->total = $this->labor_cost + $this->parts_cost - $this->discount;
+
+        // Los ítems de tipo 'other' existen en el form pero quedaban fuera del
+        // total: la orden se facturaba por menos de lo cargado. No tienen columna
+        // propia, así que se suman al total sin desglosar.
+        $otherCost = (float) $this->items()->where('type', 'other')->sum('total');
+
+        $this->total = (float) $this->labor_cost + (float) $this->parts_cost + $otherCost - (float) $this->discount;
         $this->saveQuietly();
+    }
+
+    /** Total de los ítems que no son mano de obra ni repuestos. */
+    public function otherCost(): float
+    {
+        return (float) $this->items()->where('type', 'other')->sum('total');
     }
 }

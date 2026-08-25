@@ -15,9 +15,11 @@ class WorkOrderItem extends Model
         'unit_price',
         'total',
         'inventory_item_id',
+        'stock_applied_at',
     ];
 
     protected $casts = [
+        'stock_applied_at' => 'datetime',
         'quantity'   => 'decimal:2',
         'unit_price' => 'decimal:2',
         'total'      => 'decimal:2',

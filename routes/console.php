@@ -12,3 +12,7 @@ Artisan::command('inspire', function () {
 Schedule::job(new \App\Jobs\SendAppointmentReminderJob)->hourly();
 Schedule::command('reminders:process')->dailyAt('09:00');
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
+// Pedido 6: aviso diario de repuestos por debajo del mínimo. A las 8, antes de
+// que abra el taller, para que puedan pedir lo que falta.
+Schedule::command('stock:check')->dailyAt('08:00');
