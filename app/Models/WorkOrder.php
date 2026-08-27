@@ -14,6 +14,22 @@ class WorkOrder extends Model
 {
     use HasFactory, SoftDeletes, BelongsToTenant;
 
+    /**
+     * Estado de cada punto del checklist de la orden.
+     *
+     * En el presupuesto los puntos describen CÓMO ESTÁ el auto (BIEN/REGULAR/MAL);
+     * en la orden describen SI SE HIZO el trabajo. La orden hereda del presupuesto
+     * solo los puntos que quedaron en REGULAR o MAL: los que estaban bien no
+     * tienen nada que trabajar.
+     */
+    public const PUNTO_HECHO      = 'HECHO';
+    public const PUNTO_NO_SE_PUDO = 'NO_SE_PUDO';
+
+    public const PUNTO_ESTADOS = [
+        self::PUNTO_HECHO      => 'Hecho',
+        self::PUNTO_NO_SE_PUDO => 'No se pudo',
+    ];
+
     protected $fillable = [
         'tenant_id',
         'number',
@@ -208,6 +224,52 @@ class WorkOrder extends Model
         if ($this->payment_status !== $status) {
             $this->forceFill(['payment_status' => $status])->saveQuietly();
         }
+    }
+
+    // ─── Checklist de trabajo ─────────────────────────────────────────────────
+
+    /**
+     * Arma el checklist de trabajo a partir del checklist del presupuesto,
+     * tomando solo los puntos que necesitan intervención.
+     *
+     * @param  array<int, array<string, mixed>>|null  $quoteChecklist
+     * @return list<array<string, mixed>>
+     */
+    public static function buildChecklistFromQuote(?array $quoteChecklist): array
+    {
+        return collect($quoteChecklist ?? [])
+            ->filter(fn ($punto): bool => in_array($punto['estado'] ?? null, ['REGULAR', 'MAL'], true))
+            ->values()
+            ->map(fn (array $punto): array => [
+                'id_punto'           => $punto['id_punto'] ?? null,
+                'categoria'          => $punto['categoria'] ?? '',
+                'nombre_item'        => $punto['nombre_item'] ?? '',
+                // Cómo lo encontró el presupuesto, para que el mecánico sepa qué esperar.
+                'estado_presupuesto' => $punto['estado'] ?? null,
+                'observacion_previa' => $punto['aclaracion'] ?? '',
+                // Lo que carga el mecánico.
+                'estado'             => null,
+                'aclaracion'         => '',
+            ])
+            ->all();
+    }
+
+    /** Puntos que el mecánico no pudo hacer. */
+    public function issuePoints(): array
+    {
+        return collect($this->checklist ?? [])
+            ->filter(fn ($punto): bool => ($punto['estado'] ?? null) === self::PUNTO_NO_SE_PUDO)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * La orden tiene novedades si quedó algo sin hacer. El cliente pidió que se
+     * note: se muestra en el tablero y en el listado.
+     */
+    public function hasIssues(): bool
+    {
+        return $this->issuePoints() !== [];
     }
 
     // ─── Bloqueo ──────────────────────────────────────────────────────────────

@@ -127,6 +127,11 @@ class WorkOrdersBoard extends Page
                         'mechanic' => $order->mechanic?->name ?? __('Sin asignar'),
                         'priority' => $order->priority,
                         'estimated_at' => $order->estimated_at?->format('d/m H:i') ?? __('Sin fecha'),
+                        // El cliente pidió que se note cuando algo pasó con la orden.
+                        'blocked' => $order->isBlocked(),
+                        'blockedReason' => $order->blocked_reason,
+                        'hasIssues' => $order->hasIssues(),
+                        'issuesCount' => count($order->issuePoints()),
                         'editUrl' => WorkOrderResource::getUrl('edit', ['record' => $order]),
                         'viewUrl' => WorkOrderResource::getUrl('view', ['record' => $order]),
                     ])->values()->all(),

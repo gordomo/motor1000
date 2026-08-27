@@ -16,12 +16,26 @@
 
                 <div class="m1-board__cards">
                     @forelse ($column['items'] as $item)
+                        {{-- Trabada o con algo sin hacer: el cliente pidió que se note --}}
                         <article
-                            class="m1-wo-card"
+                            @class([
+                                'm1-wo-card',
+                                'ring-2 ring-red-500' => $item['blocked'],
+                                'ring-2 ring-amber-400' => ! $item['blocked'] && $item['hasIssues'],
+                            ])
                             draggable="true"
                             wire:key="wo-card-{{ $item['id'] }}"
                             @dragstart="dragging = {{ $item['id'] }}"
                         >
+                            @if ($item['blocked'])
+                                <p class="mb-1 rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
+                                    Trabada: {{ $item['blockedReason'] }}
+                                </p>
+                            @elseif ($item['hasIssues'])
+                                <p class="mb-1 rounded bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+                                    {{ $item['issuesCount'] }} punto(s) sin hacer
+                                </p>
+                            @endif
                             <div class="flex items-center justify-between gap-2">
                                 <p class="m1-wo-card__title">{{ $item['number'] }}</p>
                                 <x-ui.status-badge

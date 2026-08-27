@@ -71,7 +71,18 @@ class WorkOrderTransitions
             }
 
             if ($pendientes = self::pendingChecklistPoints($order)) {
-                return __('Faltan :n puntos del checklist sin resolver.', ['n' => $pendientes]);
+                return __('Faltan :n puntos del trabajo sin marcar.', ['n' => $pendientes]);
+            }
+
+            // Si algo no se pudo hacer, tiene que estar explicado.
+            $sinExplicar = collect($order->checklist ?? [])
+                ->filter(fn ($punto): bool => is_array($punto)
+                    && ($punto['estado'] ?? null) === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO
+                    && blank($punto['aclaracion'] ?? null))
+                ->count();
+
+            if ($sinExplicar) {
+                return __('Hay :n puntos marcados como "no se pudo" sin explicar por qué.', ['n' => $sinExplicar]);
             }
         }
 

@@ -197,7 +197,10 @@ it('todas las pestañas de clientes filtran de verdad', function () {
     // Regresión: los closures se llamaban fn(Builder $q), y Filament inyecta el
     // builder por el nombre 'query'. Con otro nombre armaba un Builder sin modelo
     // y la pestaña quedaba rota.
-    $vip = Customer::factory()->create(['tenant_id' => $this->t->id, 'status' => 'vip']);
+    // last_visit_at explícito: el factory lo genera al azar y hacía el test frágil.
+    $vip = Customer::factory()->create([
+        'tenant_id' => $this->t->id, 'status' => 'vip', 'last_visit_at' => null,
+    ]);
     $this->customer->update(['status' => 'active', 'last_visit_at' => now()]);
 
     Livewire::test(ListCustomers::class, ['activeTab' => 'vip'])

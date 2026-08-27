@@ -255,3 +255,80 @@ it('el presupuesto nuevo arranca pendiente de aprobación', function () {
 
     expect($q->refresh()->status)->toBe(QuoteStatus::Pending);
 });
+
+// ─── El presupuesto define qué trabaja el mecánico ──────────────────────────
+
+it('la orden hereda del presupuesto solo los puntos que necesitan trabajo', function () {
+    $checklist = [
+        ['id_punto' => 1, 'categoria' => 'Frenos',     'nombre_item' => 'Pastillas delanteras', 'estado' => 'MAL',     'aclaracion' => 'Gastadas'],
+        ['id_punto' => 2, 'categoria' => 'Frenos',     'nombre_item' => 'Pastillas traseras',   'estado' => 'BIEN',    'aclaracion' => ''],
+        ['id_punto' => 3, 'categoria' => 'Neumáticos', 'nombre_item' => 'Presión',              'estado' => 'REGULAR', 'aclaracion' => 'Baja'],
+        ['id_punto' => 4, 'categoria' => 'Luces',      'nombre_item' => 'Bocina',               'estado' => 'BIEN',    'aclaracion' => ''],
+    ];
+
+    $trabajo = WorkOrder::buildChecklistFromQuote($checklist);
+
+    // Solo los REGULAR y MAL: lo que está bien no se toca.
+    expect($trabajo)->toHaveCount(2)
+        ->and(collect($trabajo)->pluck('nombre_item')->all())->toBe(['Pastillas delanteras', 'Presión'])
+        // El mecánico ve cómo lo encontró el presupuesto...
+        ->and($trabajo[0]['estado_presupuesto'])->toBe('MAL')
+        ->and($trabajo[0]['observacion_previa'])->toBe('Gastadas')
+        // ...y arranca sin marcar si lo hizo.
+        ->and($trabajo[0]['estado'])->toBeNull();
+});
+
+it('un presupuesto sin revisión genera una orden sin puntos a trabajar', function () {
+    expect(WorkOrder::buildChecklistFromQuote(null))->toBe([])
+        ->and(WorkOrder::buildChecklistFromQuote([]))->toBe([]);
+});
+
+it('la orden queda con novedades si algo no se pudo hacer', function () {
+    $o = orden([
+        'status'         => 'repairing',
+        'work_performed' => 'Se cambiaron las pastillas',
+        'checklist'      => [
+            ['id_punto' => 1, 'nombre_item' => 'Pastillas', 'estado' => WorkOrder::PUNTO_HECHO, 'aclaracion' => ''],
+            ['id_punto' => 2, 'nombre_item' => 'Presión',   'estado' => WorkOrder::PUNTO_NO_SE_PUDO, 'aclaracion' => 'Falta el compresor'],
+        ],
+    ]);
+
+    expect($o->hasIssues())->toBeTrue()
+        ->and($o->issuePoints())->toHaveCount(1);
+
+    // Y se puede completar igual: el problema está explicado.
+    app(UpdateWorkOrderStatusAction::class)->execute($o, WorkOrderStatus::Completed);
+
+    expect($o->refresh()->status)->toBe(WorkOrderStatus::Completed);
+});
+
+it('no se completa si un punto quedó como "no se pudo" sin explicar', function () {
+    $o = orden([
+        'status'         => 'repairing',
+        'work_performed' => 'Trabajo parcial',
+        'checklist'      => [
+            ['id_punto' => 1, 'nombre_item' => 'Presión', 'estado' => WorkOrder::PUNTO_NO_SE_PUDO, 'aclaracion' => ''],
+        ],
+    ]);
+
+    expect(fn () => app(UpdateWorkOrderStatusAction::class)->execute($o, WorkOrderStatus::Completed))
+        ->toThrow(DomainException::class);
+});
+
+it('las órdenes viejas con el checklist en formato anterior se pueden completar', function () {
+    // Las 50 órdenes que ya existen en prod guardaron item/done/note, sin campo
+    // estado. Si contaran como pendientes, no podrían cerrarse nunca.
+    $o = orden([
+        'status'         => 'repairing',
+        'work_performed' => 'Service completo',
+        'checklist'      => [
+            ['item' => 'Luces y señales', 'done' => true, 'note' => null],
+            ['item' => 'Frenos',          'done' => false, 'note' => null],
+        ],
+    ]);
+
+    app(UpdateWorkOrderStatusAction::class)->execute($o, WorkOrderStatus::Completed);
+
+    expect($o->refresh()->status)->toBe(WorkOrderStatus::Completed)
+        ->and($o->hasIssues())->toBeFalse();
+});

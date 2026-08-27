@@ -133,6 +133,10 @@ class WorkOrderResource extends Resource
                     Forms\Components\Textarea::make('diagnosis')
                         ->label(__('Diagnóstico'))
                         ->rows(3),
+                    Forms\Components\Textarea::make('work_performed')
+                        ->label(__('Trabajo realizado'))
+                        ->rows(3)
+                        ->helperText(__('Obligatorio para poder completar la orden.')),
                     Forms\Components\Textarea::make('internal_notes')
                         ->label(__('Notas internas'))
                         ->rows(2),
@@ -181,32 +185,57 @@ class WorkOrderResource extends Resource
                         ->helperText(__('Opcional: cómo se entregó el vehículo.'))
                         ->columnSpanFull(),
                 ]),
-            Forms\Components\Section::make(__('Checklist de revisión'))
+            // Los puntos a trabajar los hereda del presupuesto: son los que quedaron
+            // en REGULAR o MAL. Acá el mecánico marca si los hizo o no.
+            Forms\Components\Section::make(__('Trabajo a realizar'))
+                ->description(__('Puntos que el presupuesto marcó para trabajar. Si alguno no se pudo hacer, marcalo y explicá por qué.'))
                 ->collapsible()
-                ->collapsed()
                 ->schema([
                     Forms\Components\Repeater::make('checklist')
-                        ->label(__('Puntos a revisar'))
+                        ->label('')
+                        ->addable(false)
+                        ->deletable(false)
+                        ->reorderable(false)
+                        ->columns(12)
+                        ->itemLabel(fn (array $state): string => trim(
+                            '[' . ($state['categoria'] ?? '') . '] ' . ($state['nombre_item'] ?? '')
+                        ))
                         ->schema([
-                            Forms\Components\TextInput::make('item')
-                                ->label(__('Ítem'))
-                                ->required()
-                                ->maxLength(120),
-                            Forms\Components\Toggle::make('done')
-                                ->label(__('Revisado'))
-                                ->default(false),
-                            Forms\Components\TextInput::make('note')
-                                ->label(__('Observaciones'))
-                                ->maxLength(255),
-                        ])
-                        ->columns(3)
-                        ->default([
-                            ['item' => 'Luces y señales', 'done' => false, 'note' => null],
-                            ['item' => 'Nivel de fluidos', 'done' => false, 'note' => null],
-                            ['item' => 'Frenos', 'done' => false, 'note' => null],
-                            ['item' => 'Presión de neumáticos', 'done' => false, 'note' => null],
-                        ])
-                        ->addActionLabel(__('Agregar punto')),
+                            Forms\Components\Hidden::make('id_punto'),
+                            Forms\Components\Hidden::make('categoria'),
+                            Forms\Components\Hidden::make('estado_presupuesto'),
+                            Forms\Components\Hidden::make('observacion_previa'),
+
+                            Forms\Components\TextInput::make('nombre_item')
+                                ->label(__('Punto'))
+                                ->disabled()
+                                ->dehydrated() // lo usa el PDF
+                                ->columnSpan(4),
+
+                            Forms\Components\Placeholder::make('detalle_presupuesto')
+                                ->label(__('Según el presupuesto'))
+                                ->content(fn (Forms\Get $get): string => trim(
+                                    ($get('estado_presupuesto') ?? '—') .
+                                    ($get('observacion_previa') ? ' · ' . $get('observacion_previa') : '')
+                                ))
+                                ->columnSpan(3),
+
+                            Forms\Components\Radio::make('estado')
+                                ->label(__('¿Se hizo?'))
+                                ->options(WorkOrder::PUNTO_ESTADOS)
+                                ->inline()
+                                ->live()
+                                ->columnSpan(2),
+
+                            Forms\Components\TextInput::make('aclaracion')
+                                ->label(__('Por qué no se pudo'))
+                                ->placeholder(__('Falta el repuesto, apareció otra falla...'))
+                                // Obligatorio cuando el punto no se pudo hacer: es lo que
+                                // pidió el cliente para saber qué pasó.
+                                ->required(fn (Forms\Get $get): bool => $get('estado') === WorkOrder::PUNTO_NO_SE_PUDO)
+                                ->visible(fn (Forms\Get $get): bool => $get('estado') === WorkOrder::PUNTO_NO_SE_PUDO)
+                                ->columnSpan(3),
+                        ]),
                 ]),
             Forms\Components\Section::make(__('Ítems de la OS'))
                 ->schema([
@@ -314,6 +343,20 @@ class WorkOrderResource extends Resource
                 Tables\Columns\TextColumn::make('mechanic.name')
                     ->label(__('Mecánico'))
                     ->placeholder(__('No asignado')),
+                // El cliente pidió que se note cuando algo no se pudo hacer.
+                Tables\Columns\IconColumn::make('novedades')
+                    ->label(__('Novedades'))
+                    ->icon(fn (WorkOrder $record): string => $record->isBlocked()
+                        ? 'heroicon-o-lock-closed'
+                        : ($record->hasIssues() ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check'))
+                    ->color(fn (WorkOrder $record): string => $record->isBlocked()
+                        ? 'danger'
+                        : ($record->hasIssues() ? 'warning' : 'gray'))
+                    ->tooltip(fn (WorkOrder $record): ?string => match (true) {
+                        $record->isBlocked()  => __('Trabada: :motivo', ['motivo' => $record->blocked_reason]),
+                        $record->hasIssues()  => __(':n punto(s) sin hacer', ['n' => count($record->issuePoints())]),
+                        default               => null,
+                    }),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(__('Estado')),
                 Tables\Columns\BadgeColumn::make('priority')
@@ -338,6 +381,28 @@ class WorkOrderResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('con_novedades')
+                    ->label(__('Con novedades'))
+                    ->placeholder(__('Todas'))
+                    ->trueLabel(__('Con algo sin hacer'))
+                    ->falseLabel(__('Sin novedades'))
+                    ->queries(
+                        true: fn (Builder $query) => $query->where('checklist', 'like', '%NO_SE_PUDO%'),
+                        false: fn (Builder $query) => $query->where(fn (Builder $q) => $q
+                            ->whereNull('checklist')
+                            ->orWhere('checklist', 'not like', '%NO_SE_PUDO%')),
+                        blank: fn (Builder $query) => $query,
+                    ),
+                Tables\Filters\TernaryFilter::make('trabadas')
+                    ->label(__('Trabadas'))
+                    ->placeholder(__('Todas'))
+                    ->trueLabel(__('Solo trabadas'))
+                    ->falseLabel(__('Sin trabas'))
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotNull('blocked_reason'),
+                        false: fn (Builder $query) => $query->whereNull('blocked_reason'),
+                        blank: fn (Builder $query) => $query,
+                    ),
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('Estado'))
                     // Derivado del enum: antes estaba hardcodeado y se desincronizaba.

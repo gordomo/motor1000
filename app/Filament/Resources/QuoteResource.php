@@ -388,6 +388,10 @@ class QuoteResource extends Resource
                             // El KM del presupuesto manda; el del vehículo es el respaldo.
                             'mileage_in'  => $record->mileage ?: ($record->vehicle?->mileage ?? 0),
                             'discount'    => $record->discount,
+                            // El mecánico trabaja los puntos que el presupuesto marcó
+                            // como REGULAR o MAL: los que estaban bien no se tocan.
+                            'checklist'   => WorkOrder::buildChecklistFromQuote($record->checklist),
+                            'work_type'   => $record->type?->value,
                         ]);
 
                         foreach ($items as $item) {
