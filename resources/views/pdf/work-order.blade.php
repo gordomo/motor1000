@@ -140,7 +140,12 @@
             <td>
                 <strong>Vehículo</strong><br>
                 {{ $workOrder->vehicle->display_name ?? '-' }}<br>
-                VIN: {{ $workOrder->vehicle->vin ?? '-' }}
+                VIN: {{ $workOrder->vehicle->vin ?? '-' }}<br>
+                {{-- Lo pidió el usuario: el KM tiene que quedar en el comprobante --}}
+                KM entrada: {{ $workOrder->mileage_in ? number_format((int) $workOrder->mileage_in, 0, ',', '.') : '-' }}
+                @if($workOrder->mileage_out)
+                    <br>KM salida: {{ number_format((int) $workOrder->mileage_out, 0, ',', '.') }}
+                @endif
             </td>
             <td>
                 <strong>Mecánico</strong><br>
@@ -160,6 +165,26 @@
                 {{ $workOrder->diagnosis ?? '-' }}
             </td>
         </tr>
+        @if(filled($workOrder->work_performed))
+        <tr>
+            <td colspan="3">
+                <strong>Trabajo realizado</strong><br>
+                {{ $workOrder->work_performed }}
+            </td>
+        </tr>
+        @endif
+        {{-- Si algo no se pudo hacer, tiene que constar en el comprobante --}}
+        @php($sinHacer = $workOrder->issuePoints())
+        @if(count($sinHacer))
+        <tr>
+            <td colspan="3">
+                <strong>Puntos que no se pudieron realizar</strong><br>
+                @foreach($sinHacer as $punto)
+                    · {{ $punto['nombre_item'] ?? '' }}: {{ $punto['aclaracion'] ?? '' }}<br>
+                @endforeach
+            </td>
+        </tr>
+        @endif
     </table>
 
     <p class="section-title">Ítems</p>

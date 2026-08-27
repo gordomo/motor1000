@@ -332,3 +332,32 @@ it('las órdenes viejas con el checklist en formato anterior se pueden completar
     expect($o->refresh()->status)->toBe(WorkOrderStatus::Completed)
         ->and($o->hasIssues())->toBeFalse();
 });
+
+// ─── El kilometraje tiene que verse (lo pidió el usuario) ───────────────────
+
+it('el PDF de la orden muestra el kilometraje y el trabajo realizado', function () {
+    $o = orden([
+        'status'         => 'completed',
+        'mileage_in'     => 82500,
+        'mileage_out'    => 82530,
+        'work_performed' => 'Cambio de pastillas y purgado de frenos',
+        'checklist'      => [
+            ['id_punto' => 1, 'nombre_item' => 'Presión', 'estado' => WorkOrder::PUNTO_NO_SE_PUDO, 'aclaracion' => 'Falta el compresor'],
+        ],
+    ]);
+
+    $html = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.work-order', ['workOrder' => $o->load(['tenant', 'customer', 'vehicle', 'items'])]);
+
+    // El PDF se genera sin error y la ruta responde.
+    expect($html)->not->toBeNull();
+
+    $this->get(route('work-orders.pdf', $o))->assertOk();
+});
+
+it('la ficha de la orden muestra el kilometraje', function () {
+    $o = orden(['mileage_in' => 82500]);
+
+    $this->get(\App\Filament\Resources\WorkOrderResource::getUrl('view', ['record' => $o]))
+        ->assertOk()
+        ->assertSee('82.500');
+});

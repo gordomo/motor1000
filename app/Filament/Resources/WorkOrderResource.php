@@ -121,6 +121,11 @@ class WorkOrderResource extends Resource
                         // Pedido 11: obligatorio al abrir la orden.
                         ->required()
                         ->helperText(__('Se toma del vehículo y actualiza su kilometraje si es mayor.')),
+                    Forms\Components\TextInput::make('mileage_out')
+                        ->label(__('KM Salida'))
+                        ->numeric()
+                        ->minValue(0)
+                        ->helperText(__('Opcional, al entregar el vehículo.')),
                     Forms\Components\DateTimePicker::make('estimated_at')
                         ->label(__('Previsión de Entrega')),
                 ]),
@@ -568,8 +573,30 @@ class WorkOrderResource extends Resource
                     Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
                     Infolists\Components\TextEntry::make('vehicle.display_name')->label(__('Vehículo')),
                     Infolists\Components\TextEntry::make('mechanic.name')->label(__('Mecánico'))->placeholder(__('No asignado')),
+                    // El kilometraje no se mostraba en la ficha ni en el PDF (lo pidió
+                    // el usuario): es el dato que ubica el service en la historia del auto.
+                    Infolists\Components\TextEntry::make('mileage_in')
+                        ->label(__('KM de entrada'))
+                        ->numeric()
+                        ->suffix(' km')
+                        ->placeholder('—'),
+                    Infolists\Components\TextEntry::make('mileage_out')
+                        ->label(__('KM de salida'))
+                        ->numeric()
+                        ->suffix(' km')
+                        ->placeholder('—'),
+                    Infolists\Components\TextEntry::make('blocked_reason')
+                        ->label(__('Trabada'))
+                        ->badge()
+                        ->color('danger')
+                        ->columnSpan(1)
+                        ->visible(fn ($record): bool => $record->isBlocked()),
                     Infolists\Components\TextEntry::make('complaint')->label(__('Queja'))->columnSpan(3),
                     Infolists\Components\TextEntry::make('diagnosis')->label(__('Diagnóstico'))->columnSpan(3)->placeholder('—'),
+                    Infolists\Components\TextEntry::make('work_performed')
+                        ->label(__('Trabajo realizado'))
+                        ->columnSpan(3)
+                        ->placeholder('—'),
                     // Pedido 3: las fotos del ingreso son la prueba ante un reclamo,
                     // así que tienen que verse sin entrar a editar la orden.
                     Infolists\Components\ImageEntry::make('photos_in')
