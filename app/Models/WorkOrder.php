@@ -21,9 +21,13 @@ class WorkOrder extends Model
         'vehicle_id',
         'mechanic_id',
         'status',
+        'blocked_reason',
+        'blocked_at',
         'priority',
+        'work_type',
         'complaint',
         'diagnosis',
+        'work_performed',
         'internal_notes',
         'customer_notes',
         'mileage_in',
@@ -45,6 +49,7 @@ class WorkOrder extends Model
     ];
 
     protected $casts = [
+        'blocked_at'    => 'datetime',
         'estimated_at'  => 'datetime',
         'started_at'    => 'datetime',
         'completed_at'  => 'datetime',
@@ -58,6 +63,14 @@ class WorkOrder extends Model
         'total'         => 'decimal:2',
         'status'        => WorkOrderStatus::class,
     ];
+
+    /**
+     * Mecánico que está ejecutando el cambio de estado, elegido en el totem del
+     * taller. No es una columna: es contexto de la operación, y queda guardado en
+     * el historial. En el totem la sesión es compartida, así que user_id no
+     * alcanza para saber quién trabajó el auto.
+     */
+    public ?int $actingMechanicId = null;
 
     protected static function booted(): void
     {
@@ -74,6 +87,7 @@ class WorkOrder extends Model
                     'from_status'   => $order->getOriginal('status'),
                     'to_status'     => $order->status,
                     'user_id'       => auth()->id(),
+                    'mechanic_id'   => $order->actingMechanicId ?? $order->mechanic_id,
                 ]);
             }
         });
@@ -151,6 +165,66 @@ class WorkOrder extends Model
     public function quote(): BelongsTo
     {
         return $this->belongsTo(Quote::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->orderBy('paid_at');
+    }
+
+    // ─── Plata ────────────────────────────────────────────────────────────────
+
+    /** Es gratis si no hay nada que cobrar. Deriva del monto, no de un flag. */
+    public function isFree(): bool
+    {
+        return (float) $this->total <= 0;
+    }
+
+    public function totalPaid(): float
+    {
+        return (float) $this->payments()->sum('amount');
+    }
+
+    public function balance(): float
+    {
+        return round((float) $this->total - $this->totalPaid(), 2);
+    }
+
+    /**
+     * payment_status deriva de los cobros registrados: nadie lo carga a mano.
+     * Una orden gratis queda como pagada, no como pendiente eterna.
+     */
+    public function syncPaymentStatus(): void
+    {
+        $pagado = $this->totalPaid();
+
+        $status = match (true) {
+            $this->isFree()                 => 'paid',
+            $pagado <= 0                    => 'pending',
+            $pagado + 0.01 >= (float) $this->total => 'paid',
+            default                         => 'partial',
+        };
+
+        if ($this->payment_status !== $status) {
+            $this->forceFill(['payment_status' => $status])->saveQuietly();
+        }
+    }
+
+    // ─── Bloqueo ──────────────────────────────────────────────────────────────
+
+    public function isBlocked(): bool
+    {
+        return filled($this->blocked_reason);
+    }
+
+    public function block(string $reason): void
+    {
+        $this->forceFill(['blocked_reason' => $reason, 'blocked_at' => now()])->saveQuietly();
+    }
+
+    public function unblock(): void
+    {
+        $this->forceFill(['blocked_reason' => null, 'blocked_at' => null])->saveQuietly();
     }
 
     public function recalculateTotal(): void

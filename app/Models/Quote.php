@@ -99,9 +99,6 @@ class Quote extends Model
         static::updating(function (Quote $quote) {
             if ($quote->isDirty('status')) {
                 $now = now();
-                if ($quote->status === QuoteStatus::Sent && ! $quote->sent_at) {
-                    $quote->sent_at = $now;
-                }
                 if ($quote->status === QuoteStatus::Accepted && ! $quote->accepted_at) {
                     $quote->accepted_at = $now;
                 }

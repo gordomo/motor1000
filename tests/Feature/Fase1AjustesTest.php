@@ -123,7 +123,7 @@ it('11: el kilometraje del presupuesto también actualiza el del vehículo', fun
         'customer_id' => $this->customer->id,
         'vehicle_id'  => $this->vehicle->id,
         'mileage'     => 91000,
-        'status'      => 'draft',
+        'status'      => 'pending',
     ]);
 
     expect($this->vehicle->refresh()->mileage)->toBe(91000);

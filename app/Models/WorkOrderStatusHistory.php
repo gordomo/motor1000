@@ -18,6 +18,7 @@ class WorkOrderStatusHistory extends Model
         'to_status',
         'comment',
         'user_id',
+        'mechanic_id',
     ];
 
     protected $casts = [
@@ -32,5 +33,11 @@ class WorkOrderStatusHistory extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Qué mecánico hizo el cambio (elegido en el totem del taller). */
+    public function mechanic(): BelongsTo
+    {
+        return $this->belongsTo(Mechanic::class);
     }
 }

@@ -30,6 +30,8 @@ it('advances a work order to the next status', function () {
         'vehicle_id' => $this->vehicle->id,
         'status' => WorkOrderStatus::Repairing,
         'completed_at' => null,
+        // El flujo nuevo exige el trabajo realizado para poder completar.
+        'work_performed' => 'Se cambiaron las pastillas de freno',
     ]);
 
     $next = WorkOrderStatus::nextStates($order->status)[0];

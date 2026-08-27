@@ -53,6 +53,8 @@ beforeEach(function () {
         'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
         'vehicle_id' => $this->vehicle->id, 'status' => 'repairing',
         'complaint' => 'Ruido', 'mileage_in' => 50000,
+        // Requisito del flujo nuevo para poder completar la orden.
+        'work_performed' => 'Trabajo terminado',
     ]);
 });
 

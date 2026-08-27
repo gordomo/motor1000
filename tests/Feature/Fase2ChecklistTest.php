@@ -91,7 +91,7 @@ it('2: cada taller ve solo sus propios puntos', function () {
 it('2: editar los puntos no altera los presupuestos ya emitidos', function () {
     $quote = Quote::create([
         'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
-        'vehicle_id' => $this->vehicle->id, 'mileage' => 60000, 'status' => 'draft',
+        'vehicle_id' => $this->vehicle->id, 'mileage' => 60000, 'status' => 'pending',
     ]);
     $original = $quote->checklist;
 
@@ -120,7 +120,7 @@ it('2: el presupuesto sin revisión se guarda sin completar el checklist', funct
             'vehicle_id'  => $this->vehicle->id,
             'mileage'     => 61000,
             'type'        => QuoteType::SinChecklist->value,
-            'status'      => 'draft',
+            'status'      => 'pending',
             'items'       => [
                 ['tipo' => 'mano_de_obra', 'descripcion' => 'Cambio de aceite', 'cantidad' => 1, 'precio_unitario' => 45000],
             ],
@@ -143,7 +143,7 @@ it('2: el presupuesto con revisión sigue exigiendo el checklist completo', func
             'vehicle_id'  => $this->vehicle->id,
             'mileage'     => 61000,
             'type'        => QuoteType::ConChecklist->value,
-            'status'      => 'draft',
+            'status'      => 'pending',
         ])
         ->call('create')
         ->assertHasFormErrors();
@@ -154,7 +154,7 @@ it('2: el presupuesto con revisión sigue exigiendo el checklist completo', func
 it('2: por defecto el presupuesto es con revisión', function () {
     $quote = Quote::create([
         'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
-        'vehicle_id' => $this->vehicle->id, 'mileage' => 60000, 'status' => 'draft',
+        'vehicle_id' => $this->vehicle->id, 'mileage' => 60000, 'status' => 'pending',
     ]);
 
     expect($quote->refresh()->type)->toBe(QuoteType::ConChecklist)

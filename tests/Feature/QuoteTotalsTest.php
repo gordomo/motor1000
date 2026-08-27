@@ -19,7 +19,7 @@ it('calcula los totales del presupuesto al guardar', function () {
         'tenant_id'   => $t->id,
         'customer_id' => $c->id,
         'vehicle_id'  => $v->id,
-        'status'      => 'draft',
+        'status'      => 'pending',
         'tax'         => 0,
         'discount'    => 10000,
         // items como los manda el form (con el campo 'total' disabled → sin total)

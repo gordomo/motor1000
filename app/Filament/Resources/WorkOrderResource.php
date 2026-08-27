@@ -8,9 +8,11 @@ use App\Filament\Pages\WorkOrdersBoard;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Services\Inventory\WorkOrderStockService;
 use App\Services\Pdf\BulkPdfZipService;
+use App\Support\WorkOrderTransitions;
 use App\Models\Customer;
 use App\Models\InventoryItem;
 use App\Models\Mechanic;
+use App\Models\Payment;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use Filament\Forms;
@@ -374,8 +376,57 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn(WorkOrder $r) => ! empty(WorkOrderStatus::nextStates($r->status)))
-                    ->action(function (WorkOrder $record) {
+                    // Solo lo ve quien puede hacer esa transición (regla del cliente:
+                    // de completado a entregado solo lo pasa un comercial).
+                    ->visible(function (WorkOrder $r): bool {
+                        $next = WorkOrderStatus::nextStates($r->status)[0] ?? null;
+
+                        return $next && WorkOrderTransitions::userCanMove(auth()->user(), $r->status, $next);
+                    })
+                    // Cada paso pide lo suyo: el mecánico al tomar la orden, la forma
+                    // de pago al entregar.
+                    ->form(function (WorkOrder $record): array {
+                        $next = WorkOrderStatus::nextStates($record->status)[0] ?? null;
+
+                        if ($next === WorkOrderStatus::Repairing) {
+                            return [
+                                Forms\Components\Select::make('mechanic_id')
+                                    ->label(__('¿Quién se pone a trabajar?'))
+                                    ->options(fn () => Mechanic::where('is_active', true)->orderBy('name')->pluck('name', 'id'))
+                                    ->default($record->mechanic_id)
+                                    ->required(),
+                            ];
+                        }
+
+                        if ($next === WorkOrderStatus::Delivered && ! $record->isFree()) {
+                            $saldo = $record->balance();
+
+                            return [
+                                Forms\Components\Placeholder::make('resumen')
+                                    ->label(__('A cobrar'))
+                                    ->content(fn (): string => '$ ' . number_format($saldo, 2, ',', '.')
+                                        . ($record->totalPaid() > 0
+                                            ? ' (' . __('ya pagó') . ' $ ' . number_format($record->totalPaid(), 2, ',', '.') . ')'
+                                            : '')),
+                                Forms\Components\TextInput::make('amount')
+                                    ->label(__('Monto cobrado'))
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->default($saldo)
+                                    ->required(),
+                                Forms\Components\Select::make('method')
+                                    ->label(__('Forma de pago'))
+                                    ->options(Payment::METHODS)
+                                    ->required(),
+                                Forms\Components\Textarea::make('notes')
+                                    ->label(__('Observaciones'))
+                                    ->rows(2),
+                            ];
+                        }
+
+                        return [];
+                    })
+                    ->action(function (WorkOrder $record, array $data) {
                         $next = WorkOrderStatus::nextStates($record->status)[0];
 
                         // Pedido 6: si el cierre deja stock en negativo se avisa, pero
@@ -385,7 +436,26 @@ class WorkOrderResource extends Resource
                             ? app(WorkOrderStockService::class)->shortages($record)
                             : [];
 
-                        app(UpdateWorkOrderStatusAction::class)->execute($record, $next);
+                        try {
+                            app(UpdateWorkOrderStatusAction::class)->execute($record, $next, options: [
+                                'mechanic_id' => $data['mechanic_id'] ?? null,
+                                'payment'     => isset($data['amount']) ? [
+                                    'amount' => (float) $data['amount'],
+                                    'method' => $data['method'],
+                                    'type'   => 'saldo',
+                                    'notes'  => $data['notes'] ?? null,
+                                ] : null,
+                            ]);
+                        } catch (\DomainException $e) {
+                            Notification::make()
+                                ->title(__('No se puede avanzar'))
+                                ->body($e->getMessage())
+                                ->warning()
+                                ->persistent()
+                                ->send();
+
+                            return;
+                        }
 
                         Notification::make()
                             ->title("OS avanzada a: {$next->getLabel()}")

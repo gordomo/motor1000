@@ -77,8 +77,23 @@ class WorkOrdersBoard extends Page
 
         // El tablero actualizaba el estado por su cuenta, salteando la Action: por
         // eso arrastrar a "Completado" no avisaba al cliente. Ahora usa el mismo
-        // camino que el botón Avanzar, que además descuenta el stock (pedido 5).
-        app(UpdateWorkOrderStatusAction::class)->execute($order, $status);
+        // camino que el botón Avanzar, que además descuenta el stock (pedido 5) y
+        // valida quién puede mover qué.
+        try {
+            app(UpdateWorkOrderStatusAction::class)->execute($order, $status);
+        } catch (\DomainException $e) {
+            Notification::make()
+                ->title(__('No se puede mover la orden'))
+                ->body($e->getMessage())
+                ->warning()
+                ->persistent()
+                ->send();
+
+            // Vuelve a dibujar el tablero para que la tarjeta regrese a su columna.
+            $this->refreshBoard();
+
+            return;
+        }
 
         Notification::make()
             ->title(__(':number movida a :status', ['number' => $order->number, 'status' => $status->getLabel()]))

@@ -41,7 +41,7 @@ class QuoteResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return (string) Quote::whereIn('status', ['draft', 'sent'])->count();
+        return (string) Quote::where('status', QuoteStatus::Pending->value)->count();
     }
 
     public static function getNavigationBadgeColor(): string
@@ -107,7 +107,7 @@ class QuoteResource extends Resource
                     Forms\Components\Select::make('status')
                         ->label(__('Estado'))
                         ->options(QuoteStatus::class)
-                        ->default(QuoteStatus::Draft)
+                        ->default(QuoteStatus::Pending)
                         ->required()
                         ->columnSpan(1),
 
