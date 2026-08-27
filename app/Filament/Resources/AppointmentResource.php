@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AppointmentResource\Pages;
 use App\Mail\AppointmentConfirmationMail;
 use App\Models\Appointment;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Mail;
@@ -15,6 +16,8 @@ use Filament\Tables\Table;
 
 class AppointmentResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Appointment::class;
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?int $navigationSort = 3;

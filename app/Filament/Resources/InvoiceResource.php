@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Services\Pdf\BulkPdfZipService;
 use App\Models\Invoice;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -17,6 +18,8 @@ use Illuminate\Support\Collection;
 
 class InvoiceResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Invoice::class;
 
     protected static ?string $navigationIcon       = 'heroicon-o-document-currency-dollar';

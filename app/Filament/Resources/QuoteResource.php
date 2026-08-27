@@ -9,6 +9,7 @@ use App\Models\Mechanic;
 use App\Models\Quote;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -20,6 +21,8 @@ use Filament\Tables\Table;
 
 class QuoteResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Quote::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?int $navigationSort = 2;

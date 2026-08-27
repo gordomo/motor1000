@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TaskResource\Pages;
 use App\Models\Task;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TaskResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Task::class;
 
     protected static ?string $navigationIcon   = 'heroicon-o-check-circle';

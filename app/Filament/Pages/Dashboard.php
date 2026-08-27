@@ -24,6 +24,21 @@ class Dashboard extends BaseDashboard
         return __('Centro de Operaciones');
     }
 
+    /**
+     * Punto 7: el mecánico no ve el tablero comercial, solo el del taller.
+     * Su pantalla de inicio se define en AppPanelProvider::homeUrl().
+     */
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return ! ($user->hasRole('mechanic') && ! $user->hasAnyRole(['admin', 'receptionist']));
+    }
+
     public function getWidgets(): array
     {
         return [

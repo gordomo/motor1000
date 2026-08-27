@@ -50,6 +50,12 @@ class AppPanelProvider extends PanelProvider
             ->darkMode(false)
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
+            // El mecánico aterriza en el tablero del taller: no tiene acceso al
+            // Centro de Operaciones y sin esto quedaría en una pantalla prohibida.
+            ->homeUrl(fn (): string => auth()->user()?->hasRole('mechanic')
+                && ! auth()->user()->hasAnyRole(['admin', 'receptionist'])
+                    ? \App\Filament\Pages\MechanicBoard::getUrl()
+                    : \App\Filament\Pages\Dashboard::getUrl())
             // Campanita del panel: la usan las alertas de stock crítico (pedido 6).
             ->databaseNotifications()
             ->databaseNotificationsPolling('60s')

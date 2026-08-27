@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ReminderType;
 use App\Filament\Resources\ReminderResource\Pages;
 use App\Models\Reminder;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,6 +14,8 @@ use Filament\Tables\Table;
 
 class ReminderResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Reminder::class;
     protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
     protected static ?int $navigationSort = 3;

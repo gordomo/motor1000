@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CommunicationTemplateResource\Pages;
 use App\Models\CommunicationTemplate;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,8 @@ use Filament\Tables\Table;
 
 class CommunicationTemplateResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = CommunicationTemplate::class;
 
     protected static ?string $navigationIcon   = 'heroicon-o-chat-bubble-left-ellipsis';

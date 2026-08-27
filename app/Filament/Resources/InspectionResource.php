@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InspectionResource\Pages;
 use App\Models\Inspection;
 use App\Models\Vehicle;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -19,6 +20,8 @@ use Filament\Tables\Table;
  */
 class InspectionResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Inspection::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';

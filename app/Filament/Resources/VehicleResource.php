@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\VehicleResource\Pages;
 use App\Models\Vehicle;
+use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 
 class VehicleResource extends Resource
 {
+    use HiddenFromMechanics;
+
     protected static ?string $model = Vehicle::class;
     protected static ?string $navigationIcon = 'heroicon-o-truck';
     protected static ?int $navigationSort = 2;
