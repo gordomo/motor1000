@@ -74,14 +74,22 @@ class UserResource extends Resource
             Forms\Components\Section::make(__('Datos del usuario'))
                 ->columns(2)
                 ->schema([
+                    // autocomplete off + live(onBlur): el autocompletado de Chrome
+                    // llenaba nombre y correo sin disparar el evento que escucha
+                    // Livewire, así que en pantalla se veían los datos pero el
+                    // servidor los recibía vacíos y pedía los campos igual.
                     Forms\Components\TextInput::make('name')
                         ->label(__('Nombre'))
                         ->required()
+                        ->autocomplete(false)
+                        ->live(onBlur: true)
                         ->maxLength(255),
                     Forms\Components\TextInput::make('email')
                         ->label(__('Correo electrónico'))
                         ->email()
                         ->required()
+                        ->autocomplete(false)
+                        ->live(onBlur: true)
                         ->unique(User::class, 'email', ignoreRecord: true)
                         ->maxLength(255),
                     Forms\Components\TextInput::make('phone')
