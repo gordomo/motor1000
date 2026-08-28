@@ -179,7 +179,7 @@
                                 </div>
 
                                 <p @class([
-                                    'mt-2 text-sm',
+                                    'mt-3 text-sm',
                                     'font-semibold text-amber-600' => $faltan > 0,
                                     'font-semibold text-green-600' => $faltan === 0,
                                 ])>
@@ -192,7 +192,7 @@
                             @endif
 
                             {{-- ── Botones ─────────────────────────────────────── --}}
-                            <div class="mt-4 flex flex-wrap gap-2">
+                            <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
                                 @if ($enCurso)
                                     @unless ($order->mechanic_id)
                                         <x-filament::button
