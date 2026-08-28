@@ -12,7 +12,12 @@
         display: none !important;
     }
 
+    /* El panel limita el contenido a 1560px y lo centra (ver theme-overrides).
+       Sin la barra lateral hay que soltar ese tope: si solo se anula el margen
+       izquierdo, el sobrante se va entero a la derecha y queda un hueco. En una
+       tablet o un totem conviene usar todo el ancho. */
     .fi-main-ctn {
-        margin-inline-start: 0 !important;
+        max-width: none !important;
+        margin-inline: 0 !important;
     }
 </style>
