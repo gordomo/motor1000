@@ -315,22 +315,33 @@ it('no se completa si un punto quedó como "no se pudo" sin explicar', function 
         ->toThrow(DomainException::class);
 });
 
-it('las órdenes viejas con el checklist en formato anterior se pueden completar', function () {
-    // Las 50 órdenes que ya existen en prod guardaron item/done/note, sin campo
-    // estado. Si contaran como pendientes, no podrían cerrarse nunca.
+it('el checklist en formato anterior se traduce en vez de ignorarse', function () {
+    // Antes se ignoraban esos puntos para no trabar las órdenes ya cargadas, pero
+    // eso hacía que la vista los mostrara en blanco. Ahora se traducen: el punto
+    // tiene nombre y hay que marcarlo, como cualquier otro.
     $o = orden([
         'status'         => 'repairing',
         'work_performed' => 'Service completo',
         'checklist'      => [
-            ['item' => 'Luces y señales', 'done' => true, 'note' => null],
+            ['item' => 'Luces y señales', 'done' => true,  'note' => null],
             ['item' => 'Frenos',          'done' => false, 'note' => null],
         ],
     ]);
 
-    app(UpdateWorkOrderStatusAction::class)->execute($o, WorkOrderStatus::Completed);
+    expect(WorkOrderTransitions::pendingChecklistPoints($o))->toBe(1);
 
-    expect($o->refresh()->status)->toBe(WorkOrderStatus::Completed)
-        ->and($o->hasIssues())->toBeFalse();
+    expect(fn () => app(UpdateWorkOrderStatusAction::class)->execute($o, WorkOrderStatus::Completed))
+        ->toThrow(DomainException::class);
+
+    // Marcando el que faltaba, cierra.
+    $o->forceFill(['checklist' => [
+        ['item' => 'Luces y señales', 'done' => true, 'note' => null],
+        ['item' => 'Frenos',          'done' => true, 'note' => null],
+    ]])->saveQuietly();
+
+    app(UpdateWorkOrderStatusAction::class)->execute($o->refresh(), WorkOrderStatus::Completed);
+
+    expect($o->refresh()->status)->toBe(WorkOrderStatus::Completed);
 });
 
 // ─── El kilometraje tiene que verse (lo pidió el usuario) ───────────────────

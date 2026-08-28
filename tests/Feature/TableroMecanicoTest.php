@@ -236,6 +236,62 @@ it('la tarjeta muestra los puntos a trabajar y cuántos van marcados', function 
         ->assertSee('Falta marcar 1 punto para poder cerrar');
 });
 
+it('las órdenes con el checklist viejo muestran el nombre de sus puntos', function () {
+    // Las 53 órdenes que existen en prod guardaron item/done/note, con los 4 puntos
+    // fijos que traía el formulario. La vista los dibujaba en blanco porque buscaba
+    // los campos nuevos.
+    $this->orden->update([
+        'status'    => 'repairing',
+        'checklist' => [
+            ['item' => 'Luces y señales',       'done' => true,  'note' => null],
+            ['item' => 'Nivel de fluidos',      'done' => false, 'note' => 'revisar'],
+            ['item' => 'Frenos',                'done' => false, 'note' => null],
+            ['item' => 'Presión de neumáticos', 'done' => false, 'note' => null],
+        ],
+    ]);
+
+    $puntos = $this->orden->workChecklist();
+
+    expect($puntos)->toHaveCount(4)
+        ->and($puntos[0]['nombre_item'])->toBe('Luces y señales')
+        // El tilde viejo de "revisado" se lee como hecho.
+        ->and($puntos[0]['estado'])->toBe(WorkOrder::PUNTO_HECHO)
+        ->and($puntos[1]['estado'])->toBeNull();
+
+    Livewire::test(MechanicBoard::class)
+        ->assertSee('Luces y señales')
+        ->assertSee('Presión de neumáticos')
+        ->assertSee('1/4')
+        ->assertSee('Checklist cargado en la orden');
+});
+
+it('marcar un punto convierte el checklist viejo al formato nuevo', function () {
+    $this->orden->update([
+        'status'    => 'repairing',
+        'checklist' => [['item' => 'Frenos', 'done' => false, 'note' => null]],
+    ]);
+
+    Livewire::test(MechanicBoard::class)
+        ->call('marcarHecho', $this->orden->id, 0);
+
+    $guardado = $this->orden->refresh()->checklist;
+
+    expect($guardado[0])->toHaveKey('nombre_item')
+        ->and($guardado[0]['nombre_item'])->toBe('Frenos')
+        ->and($guardado[0]['estado'])->toBe(WorkOrder::PUNTO_HECHO);
+});
+
+it('dice que los puntos vienen del presupuesto cuando la orden nació de uno', function () {
+    $quote = \App\Models\Quote::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'mileage' => 50000, 'status' => 'accepted',
+    ]);
+
+    $this->orden->update(['status' => 'repairing', 'quote_id' => $quote->id]);
+
+    expect($this->orden->refresh()->checklistOrigen())->toBe('Del presupuesto ' . $quote->code);
+});
+
 it('avisa cuando la orden no tiene puntos cargados', function () {
     $this->orden->update(['status' => 'repairing', 'checklist' => null]);
 

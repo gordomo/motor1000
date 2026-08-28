@@ -254,11 +254,74 @@ class WorkOrder extends Model
             ->all();
     }
 
+    /**
+     * Puntos a trabajar, siempre con la misma forma, venga el checklist del
+     * formato nuevo o del viejo.
+     *
+     * Las órdenes anteriores a este flujo guardaron el checklist como
+     * item / done / note, con 4 puntos fijos que traía el formulario
+     * (Luces y señales, Nivel de fluidos, Frenos, Presión de neumáticos). Esas
+     * órdenes existen y se siguen trabajando, así que se traducen en lugar de
+     * ignorarse: la vista mostraba filas en blanco porque buscaba los campos
+     * nuevos.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function workChecklist(): array
+    {
+        return collect($this->checklist ?? [])
+            ->filter(fn ($punto): bool => is_array($punto))
+            ->map(function (array $punto): array {
+                $esViejo = ! array_key_exists('nombre_item', $punto) && array_key_exists('item', $punto);
+
+                if (! $esViejo) {
+                    return [
+                        'nombre_item'        => $punto['nombre_item'] ?? '',
+                        'categoria'          => $punto['categoria'] ?? '',
+                        'estado_presupuesto' => $punto['estado_presupuesto'] ?? null,
+                        'observacion_previa' => $punto['observacion_previa'] ?? '',
+                        'estado'             => $punto['estado'] ?? null,
+                        'aclaracion'         => $punto['aclaracion'] ?? '',
+                        'id_punto'           => $punto['id_punto'] ?? null,
+                    ];
+                }
+
+                return [
+                    'nombre_item'        => $punto['item'] ?? '',
+                    'categoria'          => '',
+                    'estado_presupuesto' => null,
+                    'observacion_previa' => $punto['note'] ?? '',
+                    // Lo que antes era un tilde "revisado" ahora es "hecho".
+                    'estado'             => ($punto['done'] ?? false) ? self::PUNTO_HECHO : null,
+                    'aclaracion'         => '',
+                    'id_punto'           => null,
+                ];
+            })
+            // Un punto sin nombre no se puede trabajar ni mostrar.
+            ->filter(fn (array $punto): bool => filled($punto['nombre_item']))
+            ->values()
+            ->all();
+    }
+
+    /** De dónde salieron los puntos, para poder explicarlo en pantalla. */
+    public function checklistOrigen(): ?string
+    {
+        if (blank($this->checklist)) {
+            return null;
+        }
+
+        if ($this->quote_id && $this->quote) {
+            return __('Del presupuesto :code', ['code' => $this->quote->code]);
+        }
+
+        return __('Checklist cargado en la orden');
+    }
+
     /** Puntos que el mecánico no pudo hacer. */
     public function issuePoints(): array
     {
-        return collect($this->checklist ?? [])
-            ->filter(fn ($punto): bool => ($punto['estado'] ?? null) === self::PUNTO_NO_SE_PUDO)
+        return collect($this->workChecklist())
+            ->filter(fn (array $punto): bool => $punto['estado'] === self::PUNTO_NO_SE_PUDO)
             ->values()
             ->all();
     }

@@ -296,7 +296,10 @@ class MechanicBoard extends Page
             return;
         }
 
-        $checklist = $order->checklist ?? [];
+        // Se parte de la lista normalizada y se guarda normalizada: así las órdenes
+        // que traían el formato viejo quedan convertidas la primera vez que alguien
+        // toca un punto, sin necesidad de migrar datos a mano.
+        $checklist = $order->workChecklist();
 
         if (! array_key_exists($indice, $checklist)) {
             return;

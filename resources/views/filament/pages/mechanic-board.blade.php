@@ -28,8 +28,11 @@
                         @php
                             $trabada = $order->isBlocked();
                             $enCurso = $order->status === \App\Enums\WorkOrderStatus::Repairing;
-                            $puntos = collect($order->checklist ?? []);
-                            $marcados = $puntos->filter(fn ($p) => filled($p['estado'] ?? null))->count();
+                            // workChecklist() traduce el formato viejo: las órdenes
+                            // anteriores a este flujo guardaban item/done/note y las
+                            // filas salían en blanco.
+                            $puntos = collect($order->workChecklist());
+                            $marcados = $puntos->filter(fn ($p) => filled($p['estado']))->count();
                             $faltan = $puntos->count() - $marcados;
                         @endphp
 
@@ -99,9 +102,15 @@
                             @else
                                 {{-- Puntos marcables directo: en una tablet, un toque por punto --}}
                                 <div class="mt-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <p class="border-b border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:border-gray-700">
-                                        {{ __('Marcá cada punto') }} · {{ $marcados }}/{{ $puntos->count() }}
-                                    </p>
+                                    <div class="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                                        <p class="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                            {{ __('Marcá cada punto') }} · {{ $marcados }}/{{ $puntos->count() }}
+                                        </p>
+                                        {{-- De dónde salen los puntos: si no, no se entiende --}}
+                                        @if ($origen = $order->checklistOrigen())
+                                            <p class="text-xs text-gray-400">{{ $origen }}</p>
+                                        @endif
+                                    </div>
 
                                     <ul class="divide-y divide-gray-100 dark:divide-gray-800">
                                         @foreach ($puntos as $indice => $punto)
@@ -112,19 +121,19 @@
                                                         'text-sm font-medium text-gray-800 dark:text-gray-100',
                                                         'line-through opacity-60' => $estado === \App\Models\WorkOrder::PUNTO_HECHO,
                                                     ])>
-                                                        {{ $punto['nombre_item'] ?? '' }}
+                                                        {{ $punto['nombre_item'] }}
                                                     </p>
-                                                    @if (($punto['estado_presupuesto'] ?? null))
+                                                    @if ($punto['estado_presupuesto'])
                                                         <p class="text-xs text-gray-400">
                                                             {{ __('venía') }} {{ $punto['estado_presupuesto'] }}
-                                                            @if (($punto['observacion_previa'] ?? null))
+                                                            @if ($punto['observacion_previa'])
                                                                 · {{ $punto['observacion_previa'] }}
                                                             @endif
                                                         </p>
                                                     @endif
                                                     @if ($estado === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO)
                                                         <p class="text-xs font-semibold text-amber-600">
-                                                            {{ __('No se pudo:') }} {{ $punto['aclaracion'] ?? '' }}
+                                                            {{ __('No se pudo:') }} {{ $punto['aclaracion'] }}
                                                         </p>
                                                     @endif
                                                 </div>

@@ -75,10 +75,9 @@ class WorkOrderTransitions
             }
 
             // Si algo no se pudo hacer, tiene que estar explicado.
-            $sinExplicar = collect($order->checklist ?? [])
-                ->filter(fn ($punto): bool => is_array($punto)
-                    && ($punto['estado'] ?? null) === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO
-                    && blank($punto['aclaracion'] ?? null))
+            $sinExplicar = collect($order->workChecklist())
+                ->filter(fn (array $punto): bool => $punto['estado'] === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO
+                    && blank($punto['aclaracion']))
                 ->count();
 
             if ($sinExplicar) {
@@ -95,12 +94,8 @@ class WorkOrderTransitions
      */
     public static function pendingChecklistPoints(WorkOrder $order): int
     {
-        return collect($order->checklist ?? [])
-            // Las órdenes anteriores a este flujo guardaron el checklist con otra
-            // forma (item / done / note), sin campo 'estado'. Esas se ignoran: si
-            // no, ninguna orden ya cargada podría completarse nunca.
-            ->filter(fn ($punto): bool => is_array($punto) && array_key_exists('estado', $punto))
-            ->filter(fn ($punto): bool => blank($punto['estado']))
+        return collect($order->workChecklist())
+            ->filter(fn (array $punto): bool => blank($punto['estado']))
             ->count();
     }
 }
