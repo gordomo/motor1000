@@ -1,5 +1,15 @@
 <x-filament-panels::page>
-    {{-- Vista del mecánico: pensada para tablet/totem. Botones grandes, sin plata. --}}
+    {{-- Vista del mecánico: pensada para tablet o totem. Botones grandes, sin plata.
+         Los nombres de los estados salen del enum: la misma orden se llama igual
+         acá, en el listado, en el kanban y en el PDF. --}}
+
+    @if (auth()->user()?->isOnlyMechanic())
+        {{-- Con un solo ítem en el menú, la barra lateral es ruido en una tablet --}}
+        <style>
+            .fi-sidebar, .fi-topbar-open-sidebar-btn, .fi-sidebar-close-overlay { display: none !important; }
+            .fi-main-ctn { margin-inline-start: 0 !important; }
+        </style>
+    @endif
 
     @foreach ($this->grupos as $grupo)
         <section class="mb-8">
@@ -17,17 +27,18 @@
                     @foreach ($grupo['items'] as $order)
                         @php
                             $trabada = $order->isBlocked();
-                            $novedades = $order->hasIssues();
                             $enCurso = $order->status === \App\Enums\WorkOrderStatus::Repairing;
+                            $puntos = collect($order->checklist ?? []);
+                            $marcados = $puntos->filter(fn ($p) => filled($p['estado'] ?? null))->count();
+                            $faltan = $puntos->count() - $marcados;
                         @endphp
 
                         <article @class([
                             'rounded-xl border-2 bg-white p-4 shadow-sm dark:bg-gray-900',
                             'border-red-500' => $trabada,
-                            'border-amber-400' => ! $trabada && $novedades,
-                            'border-gray-200 dark:border-gray-700' => ! $trabada && ! $novedades,
+                            'border-gray-200 dark:border-gray-700' => ! $trabada,
                         ])>
-                            {{-- Patente bien grande: es lo que el mecánico busca --}}
+                            {{-- Patente en grande: es lo que el mecánico busca --}}
                             <div class="flex items-start justify-between gap-2">
                                 <div>
                                     <p class="text-2xl font-black tracking-wide text-gray-900 dark:text-white">
@@ -37,79 +48,32 @@
                                         {{ trim(($order->vehicle?->brand ?? '') . ' ' . ($order->vehicle?->model ?? '')) ?: __('Vehículo sin datos') }}
                                     </p>
                                 </div>
-                                <span class="shrink-0 rounded-full px-2 py-1 text-xs font-bold
-                                    @class([
+                                <div class="shrink-0 text-right">
+                                    <span @class([
+                                        'rounded-full px-2 py-1 text-xs font-bold',
                                         'bg-red-100 text-red-700' => $order->priority === 'urgent',
                                         'bg-amber-100 text-amber-700' => $order->priority === 'high',
                                         'bg-blue-100 text-blue-700' => $order->priority === 'normal',
                                         'bg-gray-100 text-gray-600' => $order->priority === 'low',
-                                    ])">
-                                    {{ match ($order->priority) {
-                                        'urgent' => __('Urgente'),
-                                        'high' => __('Alta'),
-                                        'low' => __('Baja'),
-                                        default => __('Normal'),
-                                    } }}
-                                </span>
+                                    ])>
+                                        {{ match ($order->priority) {
+                                            'urgent' => __('Urgente'),
+                                            'high' => __('Alta'),
+                                            'low' => __('Baja'),
+                                            default => __('Normal'),
+                                        } }}
+                                    </span>
+                                    <p class="mt-1 text-xs text-gray-400">{{ $order->number }}</p>
+                                </div>
                             </div>
-
-                            <p class="mt-2 text-xs font-semibold text-gray-400">{{ $order->number }}</p>
 
                             <p class="mt-2 text-sm text-gray-700 dark:text-gray-200">
                                 <span class="font-semibold">{{ __('Trabajo:') }}</span> {{ $order->complaint }}
                             </p>
 
                             @if ($enCurso)
-                                <p class="mt-2 text-sm font-semibold text-primary-600">
+                                <p class="mt-1 text-sm font-semibold text-primary-600">
                                     {{ __('Lo está haciendo:') }} {{ $order->mechanic?->name ?? __('sin asignar') }}
-                                </p>
-                            @endif
-
-                            {{-- Los puntos a la vista: antes solo decía "4 puntos a
-                                 trabajar" y parecía que se podía cerrar sin marcarlos --}}
-                            @if (filled($order->checklist))
-                                @php
-                                    $puntos = collect($order->checklist);
-                                    $marcados = $puntos->filter(fn ($p) => filled($p['estado'] ?? null))->count();
-                                @endphp
-
-                                <div class="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                                    <p class="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">
-                                        {{ __('A trabajar') }} · {{ $marcados }}/{{ $puntos->count() }} {{ __('marcados') }}
-                                    </p>
-
-                                    <ul class="space-y-1">
-                                        @foreach ($puntos as $punto)
-                                            @php($estado = $punto['estado'] ?? null)
-                                            <li class="flex items-start gap-2 text-sm">
-                                                <span class="mt-0.5 shrink-0">
-                                                    @if ($estado === \App\Models\WorkOrder::PUNTO_HECHO)
-                                                        <x-filament::icon icon="heroicon-o-check-circle" class="h-4 w-4 text-green-600" />
-                                                    @elseif ($estado === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO)
-                                                        <x-filament::icon icon="heroicon-o-x-circle" class="h-4 w-4 text-amber-500" />
-                                                    @else
-                                                        <x-filament::icon icon="heroicon-o-minus-circle" class="h-4 w-4 text-gray-300" />
-                                                    @endif
-                                                </span>
-                                                <span @class(['text-gray-700 dark:text-gray-200', 'line-through opacity-60' => $estado === \App\Models\WorkOrder::PUNTO_HECHO])>
-                                                    {{ $punto['nombre_item'] ?? '' }}
-                                                    @if (($punto['estado_presupuesto'] ?? null))
-                                                        <span class="text-xs text-gray-400">({{ $punto['estado_presupuesto'] }})</span>
-                                                    @endif
-                                                </span>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-
-                                    @if ($marcados < $puntos->count())
-                                        <p class="mt-2 text-xs font-semibold text-amber-600">
-                                            {{ __('Hay que marcar todos los puntos para poder cerrar la orden.') }}
-                                        </p>
-                                    @endif
-                                </div>
-                            @else
-                                <p class="mt-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500 dark:bg-gray-800">
-                                    {{ __('Esta orden no tiene puntos cargados. Al cerrarla solo se pide el trabajo realizado.') }}
                                 </p>
                             @endif
 
@@ -119,7 +83,106 @@
                                 </p>
                             @endif
 
-                            {{-- Botones grandes, uno por acción posible --}}
+                            {{-- ── Qué hacer con esta tarjeta ──────────────────── --}}
+                            @if (! $enCurso)
+                                <p class="mt-4 rounded-lg bg-gray-50 p-2 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                    @if ($trabada)
+                                        {{ __('Cuando se resuelva lo que falta, tocá "Ya se resolvió" y después empezá el trabajo.') }}
+                                    @else
+                                        {{ __('Tocá "Me pongo a trabajar" para tomar este auto.') }}
+                                    @endif
+                                </p>
+                            @elseif ($puntos->isEmpty())
+                                <p class="mt-4 rounded-lg bg-gray-50 p-2 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                    {{ __('Esta orden no tiene puntos cargados. Cuando termines, tocá "Terminé el trabajo" y contá qué hiciste.') }}
+                                </p>
+                            @else
+                                {{-- Puntos marcables directo: en una tablet, un toque por punto --}}
+                                <div class="mt-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                                    <p class="border-b border-gray-200 px-3 py-2 text-xs font-bold uppercase tracking-wide text-gray-500 dark:border-gray-700">
+                                        {{ __('Marcá cada punto') }} · {{ $marcados }}/{{ $puntos->count() }}
+                                    </p>
+
+                                    <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+                                        @foreach ($puntos as $indice => $punto)
+                                            @php($estado = $punto['estado'] ?? null)
+                                            <li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                                                <div class="min-w-0 flex-1">
+                                                    <p @class([
+                                                        'text-sm font-medium text-gray-800 dark:text-gray-100',
+                                                        'line-through opacity-60' => $estado === \App\Models\WorkOrder::PUNTO_HECHO,
+                                                    ])>
+                                                        {{ $punto['nombre_item'] ?? '' }}
+                                                    </p>
+                                                    @if (($punto['estado_presupuesto'] ?? null))
+                                                        <p class="text-xs text-gray-400">
+                                                            {{ __('venía') }} {{ $punto['estado_presupuesto'] }}
+                                                            @if (($punto['observacion_previa'] ?? null))
+                                                                · {{ $punto['observacion_previa'] }}
+                                                            @endif
+                                                        </p>
+                                                    @endif
+                                                    @if ($estado === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO)
+                                                        <p class="text-xs font-semibold text-amber-600">
+                                                            {{ __('No se pudo:') }} {{ $punto['aclaracion'] ?? '' }}
+                                                        </p>
+                                                    @endif
+                                                </div>
+
+                                                <div class="flex shrink-0 items-center gap-1">
+                                                    @if ($estado)
+                                                        <span @class([
+                                                            'rounded px-2 py-1 text-xs font-bold',
+                                                            'bg-green-100 text-green-700' => $estado === \App\Models\WorkOrder::PUNTO_HECHO,
+                                                            'bg-amber-100 text-amber-700' => $estado === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO,
+                                                        ])>
+                                                            {{ \App\Models\WorkOrder::PUNTO_ESTADOS[$estado] ?? $estado }}
+                                                        </span>
+                                                        <x-filament::icon-button
+                                                            icon="heroicon-o-arrow-uturn-left"
+                                                            color="gray"
+                                                            size="lg"
+                                                            :label="__('Desmarcar')"
+                                                            wire:click="desmarcarPunto({{ $order->id }}, {{ $indice }})"
+                                                        />
+                                                    @else
+                                                        <x-filament::button
+                                                            size="sm"
+                                                            color="success"
+                                                            icon="heroicon-o-check"
+                                                            wire:click="marcarHecho({{ $order->id }}, {{ $indice }})"
+                                                        >
+                                                            {{ __('Hecho') }}
+                                                        </x-filament::button>
+                                                        <x-filament::button
+                                                            size="sm"
+                                                            color="warning"
+                                                            icon="heroicon-o-x-mark"
+                                                            wire:click="mountAction('noSePudo', { order: {{ $order->id }}, indice: {{ $indice }} })"
+                                                        >
+                                                            {{ __('No se pudo') }}
+                                                        </x-filament::button>
+                                                    @endif
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+
+                                <p @class([
+                                    'mt-2 text-sm',
+                                    'font-semibold text-amber-600' => $faltan > 0,
+                                    'font-semibold text-green-600' => $faltan === 0,
+                                ])>
+                                    @if ($faltan > 0)
+                                        {{ trans_choice('{1} Falta marcar 1 punto para poder cerrar|[2,*] Faltan marcar :count puntos para poder cerrar', $faltan, ['count' => $faltan]) }}
+                                    @else
+                                        {{ __('Todo marcado. Ya podés cerrar la orden.') }}
+                                    @endif
+                                </p>
+                            @endif
+
+                            {{-- ── Botones ─────────────────────────────────────── --}}
                             <div class="mt-4 flex flex-wrap gap-2">
                                 @if ($enCurso)
                                     @unless ($order->mechanic_id)
@@ -135,8 +198,9 @@
 
                                     <x-filament::button
                                         size="lg"
-                                        color="success"
+                                        :color="$faltan > 0 ? 'gray' : 'success'"
                                         icon="heroicon-o-check-circle"
+                                        :disabled="$faltan > 0"
                                         wire:click="mountAction('completar', { order: {{ $order->id }} })"
                                     >
                                         {{ __('Terminé el trabajo') }}

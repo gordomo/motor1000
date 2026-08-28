@@ -60,18 +60,21 @@ class MechanicBoard extends Page
             ->orderBy('created_at')
             ->get();
 
-        return [
-            [
-                'titulo'   => __('En el taller ahora'),
-                'subtitulo' => __('Órdenes que se están trabajando'),
-                'items'    => $orders->where('status', WorkOrderStatus::Repairing)->values(),
-            ],
-            [
-                'titulo'   => __('Para empezar'),
-                'subtitulo' => __('Autos recibidos, esperando que alguien los tome'),
-                'items'    => $orders->where('status', WorkOrderStatus::Received)->values(),
-            ],
-        ];
+        // Los títulos salen del enum: la misma orden tiene que llamarse igual acá,
+        // en el listado, en el kanban y en el PDF. Antes usaba nombres inventados
+        // ("En el taller ahora", "Para empezar") que no existían en ningún otro lado.
+        return collect([WorkOrderStatus::Repairing, WorkOrderStatus::Received])
+            ->map(fn (WorkOrderStatus $status): array => [
+                'estado'    => $status,
+                'titulo'    => $status->getLabel(),
+                'subtitulo' => match ($status) {
+                    WorkOrderStatus::Repairing => __('Autos que se están trabajando'),
+                    WorkOrderStatus::Received  => __('Autos que esperan que alguien los tome'),
+                    default                    => '',
+                },
+                'items'     => $orders->where('status', $status)->values(),
+            ])
+            ->all();
     }
 
     /** Lista de mecánicos para el "¿quién sos?". */
@@ -203,45 +206,17 @@ class MechanicBoard extends Page
             ->label(__('Terminé el trabajo'))
             ->icon('heroicon-o-check-circle')
             ->color('success')
-            ->modalHeading(__('¿Qué se hizo?'))
-            ->modalSubmitActionLabel(__('Marcar como terminado'))
-            ->modalWidth('3xl')
+            ->modalHeading(__('Cerrar la orden'))
+            ->modalDescription(__('Contá qué se hizo en el auto. Esto queda en el comprobante del cliente.'))
+            ->modalSubmitActionLabel(__('Cerrar la orden'))
             ->fillForm(fn (array $arguments): array => [
-                'checklist'      => $this->orden($arguments)?->checklist ?? [],
                 'work_performed' => $this->orden($arguments)?->work_performed,
             ])
+            // Los puntos ya se marcan en la tarjeta: acá solo falta el relato.
             ->form([
-                Forms\Components\Repeater::make('checklist')
-                    ->label(__('Puntos a trabajar'))
-                    ->addable(false)
-                    ->deletable(false)
-                    ->reorderable(false)
-                    ->itemLabel(fn (array $state): string => trim(
-                        ($state['nombre_item'] ?? '') .
-                        (($state['estado_presupuesto'] ?? null) ? ' · ' . __('venía') . ' ' . $state['estado_presupuesto'] : '')
-                    ))
-                    ->schema([
-                        Forms\Components\Hidden::make('id_punto'),
-                        Forms\Components\Hidden::make('categoria'),
-                        Forms\Components\Hidden::make('nombre_item'),
-                        Forms\Components\Hidden::make('estado_presupuesto'),
-                        Forms\Components\Hidden::make('observacion_previa'),
-                        Forms\Components\Radio::make('estado')
-                            ->label('')
-                            ->options(WorkOrder::PUNTO_ESTADOS)
-                            ->inline()
-                            ->live()
-                            ->required(),
-                        Forms\Components\Textarea::make('aclaracion')
-                            ->label(__('Por qué no se pudo'))
-                            ->rows(2)
-                            ->required(fn (Forms\Get $get): bool => $get('estado') === WorkOrder::PUNTO_NO_SE_PUDO)
-                            ->visible(fn (Forms\Get $get): bool => $get('estado') === WorkOrder::PUNTO_NO_SE_PUDO),
-                    ])
-                    ->visible(fn (Forms\Get $get): bool => filled($get('checklist'))),
                 Forms\Components\Textarea::make('work_performed')
                     ->label(__('Trabajo realizado'))
-                    ->placeholder(__('Contá qué se hizo en el auto...'))
+                    ->placeholder(__('Se cambiaron las pastillas delanteras y se purgó el circuito...'))
                     ->required()
                     ->rows(4),
             ])
@@ -252,12 +227,8 @@ class MechanicBoard extends Page
                     return;
                 }
 
-                // Se guarda lo que cargó el mecánico antes de validar el paso: si algo
-                // falta, no pierde lo escrito.
-                $order->forceFill([
-                    'checklist'      => $data['checklist'] ?? $order->checklist,
-                    'work_performed' => $data['work_performed'],
-                ])->saveQuietly();
+                // Se guarda antes de validar el paso: si algo falta, no pierde el texto.
+                $order->forceFill(['work_performed' => $data['work_performed']])->saveQuietly();
 
                 try {
                     app(UpdateWorkOrderStatusAction::class)->execute($order->refresh(), WorkOrderStatus::Completed);
@@ -272,6 +243,69 @@ class MechanicBoard extends Page
                     ->success()
                     ->send();
             });
+    }
+
+    // ─── Marcar los puntos desde la tarjeta ───────────────────────────────────
+
+    /**
+     * Marca un punto como hecho sin abrir ningún modal: en una tablet, un toque.
+     * Antes los puntos se listaban con iconos que no hacían nada y había que
+     * abrir el modal de cierre para poder tocarlos.
+     */
+    public function marcarHecho(int $orderId, int $indice): void
+    {
+        $this->actualizarPunto($orderId, $indice, WorkOrder::PUNTO_HECHO, '');
+    }
+
+    /** Vuelve el punto a sin marcar, por si se tocó de más. */
+    public function desmarcarPunto(int $orderId, int $indice): void
+    {
+        $this->actualizarPunto($orderId, $indice, null, '');
+    }
+
+    public function noSePudoAction(): Action
+    {
+        return Action::make('noSePudo')
+            ->label(__('No se pudo'))
+            ->icon('heroicon-o-x-circle')
+            ->color('warning')
+            ->modalHeading(__('¿Por qué no se pudo?'))
+            ->modalSubmitActionLabel(__('Guardar'))
+            ->form([
+                Forms\Components\Textarea::make('aclaracion')
+                    ->label(__('Contá qué pasó'))
+                    ->placeholder(__('Falta el repuesto, apareció otra falla, no entraba la herramienta...'))
+                    ->required()
+                    ->rows(3),
+            ])
+            ->action(function (array $arguments, array $data): void {
+                $this->actualizarPunto(
+                    (int) $arguments['order'],
+                    (int) $arguments['indice'],
+                    WorkOrder::PUNTO_NO_SE_PUDO,
+                    $data['aclaracion'],
+                );
+            });
+    }
+
+    private function actualizarPunto(int $orderId, int $indice, ?string $estado, string $aclaracion): void
+    {
+        $order = WorkOrder::query()->find($orderId);
+
+        if (! $order) {
+            return;
+        }
+
+        $checklist = $order->checklist ?? [];
+
+        if (! array_key_exists($indice, $checklist)) {
+            return;
+        }
+
+        $checklist[$indice]['estado']     = $estado;
+        $checklist[$indice]['aclaracion'] = $aclaracion;
+
+        $order->forceFill(['checklist' => $checklist])->saveQuietly();
     }
 
     private function avisar(string $mensaje): void

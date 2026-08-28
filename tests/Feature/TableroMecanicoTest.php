@@ -120,71 +120,69 @@ it('el mecánico avisa que no puede empezar y la orden queda marcada', function 
         ->and($this->orden->status)->toBe(WorkOrderStatus::Received);
 });
 
-it('el mecánico cierra la orden marcando los puntos y el trabajo realizado', function () {
+it('el mecánico marca un punto como hecho con un toque, sin abrir nada', function () {
+    $this->orden->update(['status' => 'repairing']);
+
+    Livewire::test(MechanicBoard::class)
+        ->call('marcarHecho', $this->orden->id, 0);
+
+    $checklist = $this->orden->refresh()->checklist;
+
+    expect($checklist[0]['estado'])->toBe(WorkOrder::PUNTO_HECHO);
+});
+
+it('el mecánico puede desmarcar un punto que tocó de más', function () {
+    $this->orden->update(['status' => 'repairing']);
+
+    Livewire::test(MechanicBoard::class)
+        ->call('marcarHecho', $this->orden->id, 0)
+        ->call('desmarcarPunto', $this->orden->id, 0);
+
+    expect($this->orden->refresh()->checklist[0]['estado'])->toBeNull();
+});
+
+it('marcar "no se pudo" pide el motivo y lo guarda en el punto', function () {
+    $this->orden->update(['status' => 'repairing']);
+
+    Livewire::test(MechanicBoard::class)
+        ->mountAction('noSePudo', ['order' => $this->orden->id, 'indice' => 0])
+        ->setActionData(['aclaracion' => 'Falta el repuesto'])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    $punto = $this->orden->refresh()->checklist[0];
+
+    expect($punto['estado'])->toBe(WorkOrder::PUNTO_NO_SE_PUDO)
+        ->and($punto['aclaracion'])->toBe('Falta el repuesto');
+});
+
+it('el cierre solo pide el trabajo realizado, porque los puntos ya están marcados', function () {
     $this->orden->update(['status' => 'repairing', 'mechanic_id' => $this->juan->id]);
 
-    $test = Livewire::test(MechanicBoard::class)
-        ->mountAction('completar', ['order' => $this->orden->id]);
-
-    // El repeater usa claves UUID: se parte de los datos que el form ya cargó.
-    $data = $test->get('mountedActionsData.0');
-    $punto = array_key_first($data['checklist']);
-    $data['checklist'][$punto]['estado'] = WorkOrder::PUNTO_HECHO;
-    $data['work_performed'] = 'Se cambiaron las pastillas delanteras';
-
-    $test->setActionData($data)
+    Livewire::test(MechanicBoard::class)
+        ->call('marcarHecho', $this->orden->id, 0)
+        ->mountAction('completar', ['order' => $this->orden->id])
+        ->setActionData(['work_performed' => 'Se cambiaron las pastillas delanteras'])
         ->callMountedAction()
         ->assertHasNoActionErrors();
 
     $this->orden->refresh();
 
     expect($this->orden->status)->toBe(WorkOrderStatus::Completed)
-        ->and($this->orden->work_performed)->toBe('Se cambiaron las pastillas delanteras')
-        ->and($this->orden->hasIssues())->toBeFalse();
+        ->and($this->orden->work_performed)->toBe('Se cambiaron las pastillas delanteras');
 });
 
-it('el formulario no deja cerrar sin explicar el punto que no se pudo', function () {
+it('con puntos sin marcar el cierre no avanza y avisa qué falta', function () {
     $this->orden->update(['status' => 'repairing']);
 
-    $test = Livewire::test(MechanicBoard::class)
-        ->mountAction('completar', ['order' => $this->orden->id]);
+    Livewire::test(MechanicBoard::class)
+        ->mountAction('completar', ['order' => $this->orden->id])
+        ->setActionData(['work_performed' => 'Algo hice'])
+        ->callMountedAction();
 
-    $data = $test->get('mountedActionsData.0');
-    $punto = array_key_first($data['checklist']);
-    $data['checklist'][$punto]['estado'] = WorkOrder::PUNTO_NO_SE_PUDO;
-    $data['checklist'][$punto]['aclaracion'] = '';
-    $data['work_performed'] = 'Intenté pero falta el repuesto';
-
-    $test->setActionData($data)
-        ->callMountedAction()
-        ->assertHasActionErrors();
-
-    // La orden no avanzó y el modal sigue abierto con lo que escribió.
-    expect($this->orden->refresh()->status)->toBe(WorkOrderStatus::Repairing);
-});
-
-it('el mecánico cierra la orden con un punto sin hacer, explicando por qué', function () {
-    $this->orden->update(['status' => 'repairing']);
-
-    $test = Livewire::test(MechanicBoard::class)
-        ->mountAction('completar', ['order' => $this->orden->id]);
-
-    $data = $test->get('mountedActionsData.0');
-    $punto = array_key_first($data['checklist']);
-    $data['checklist'][$punto]['estado'] = WorkOrder::PUNTO_NO_SE_PUDO;
-    $data['checklist'][$punto]['aclaracion'] = 'Falta el repuesto, se pidió al proveedor';
-    $data['work_performed'] = 'Se revisó todo, falta la pieza';
-
-    $test->setActionData($data)
-        ->callMountedAction()
-        ->assertHasNoActionErrors();
-
-    $this->orden->refresh();
-
-    expect($this->orden->status)->toBe(WorkOrderStatus::Completed)
-        // Queda marcada con novedades para que se note que algo pasó.
-        ->and($this->orden->hasIssues())->toBeTrue()
-        ->and($this->orden->issuePoints()[0]['aclaracion'])->toBe('Falta el repuesto, se pidió al proveedor');
+    // Sigue en reparación, pero el texto quedó guardado.
+    expect($this->orden->refresh()->status)->toBe(WorkOrderStatus::Repairing)
+        ->and($this->orden->work_performed)->toBe('Algo hice');
 });
 
 it('el tablero solo muestra órdenes abiertas', function () {
@@ -202,6 +200,26 @@ it('el tablero solo muestra órdenes abiertas', function () {
 
 // ─── Claridad de la tarjeta ─────────────────────────────────────────────────
 
+it('los grupos usan los mismos nombres de estado que el resto del sistema', function () {
+    Livewire::test(MechanicBoard::class)
+        ->assertSee(WorkOrderStatus::Repairing->getLabel())
+        ->assertSee(WorkOrderStatus::Received->getLabel())
+        // Los nombres inventados no van más.
+        ->assertDontSee('En el taller ahora')
+        ->assertDontSee('Para empezar');
+});
+
+it('la tarjeta dice qué hacer con ella', function () {
+    Livewire::test(MechanicBoard::class)
+        ->assertSee('Tocá "Me pongo a trabajar" para tomar este auto.');
+
+    $this->orden->update(['status' => 'repairing']);
+
+    Livewire::test(MechanicBoard::class)
+        ->assertSee('Marcá cada punto')
+        ->assertSee('Falta marcar 1 punto para poder cerrar');
+});
+
 it('la tarjeta muestra los puntos a trabajar y cuántos van marcados', function () {
     $this->orden->update([
         'status'    => 'repairing',
@@ -215,7 +233,7 @@ it('la tarjeta muestra los puntos a trabajar y cuántos van marcados', function 
         ->assertSee('Pastillas delanteras')
         ->assertSee('Presión neumáticos')
         ->assertSee('1/2')
-        ->assertSee('Hay que marcar todos los puntos para poder cerrar la orden.');
+        ->assertSee('Falta marcar 1 punto para poder cerrar');
 });
 
 it('avisa cuando la orden no tiene puntos cargados', function () {
