@@ -49,6 +49,17 @@ class MechanicBoard extends Page
         return auth()->user()?->hasAnyRole(['mechanic', 'admin']) ?? false;
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('manual')
+                ->label(__('¿Cómo se usa?'))
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('gray')
+                ->url(fn (): string => Manual::getUrl()),
+        ];
+    }
+
     /** Órdenes en juego, agrupadas por lo que el mecánico tiene que hacer con ellas. */
     public function getGruposProperty(): array
     {
