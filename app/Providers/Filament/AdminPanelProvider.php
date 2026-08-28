@@ -26,6 +26,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            // Cada usuario puede cambiar su propia contraseña desde el menú de su
+            // nombre. Antes solo un administrador podía hacerlo por él.
+            ->profile(isSimple: false)
+            // "Olvidé mi contraseña" en el login: sin esto, recuperar el acceso
+            // dependía de correr un comando en el servidor.
+            ->passwordReset()
             ->colors([
                 'primary' => Color::Slate,
             ])
