@@ -23,7 +23,10 @@
                     {{ __('No hay órdenes acá.') }}
                 </div>
             @else
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {{-- Una tarjeta por fila, a todo el ancho: en una tablet la grilla de
+                     3 columnas dejaba la tarjeta comprimida en un costado, y los
+                     puntos del checklist necesitan lugar para leerse. --}}
+                <div class="grid grid-cols-1 gap-4">
                     @foreach ($grupo['items'] as $order)
                         @php
                             $trabada = $order->isBlocked();
