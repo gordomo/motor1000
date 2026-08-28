@@ -47,6 +47,15 @@ class User extends Authenticatable implements FilamentUser
         return $this->is_active && $this->tenant_id !== null && ! $this->is_super_admin;
     }
 
+    /**
+     * Trabaja en el taller y nada más: no administra ni atiende el mostrador.
+     * Define qué ve en el panel (punto 7 del pedido del cliente).
+     */
+    public function isOnlyMechanic(): bool
+    {
+        return $this->hasRole('mechanic') && ! $this->hasAnyRole(['admin', 'receptionist']);
+    }
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);

@@ -131,6 +131,33 @@ class MechanicBoard extends Page
             });
     }
 
+    /**
+     * Órdenes que ya estaban en reparación antes de este flujo quedaron sin
+     * mecánico asignado. Esto permite que alguien se haga cargo sin cambiar el
+     * estado, para que el trabajo no quede sin dueño.
+     */
+    public function hacerseCargoAction(): Action
+    {
+        return Action::make('hacerseCargo')
+            ->label(__('Me hago cargo'))
+            ->icon('heroicon-o-hand-thumb-up')
+            ->color('primary')
+            ->modalHeading(__('¿Quién se hace cargo?'))
+            ->modalSubmitActionLabel(__('Confirmar'))
+            ->form(fn (): array => [
+                Forms\Components\Radio::make('mechanic_id')
+                    ->label('')
+                    ->options($this->mecanicos())
+                    ->required(),
+            ])
+            ->action(function (array $arguments, array $data): void {
+                $order = $this->orden($arguments);
+                $order?->forceFill(['mechanic_id' => (int) $data['mechanic_id']])->saveQuietly();
+
+                Notification::make()->title(__('Listo, quedó asignada.'))->success()->send();
+            });
+    }
+
     public function trabarAction(): Action
     {
         return Action::make('trabar')

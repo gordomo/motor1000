@@ -199,3 +199,57 @@ it('el tablero solo muestra órdenes abiertas', function () {
 
     expect($total)->toBe(1);
 });
+
+// ─── Claridad de la tarjeta ─────────────────────────────────────────────────
+
+it('la tarjeta muestra los puntos a trabajar y cuántos van marcados', function () {
+    $this->orden->update([
+        'status'    => 'repairing',
+        'checklist' => [
+            ['id_punto' => 1, 'nombre_item' => 'Pastillas delanteras', 'estado_presupuesto' => 'MAL', 'estado' => WorkOrder::PUNTO_HECHO, 'aclaracion' => ''],
+            ['id_punto' => 2, 'nombre_item' => 'Presión neumáticos',   'estado_presupuesto' => 'REGULAR', 'estado' => null, 'aclaracion' => ''],
+        ],
+    ]);
+
+    Livewire::test(MechanicBoard::class)
+        ->assertSee('Pastillas delanteras')
+        ->assertSee('Presión neumáticos')
+        ->assertSee('1/2')
+        ->assertSee('Hay que marcar todos los puntos para poder cerrar la orden.');
+});
+
+it('avisa cuando la orden no tiene puntos cargados', function () {
+    $this->orden->update(['status' => 'repairing', 'checklist' => null]);
+
+    Livewire::test(MechanicBoard::class)
+        ->assertSee('Esta orden no tiene puntos cargados.');
+});
+
+it('una orden en curso sin mecánico se puede tomar sin cambiar de estado', function () {
+    $this->orden->update(['status' => 'repairing', 'mechanic_id' => null]);
+
+    Livewire::test(MechanicBoard::class)
+        ->mountAction('hacerseCargo', ['order' => $this->orden->id])
+        ->setActionData(['mechanic_id' => $this->juan->id])
+        ->callMountedAction()
+        ->assertHasNoActionErrors();
+
+    $this->orden->refresh();
+
+    expect($this->orden->mechanic_id)->toBe($this->juan->id)
+        ->and($this->orden->status)->toBe(WorkOrderStatus::Repairing);
+});
+
+it('el mecánico no ve el calendario de citas ni el listado de órdenes en el menú', function () {
+    expect(\App\Filament\Pages\AppointmentsCalendar::canAccess())->toBeFalse()
+        ->and(\App\Filament\Resources\WorkOrderResource::shouldRegisterNavigation())->toBeFalse();
+});
+
+it('recepción sí ve el calendario y el listado', function () {
+    $comercial = User::factory()->create(['tenant_id' => $this->t->id]);
+    $comercial->assignRole('receptionist');
+    $this->actingAs($comercial);
+
+    expect(\App\Filament\Pages\AppointmentsCalendar::canAccess())->toBeTrue()
+        ->and(\App\Filament\Resources\WorkOrderResource::shouldRegisterNavigation())->toBeTrue();
+});

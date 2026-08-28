@@ -51,6 +51,6 @@ trait HiddenFromMechanics
             return false;
         }
 
-        return $user->hasRole('mechanic') && ! $user->hasAnyRole(['admin', 'receptionist']);
+        return $user->isOnlyMechanic();
     }
 }

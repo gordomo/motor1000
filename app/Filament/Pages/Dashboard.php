@@ -44,7 +44,7 @@ class Dashboard extends BaseDashboard
             return false;
         }
 
-        return ! ($user->hasRole('mechanic') && ! $user->hasAnyRole(['admin', 'receptionist']));
+        return ! $user->isOnlyMechanic();
     }
 
     public function getWidgets(): array

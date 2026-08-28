@@ -58,8 +58,7 @@ class AppPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             // El mecánico aterriza en el tablero del taller: no tiene acceso al
             // Centro de Operaciones y sin esto quedaría en una pantalla prohibida.
-            ->homeUrl(fn (): string => auth()->user()?->hasRole('mechanic')
-                && ! auth()->user()->hasAnyRole(['admin', 'receptionist'])
+            ->homeUrl(fn (): string => auth()->user()?->isOnlyMechanic()
                     ? \App\Filament\Pages\MechanicBoard::getUrl()
                     : \App\Filament\Pages\Dashboard::getUrl())
             // Campanita del panel: la usan las alertas de stock crítico (pedido 6).

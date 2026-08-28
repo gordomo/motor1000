@@ -12,6 +12,20 @@ use Throwable;
 
 class AppointmentsCalendar extends Page
 {
+
+    /**
+     * Punto 7: el mecánico solo ve el tablero del taller. El calendario es una
+     * página y no un recurso, así que el trait HiddenFromMechanics no lo cubría.
+     */
+    public static function canAccess(): bool
+    {
+        return ! (auth()->user()?->isOnlyMechanic() ?? false);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
     protected static ?int $navigationSort = 4;

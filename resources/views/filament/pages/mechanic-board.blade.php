@@ -65,9 +65,51 @@
                                 </p>
                             @endif
 
+                            {{-- Los puntos a la vista: antes solo decía "4 puntos a
+                                 trabajar" y parecía que se podía cerrar sin marcarlos --}}
                             @if (filled($order->checklist))
-                                <p class="mt-2 text-xs text-gray-500">
-                                    {{ trans_choice('{1} 1 punto a trabajar|[2,*] :count puntos a trabajar', count($order->checklist), ['count' => count($order->checklist)]) }}
+                                @php
+                                    $puntos = collect($order->checklist);
+                                    $marcados = $puntos->filter(fn ($p) => filled($p['estado'] ?? null))->count();
+                                @endphp
+
+                                <div class="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                                    <p class="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+                                        {{ __('A trabajar') }} · {{ $marcados }}/{{ $puntos->count() }} {{ __('marcados') }}
+                                    </p>
+
+                                    <ul class="space-y-1">
+                                        @foreach ($puntos as $punto)
+                                            @php($estado = $punto['estado'] ?? null)
+                                            <li class="flex items-start gap-2 text-sm">
+                                                <span class="mt-0.5 shrink-0">
+                                                    @if ($estado === \App\Models\WorkOrder::PUNTO_HECHO)
+                                                        <x-filament::icon icon="heroicon-o-check-circle" class="h-4 w-4 text-green-600" />
+                                                    @elseif ($estado === \App\Models\WorkOrder::PUNTO_NO_SE_PUDO)
+                                                        <x-filament::icon icon="heroicon-o-x-circle" class="h-4 w-4 text-amber-500" />
+                                                    @else
+                                                        <x-filament::icon icon="heroicon-o-minus-circle" class="h-4 w-4 text-gray-300" />
+                                                    @endif
+                                                </span>
+                                                <span @class(['text-gray-700 dark:text-gray-200', 'line-through opacity-60' => $estado === \App\Models\WorkOrder::PUNTO_HECHO])>
+                                                    {{ $punto['nombre_item'] ?? '' }}
+                                                    @if (($punto['estado_presupuesto'] ?? null))
+                                                        <span class="text-xs text-gray-400">({{ $punto['estado_presupuesto'] }})</span>
+                                                    @endif
+                                                </span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+
+                                    @if ($marcados < $puntos->count())
+                                        <p class="mt-2 text-xs font-semibold text-amber-600">
+                                            {{ __('Hay que marcar todos los puntos para poder cerrar la orden.') }}
+                                        </p>
+                                    @endif
+                                </div>
+                            @else
+                                <p class="mt-3 rounded-lg bg-gray-50 p-2 text-xs text-gray-500 dark:bg-gray-800">
+                                    {{ __('Esta orden no tiene puntos cargados. Al cerrarla solo se pide el trabajo realizado.') }}
                                 </p>
                             @endif
 
@@ -80,6 +122,17 @@
                             {{-- Botones grandes, uno por acción posible --}}
                             <div class="mt-4 flex flex-wrap gap-2">
                                 @if ($enCurso)
+                                    @unless ($order->mechanic_id)
+                                        <x-filament::button
+                                            size="lg"
+                                            color="primary"
+                                            icon="heroicon-o-hand-thumb-up"
+                                            wire:click="mountAction('hacerseCargo', { order: {{ $order->id }} })"
+                                        >
+                                            {{ __('Me hago cargo') }}
+                                        </x-filament::button>
+                                    @endunless
+
                                     <x-filament::button
                                         size="lg"
                                         color="success"

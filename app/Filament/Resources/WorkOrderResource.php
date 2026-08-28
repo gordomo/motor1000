@@ -58,6 +58,16 @@ class WorkOrderResource extends Resource
             ? 'warning' : 'primary';
     }
 
+    /**
+     * El mecánico entra por el Tablero del taller, no por el listado: el punto 7
+     * pide que vea solo eso. Se saca del menú pero NO se le quita el acceso, para
+     * no romper ningún enlace que apunte a una orden.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return ! (auth()->user()?->isOnlyMechanic() ?? false);
+    }
+
     public static function getNavigationUrl(): string
     {
         return WorkOrdersBoard::getUrl();
