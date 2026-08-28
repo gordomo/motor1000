@@ -4,18 +4,17 @@
     {{-- Manual dentro del sistema. Usa los componentes del panel para que se vea
          como el resto y no como una página pegada aparte. --}}
 
-    <x-filament::section>
-        <x-slot name="heading">{{ __('Cómo usar el sistema') }}</x-slot>
-        <x-slot name="description">
-            {{ __('Estás entrando como :rol. Abajo está tu guía, y también lo que hacen los demás, para saber a quién pedirle cada cosa.', [
-                'rol' => match ($rol) {
-                    'admin'     => __('Administrador'),
-                    'comercial' => __('Comercial'),
-                    default     => __('Mecánico'),
-                },
-            ]) }}
-        </x-slot>
-    </x-filament::section>
+    {{-- Antes esto era una x-filament::section con encabezado y sin cuerpo, y el
+         recuadro vacío parecía un error de la página. --}}
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+        {{ __('Estás entrando como :rol. Abajo está tu guía, y también lo que hacen los demás, para saber a quién pedirle cada cosa.', [
+            'rol' => match ($rol) {
+                'admin'     => __('Administrador'),
+                'comercial' => __('Comercial'),
+                default     => __('Mecánico'),
+            },
+        ]) }}
+    </p>
 
     {{-- ── Tu guía, primero ──────────────────────────────────────────── --}}
 

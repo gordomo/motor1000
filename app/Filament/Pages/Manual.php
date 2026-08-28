@@ -43,6 +43,25 @@ class Manual extends Page
         return auth()->user()?->hasAnyRole(['admin', 'receptionist', 'mechanic']) ?? false;
     }
 
+    /**
+     * El mecánico usa el panel sin barra lateral, así que necesita una salida
+     * explícita para volver a su pantalla de trabajo.
+     */
+    protected function getHeaderActions(): array
+    {
+        if (! auth()->user()?->isOnlyMechanic()) {
+            return [];
+        }
+
+        return [
+            \Filament\Actions\Action::make('volver')
+                ->label(__('Volver al tablero'))
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url(fn (): string => MechanicBoard::getUrl()),
+        ];
+    }
+
     /** El rol con el que se abre el manual, para mostrar su guía primero. */
     public function getRolProperty(): string
     {

@@ -112,3 +112,19 @@ it('el manual advierte del botón que le avisa al cliente', function () {
     Livewire::test(Manual::class)
         ->assertSee('le avisa al cliente que su auto está listo');
 });
+
+it('el mecánico tiene cómo volver al tablero, porque no tiene menú', function () {
+    comoRol('mechanic');
+
+    Livewire::test(Manual::class)
+        ->assertOk()
+        ->assertSee('Volver al tablero');
+});
+
+it('el comercial no necesita ese botón: tiene el menú', function () {
+    comoRol('receptionist');
+
+    Livewire::test(Manual::class)
+        ->assertOk()
+        ->assertDontSee('Volver al tablero');
+});

@@ -87,6 +87,17 @@ class AppPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn (): string => view('filament.theme-overrides')->render()
             )
+            // Modo taller: sin barra lateral para quien solo es mecánico, en TODAS
+            // las pantallas del panel. Antes se ocultaba solo en su tablero y al
+            // abrir el manual reaparecía, así que parecían dos sistemas distintos.
+            // Va como render hook porque al armar el panel todavía no se sabe quién
+            // es el usuario.
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => auth()->user()?->isOnlyMechanic()
+                    ? view('filament.hooks.mechanic-kiosk')->render()
+                    : '',
+            )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_START,
                 fn (): string => view('filament.topbar-module')->render()

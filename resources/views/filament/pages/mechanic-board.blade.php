@@ -3,14 +3,6 @@
          Los nombres de los estados salen del enum: la misma orden se llama igual
          acá, en el listado, en el kanban y en el PDF. --}}
 
-    @if (auth()->user()?->isOnlyMechanic())
-        {{-- Con un solo ítem en el menú, la barra lateral es ruido en una tablet --}}
-        <style>
-            .fi-sidebar, .fi-topbar-open-sidebar-btn, .fi-sidebar-close-overlay { display: none !important; }
-            .fi-main-ctn { margin-inline-start: 0 !important; }
-        </style>
-    @endif
-
     @foreach ($this->grupos as $grupo)
         <section class="mb-8">
             <header class="mb-3">
