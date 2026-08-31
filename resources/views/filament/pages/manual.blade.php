@@ -80,7 +80,7 @@
                 <li>{{ __('Si el cliente paga una parte, la orden queda como pago parcial y el saldo sigue contando en "Por cobrar", incluso si ya se llevó el auto.') }}</li>
                 <li>{{ __('Una orden sin cargo se entrega sin pedir nada y se cuenta aparte, no como plata.') }}</li>
                 <li>{{ __('Si una orden se entregó sin registrar la forma de pago, usá "Registrar cobro" en el listado de órdenes. La fecha viene con la de entrega, así el cobro cuenta en el mes en que realmente entró la plata.') }}</li>
-                <li>{{ __('Los cobros de cada orden se ven en su ficha, en la pestaña Cobros. Corregirlos o borrarlos solo lo puede hacer el administrador: es plata que ya está contada en los números del taller.') }}</li>
+                <li>{{ __('Los cobros de cada orden se ven en su ficha, en la pestaña Cobros. Si te equivocaste al cargar uno, podés corregirlo ahí mismo. Borrarlo solo lo puede hacer el administrador.') }}</li>
             </ul>
         </x-filament::section>
 
@@ -126,8 +126,8 @@
                 </div>
 
                 <div>
-                    <p class="font-semibold">{{ __('Corregir cobros') }}</p>
-                    <p>{{ __('En la ficha de cualquier orden, pestaña Cobros, podés corregir el monto, la forma de pago o la fecha de un cobro, o borrarlo. Sos el único que puede: el comercial registra cobros pero no los modifica. Al corregir, los números del tablero se recalculan solos.') }}</p>
+                    <p class="font-semibold">{{ __('Cobros: corregir cualquiera y borrar') }}</p>
+                    <p>{{ __('En la ficha de cualquier orden, pestaña Cobros, podés corregir el monto, la forma de pago o la fecha de cualquier cobro, incluso los que cargó otra persona, y sos el único que puede borrarlos. El comercial solo corrige los que registró él. Al corregir, los números del tablero se recalculan solos.') }}</p>
                 </div>
 
                 <div>

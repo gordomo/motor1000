@@ -51,9 +51,44 @@ it('el comercial puede registrar cobros', function () {
         ->and($this->comercial->can('viewAny', Payment::class))->toBeTrue();
 });
 
-it('el comercial NO puede corregir ni borrar un cobro', function () {
-    expect($this->comercial->can('update', $this->cobro))->toBeFalse()
-        ->and($this->comercial->can('delete', $this->cobro))->toBeFalse();
+it('el comercial puede corregir el cobro que registró él', function () {
+    // Equivocarse al cargar es normal: si puso "efectivo" y era transferencia,
+    // lo arregla él sin depender del dueño.
+    $propio = Payment::create([
+        'tenant_id' => $this->t->id, 'work_order_id' => $this->cobro->work_order_id,
+        'amount' => 100, 'method' => 'efectivo', 'paid_at' => now(),
+        'user_id' => $this->comercial->id,
+    ]);
+
+    expect($this->comercial->can('update', $propio))->toBeTrue();
+});
+
+it('el comercial NO puede corregir el cobro de otra persona', function () {
+    $deOtro = Payment::create([
+        'tenant_id' => $this->t->id, 'work_order_id' => $this->cobro->work_order_id,
+        'amount' => 100, 'method' => 'efectivo', 'paid_at' => now(),
+        'user_id' => $this->admin->id,
+    ]);
+
+    expect($this->comercial->can('update', $deOtro))->toBeFalse();
+});
+
+it('el comercial nunca puede borrar un cobro, ni el propio', function () {
+    $propio = Payment::create([
+        'tenant_id' => $this->t->id, 'work_order_id' => $this->cobro->work_order_id,
+        'amount' => 100, 'method' => 'efectivo', 'paid_at' => now(),
+        'user_id' => $this->comercial->id,
+    ]);
+
+    expect($this->comercial->can('delete', $propio))->toBeFalse();
+});
+
+it('los cobros sin autor registrado solo los corrige el administrador', function () {
+    // Los cargados antes de esto no tienen autor, así que no hay forma de saber
+    // de quién eran.
+    expect($this->cobro->user_id)->toBeNull()
+        ->and($this->comercial->can('update', $this->cobro))->toBeFalse()
+        ->and($this->admin->can('update', $this->cobro))->toBeTrue();
 });
 
 it('el administrador puede corregir y borrar', function () {
