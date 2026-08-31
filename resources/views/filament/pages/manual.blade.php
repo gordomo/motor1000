@@ -195,7 +195,7 @@
         </div>
 
         <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Borrar clientes y órdenes lo pueden hacer el administrador y el comercial. El mecánico no borra nada.') }}
+            {{ __('Borrar clientes y órdenes lo pueden hacer el administrador y el comercial. El mecánico no borra nada, y no ve ningún importe.') }}
         </p>
     </x-filament::section>
 

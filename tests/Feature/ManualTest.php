@@ -128,3 +128,11 @@ it('el comercial no necesita ese botón: tiene el menú', function () {
         ->assertOk()
         ->assertDontSee('Volver al tablero');
 });
+
+it('el manual dice quién puede registrar cobros', function () {
+    comoRol('admin');
+
+    Livewire::test(Manual::class)
+        ->assertSee('Registrar cobros')
+        ->assertSee('Borrar un cobro registrado');
+});

@@ -126,6 +126,8 @@ class Manual extends Page
             [__('Facturación'),                        true,  true,  false],
             [__('Centro de Operaciones (los números)'), true,  true,  false],
             [__('Órdenes cerradas (informe)'),         true,  true,  false],
+            [__('Registrar cobros'),                   true,  true,  false],
+            [__('Borrar un cobro registrado'),         true,  true,  false],
             [__('Equipo (usuarios)'),                  true,  false, false],
             [__('Puntos de revisión'),                 true,  false, false],
             [__('Mi Taller'),                          true,  false, false],
