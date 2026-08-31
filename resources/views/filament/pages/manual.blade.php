@@ -79,6 +79,8 @@
                 <li>{{ __('Cada cobro queda registrado con su fecha, su monto y la forma de pago. En los números aparece en la fecha en que entró la plata.') }}</li>
                 <li>{{ __('Si el cliente paga una parte, la orden queda como pago parcial y el saldo sigue contando en "Por cobrar", incluso si ya se llevó el auto.') }}</li>
                 <li>{{ __('Una orden sin cargo se entrega sin pedir nada y se cuenta aparte, no como plata.') }}</li>
+                <li>{{ __('Si una orden se entregó sin registrar la forma de pago, usá "Registrar cobro" en el listado de órdenes. La fecha viene con la de entrega, así el cobro cuenta en el mes en que realmente entró la plata.') }}</li>
+                <li>{{ __('Los cobros de cada orden se ven en su ficha, en la pestaña Cobros, y ahí se puede borrar uno cargado por error.') }}</li>
             </ul>
         </x-filament::section>
 

@@ -6,6 +6,7 @@ use App\Actions\WorkOrder\UpdateWorkOrderStatusAction;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Pages\WorkOrdersBoard;
 use App\Filament\Resources\WorkOrderResource\Pages;
+use App\Filament\Resources\WorkOrderResource\RelationManagers;
 use App\Services\Inventory\WorkOrderStockService;
 use App\Services\Pdf\BulkPdfZipService;
 use App\Support\WorkOrderTransitions;
@@ -451,6 +452,73 @@ class WorkOrderResource extends Resource
                     ->color('gray')
                     ->url(fn (WorkOrder $record): string => route('work-orders.pdf', $record))
                     ->openUrlInNewTab(),
+                // Las órdenes entregadas antes de que existieran los cobros no tienen
+                // forma de pago registrada, así que no cuentan como cobradas. Esto
+                // permite cargarla y que la plata entre a los números.
+                Tables\Actions\Action::make('registrar_cobro')
+                    ->label(__('Registrar cobro'))
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->visible(fn (WorkOrder $r): bool =>
+                        (auth()->user()?->hasAnyRole(['admin', 'receptionist']) ?? false)
+                        && ! $r->isFree()
+                        && $r->balance() > 0
+                        && in_array($r->status, [WorkOrderStatus::Completed, WorkOrderStatus::Delivered], true)
+                    )
+                    ->modalHeading(fn (WorkOrder $r): string => __('Cobro de :number', ['number' => $r->number]))
+                    ->modalSubmitActionLabel(__('Registrar'))
+                    ->form(fn (WorkOrder $r): array => [
+                        Forms\Components\Placeholder::make('resumen')
+                            ->label(__('Situación'))
+                            ->content(__('Total :total · ya pagó :pagado · falta :saldo', [
+                                'total'  => '$ ' . number_format((float) $r->total, 2, ',', '.'),
+                                'pagado' => '$ ' . number_format($r->totalPaid(), 2, ',', '.'),
+                                'saldo'  => '$ ' . number_format($r->balance(), 2, ',', '.'),
+                            ])),
+                        Forms\Components\TextInput::make('amount')
+                            ->label(__('Monto cobrado'))
+                            ->numeric()
+                            ->prefix('$')
+                            ->default($r->balance())
+                            ->required(),
+                        Forms\Components\Select::make('method')
+                            ->label(__('Forma de pago'))
+                            ->options(Payment::METHODS)
+                            ->required(),
+                        Forms\Components\DateTimePicker::make('paid_at')
+                            ->label(__('Cuándo se cobró'))
+                            // Por defecto la fecha de entrega: es cuando la plata
+                            // entró. Si contara "hoy", los cobros viejos se
+                            // amontonarían todos en el mes actual.
+                            ->default($r->delivered_at ?? now())
+                            ->maxDate(now())
+                            ->required()
+                            ->helperText(__('En los números, el cobro cuenta en esta fecha.')),
+                        Forms\Components\Textarea::make('notes')
+                            ->label(__('Observaciones'))
+                            ->rows(2),
+                    ])
+                    ->action(function (WorkOrder $record, array $data): void {
+                        Payment::create([
+                            'tenant_id'     => $record->tenant_id,
+                            'work_order_id' => $record->id,
+                            'type'          => $record->status === WorkOrderStatus::Delivered ? 'saldo' : 'adelanto',
+                            'amount'        => (float) $data['amount'],
+                            'method'        => $data['method'],
+                            'paid_at'       => $data['paid_at'],
+                            'notes'         => $data['notes'] ?? null,
+                        ]);
+
+                        $record->refresh();
+
+                        Notification::make()
+                            ->title(__('Cobro registrado'))
+                            ->body($record->balance() > 0
+                                ? __('Queda un saldo de :saldo', ['saldo' => '$ ' . number_format($record->balance(), 2, ',', '.')])
+                                : __('La orden queda totalmente cobrada.'))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('advance_status')
                     ->label(__('Avanzar'))
                     ->icon('heroicon-o-arrow-right-circle')
@@ -559,6 +627,65 @@ class WorkOrderResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // Pensada para poner al día las entregas anteriores a los cobros:
+                    // de a una serían decenas de pasos.
+                    Tables\Actions\BulkAction::make('registrar_cobros')
+                        ->label(__('Registrar cobro del saldo'))
+                        ->icon('heroicon-o-banknotes')
+                        ->color('success')
+                        ->visible(fn (): bool => auth()->user()?->hasAnyRole(['admin', 'receptionist']) ?? false)
+                        ->modalHeading(__('Registrar el cobro de las órdenes elegidas'))
+                        ->modalDescription(__('Se registra el saldo completo de cada orden. Las que ya están cobradas o son sin cargo se saltean.'))
+                        ->modalSubmitActionLabel(__('Registrar'))
+                        ->form([
+                            Forms\Components\Select::make('method')
+                                ->label(__('Forma de pago'))
+                                ->options(Payment::METHODS)
+                                ->required(),
+                            Forms\Components\Radio::make('fecha')
+                                ->label(__('Fecha del cobro'))
+                                ->options([
+                                    'entrega' => __('La fecha de entrega de cada orden'),
+                                    'hoy'     => __('Hoy'),
+                                ])
+                                ->default('entrega')
+                                ->required()
+                                ->helperText(__('Con la fecha de entrega, cada cobro cuenta en el mes en que realmente entró la plata.')),
+                        ])
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records, array $data): void {
+                            $registrados = 0;
+                            $salteados = 0;
+
+                            foreach ($records as $record) {
+                                if ($record->isFree() || $record->balance() <= 0) {
+                                    $salteados++;
+
+                                    continue;
+                                }
+
+                                Payment::create([
+                                    'tenant_id'     => $record->tenant_id,
+                                    'work_order_id' => $record->id,
+                                    'type'          => 'saldo',
+                                    'amount'        => $record->balance(),
+                                    'method'        => $data['method'],
+                                    'paid_at'       => $data['fecha'] === 'hoy'
+                                        ? now()
+                                        : ($record->delivered_at ?? $record->completed_at ?? now()),
+                                ]);
+
+                                $registrados++;
+                            }
+
+                            Notification::make()
+                                ->title(trans_choice('{1} 1 cobro registrado|[2,*] :count cobros registrados', $registrados, ['count' => $registrados]))
+                                ->body($salteados > 0
+                                    ? __(':n órdenes se saltearon porque ya estaban cobradas o son sin cargo.', ['n' => $salteados])
+                                    : null)
+                                ->success()
+                                ->send();
+                        }),
                     Tables\Actions\BulkAction::make('download_pdfs_zip')
                         ->label(__('Descargar PDFs (ZIP)'))
                         ->icon('heroicon-o-archive-box-arrow-down')
@@ -651,7 +778,10 @@ class WorkOrderResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            // Los cobros de la orden, para poder revisarlos y corregirlos.
+            RelationManagers\PaymentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
