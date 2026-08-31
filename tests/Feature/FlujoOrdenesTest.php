@@ -372,3 +372,21 @@ it('la ficha de la orden muestra el kilometraje', function () {
         ->assertOk()
         ->assertSee('82.500');
 });
+
+it('recalcular el total repara una orden que quedó corta por los ítems "Otro"', function () {
+    // El cálculo viejo ignoraba los ítems de tipo "Otro" y dejaba el total corto.
+    // Así quedó WO-00008 en prod: $584.000 guardados cuando valía $854.000.
+    $o = orden(['status' => 'delivered', 'work_performed' => 'Listo']);
+    $o->items()->create(['type' => 'labor', 'description' => 'Mano de obra', 'quantity' => 1, 'unit_price' => 584000]);
+    $o->items()->create(['type' => 'other', 'description' => 'Grúa',         'quantity' => 1, 'unit_price' => 270000]);
+
+    // Se simula el total viejo, calculado sin los "Otro".
+    $o->forceFill(['total' => 584000])->saveQuietly();
+
+    expect((float) $o->refresh()->total)->toEqual(584000.0);
+
+    $o->recalculateTotal();
+
+    expect((float) $o->refresh()->total)->toEqual(854000.0)
+        ->and($o->otherCost())->toEqual(270000.0);
+});
