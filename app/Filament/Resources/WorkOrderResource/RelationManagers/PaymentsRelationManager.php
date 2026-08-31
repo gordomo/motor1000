@@ -4,6 +4,7 @@ namespace App\Filament\Resources\WorkOrderResource\RelationManagers;
 
 use App\Models\Payment;
 use App\Models\WorkOrder;
+use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -61,6 +62,33 @@ class PaymentsRelationManager extends RelationManager
                     ->wrap(),
             ])
             ->actions([
+                // Corregir y borrar quedan solo para el administrador (PaymentPolicy):
+                // es plata que ya está contada en los números del taller. Filament
+                // esconde los botones solo con verlos, sin necesidad de repetir la
+                // condición acá.
+                Tables\Actions\EditAction::make()
+                    ->label(__('Corregir'))
+                    ->modalHeading(__('Corregir el cobro'))
+                    ->modalDescription(__('Se recalcula el estado de pago de la orden y los números del tablero.'))
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label(__('Monto cobrado'))
+                            ->numeric()
+                            ->prefix('$')
+                            ->required(),
+                        Forms\Components\Select::make('method')
+                            ->label(__('Forma de pago'))
+                            ->options(Payment::METHODS)
+                            ->required(),
+                        Forms\Components\DateTimePicker::make('paid_at')
+                            ->label(__('Cuándo se cobró'))
+                            ->maxDate(now())
+                            ->required()
+                            ->helperText(__('En los números, el cobro cuenta en esta fecha.')),
+                        Forms\Components\Textarea::make('notes')
+                            ->label(__('Observaciones'))
+                            ->rows(2),
+                    ]),
                 Tables\Actions\DeleteAction::make()
                     ->label(__('Borrar cobro'))
                     ->modalHeading(__('Borrar este cobro'))

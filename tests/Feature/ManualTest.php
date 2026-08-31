@@ -134,5 +134,7 @@ it('el manual dice quién puede registrar cobros', function () {
 
     Livewire::test(Manual::class)
         ->assertSee('Registrar cobros')
-        ->assertSee('Borrar un cobro registrado');
+        ->assertSee('Corregir o borrar un cobro')
+        // Y en la guía del administrador, que es el único que puede.
+        ->assertSee('Corregir cobros');
 });
