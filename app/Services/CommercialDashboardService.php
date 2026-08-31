@@ -63,23 +63,40 @@ class CommercialDashboardService
     }
 
     /**
-     * Trabajo terminado y todavía no cobrado. No se filtra por fecha: lo que está
-     * pendiente de cobro importa hoy, sin importar cuándo se terminó.
+     * Plata que el taller tiene para cobrar, sin filtrar por fecha: lo que se debe
+     * importa hoy, sin importar cuándo se hizo el trabajo. Son dos situaciones:
+     *
+     *  - Trabajo terminado que todavía no se entregó.
+     *  - Autos ya entregados con saldo pendiente, porque el cliente pagó una parte.
+     *
+     * El segundo caso antes no aparecía en ningún lado: la orden salía de "listo
+     * para cobrar" al entregarse y en "cobrado" solo figuraba lo que había pagado,
+     * así que la deuda quedaba invisible.
      */
     private function porCobrar(int $tenantId): array
     {
         $ordenes = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
-            ->where('status', WorkOrderStatus::Completed->value)
+            ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value])
             ->where('total', '>', 0)
             ->with('payments')
-            ->get();
+            ->get()
+            ->filter(fn (WorkOrder $o): bool => $o->balance() > 0);
 
-        $monto = $ordenes->sum(fn (WorkOrder $o): float => max(0, $o->balance()));
+        $terminado = $ordenes->where('status', WorkOrderStatus::Completed);
+        $entregado = $ordenes->where('status', WorkOrderStatus::Delivered);
+
+        $saldo = fn ($coleccion): float => round((float) $coleccion->sum(
+            fn (WorkOrder $o): float => max(0, $o->balance())
+        ), 2);
 
         return [
-            'monto'    => round((float) $monto, 2),
-            'cantidad' => $ordenes->count(),
+            'monto'              => $saldo($ordenes),
+            'cantidad'           => $ordenes->count(),
+            'terminado'          => $saldo($terminado),
+            'cantidad_terminado' => $terminado->count(),
+            'entregado'          => $saldo($entregado),
+            'cantidad_entregado' => $entregado->count(),
         ];
     }
 

@@ -48,12 +48,10 @@ class CommercialOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-check-circle')
                 ->color('info'),
 
-            Stat::make(__('Listo para cobrar'), $this->plata($m['por_cobrar']['monto']))
-                ->description(trans_choice(
-                    '{1} 1 orden terminada sin entregar|[2,*] :count órdenes terminadas sin entregar',
-                    $m['por_cobrar']['cantidad'],
-                    ['count' => $m['por_cobrar']['cantidad']],
-                ))
+            // Incluye los autos ya entregados con saldo: esa deuda antes no
+            // aparecía en ningún número del tablero.
+            Stat::make(__('Por cobrar'), $this->plata($m['por_cobrar']['monto']))
+                ->description($this->detallePorCobrar($m['por_cobrar']))
                 ->descriptionIcon('heroicon-o-clock')
                 ->color('warning'),
 
@@ -64,6 +62,34 @@ class CommercialOverviewWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('success'),
         ];
+    }
+
+    /** Cómo se reparte lo que hay para cobrar, para que el número se entienda. */
+    private function detallePorCobrar(array $porCobrar): string
+    {
+        if ($porCobrar['cantidad'] === 0) {
+            return __('No hay nada pendiente de cobro');
+        }
+
+        $partes = [];
+
+        if ($porCobrar['cantidad_terminado'] > 0) {
+            $partes[] = trans_choice(
+                '{1} 1 orden terminada sin entregar|[2,*] :count terminadas sin entregar',
+                $porCobrar['cantidad_terminado'],
+                ['count' => $porCobrar['cantidad_terminado']],
+            );
+        }
+
+        if ($porCobrar['cantidad_entregado'] > 0) {
+            $partes[] = trans_choice(
+                '{1} 1 entregada con saldo|[2,*] :count entregadas con saldo',
+                $porCobrar['cantidad_entregado'],
+                ['count' => $porCobrar['cantidad_entregado']],
+            ) . ' (' . $this->plata($porCobrar['entregado']) . ')';
+        }
+
+        return implode(' · ', $partes);
     }
 
     /** Rango del filtro del tablero; por defecto el mes actual (pedido 14). */

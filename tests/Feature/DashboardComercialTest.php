@@ -151,6 +151,37 @@ it('el adelanto se cuenta en su fecha real, no en la de la entrega', function ()
         ->and($mesPasado['cobrado']['adelantos'])->toEqual(40000.0);
 });
 
+it('el auto entregado con saldo pendiente sigue contando como deuda', function () {
+    // Antes desaparecía: salía de "listo para cobrar" al entregarse y en "cobrado"
+    // solo figuraba lo que había pagado, así que la deuda no estaba en ningún lado.
+    $o = ot(['status' => 'completed', 'work_performed' => 'Listo']);
+    $o->items()->create(['type' => 'labor', 'description' => 'Mano de obra', 'quantity' => 1, 'unit_price' => 100000]);
+
+    $this->actingAs($this->admin);
+    app(UpdateWorkOrderStatusAction::class)->execute($o->refresh(), WorkOrderStatus::Delivered, options: [
+        'payment' => ['amount' => 40000, 'method' => 'efectivo'],
+    ]);
+
+    $m = metrics();
+
+    expect($m['cobrado']['monto'])->toEqual(40000.0)
+        ->and($m['por_cobrar']['monto'])->toEqual(60000.0)
+        ->and($m['por_cobrar']['cantidad_entregado'])->toBe(1)
+        ->and($m['por_cobrar']['cantidad_terminado'])->toBe(0);
+});
+
+it('el auto entregado y pagado por completo no queda como deuda', function () {
+    $o = ot(['status' => 'completed', 'work_performed' => 'Listo']);
+    $o->items()->create(['type' => 'labor', 'description' => 'Mano de obra', 'quantity' => 1, 'unit_price' => 80000]);
+
+    app(UpdateWorkOrderStatusAction::class)->execute($o->refresh(), WorkOrderStatus::Delivered, options: [
+        'payment' => ['amount' => 80000, 'method' => 'efectivo'],
+    ]);
+
+    expect(metrics()['por_cobrar']['monto'])->toEqual(0.0)
+        ->and(metrics()['por_cobrar']['cantidad'])->toBe(0);
+});
+
 it('la orden con pago parcial queda con el saldo como listo para cobrar', function () {
     $o = ot(['status' => 'repairing', 'work_performed' => 'Listo']);
     $o->items()->create(['type' => 'labor', 'description' => 'Mano de obra', 'quantity' => 1, 'unit_price' => 100000]);

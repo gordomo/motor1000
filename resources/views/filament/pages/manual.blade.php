@@ -76,8 +76,8 @@
             <x-slot name="description">{{ __('Una orden completada es trabajo terminado listo para cobrar. Al entregarla se registra el ingreso.') }}</x-slot>
 
             <ul class="ml-4 list-disc space-y-2 text-sm">
-                <li>{{ __('Si el cliente dejó un adelanto, cada cobro cuenta en la fecha en que entró, no en la de la entrega.') }}</li>
-                <li>{{ __('Si paga una parte, la orden queda como pago parcial y el saldo sigue como pendiente de cobro.') }}</li>
+                <li>{{ __('Cada cobro queda registrado con su fecha, su monto y la forma de pago. En los números aparece en la fecha en que entró la plata.') }}</li>
+                <li>{{ __('Si el cliente paga una parte, la orden queda como pago parcial y el saldo sigue contando en "Por cobrar", incluso si ya se llevó el auto.') }}</li>
                 <li>{{ __('Una orden sin cargo se entrega sin pedir nada y se cuenta aparte, no como plata.') }}</li>
             </ul>
         </x-filament::section>
@@ -88,7 +88,7 @@
 
             <ul class="ml-4 list-disc space-y-2 text-sm">
                 <li><strong>{{ __('Presupuestado:') }}</strong> {{ __('cuánto se cotizó, cuántos se aprobaron y el porcentaje de conversión.') }}</li>
-                <li><strong>{{ __('Listo para cobrar:') }}</strong> {{ __('las órdenes terminadas que todavía no se entregaron.') }}</li>
+                <li><strong>{{ __('Por cobrar:') }}</strong> {{ __('todo lo que el taller tiene para cobrar: el trabajo terminado que no se entregó, más los autos ya entregados con saldo pendiente.') }}</li>
                 <li><strong>{{ __('Cobrado:') }}</strong> {{ __('la plata que entró de verdad, separada por forma de pago.') }}</li>
                 <li><strong>{{ __('Por rubro:') }}</strong> {{ __('mano de obra, repuestos y otros, con los descuentos aparte.') }}</li>
             </ul>
