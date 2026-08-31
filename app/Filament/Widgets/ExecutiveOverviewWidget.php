@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\Invoice;
 use App\Services\DashboardService;
 use Filament\Widgets\Widget;
@@ -22,7 +23,7 @@ class ExecutiveOverviewWidget extends Widget
         $kpis = app(DashboardService::class)->getKpis($tenantId);
 
         $currentMonthRevenue = (float) $kpis['monthly_revenue'];
-        $previousMonthRevenue = (float) Invoice::withoutGlobalScopes()
+        $previousMonthRevenue = (float) Invoice::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'paid')
             ->whereBetween('paid_at', [

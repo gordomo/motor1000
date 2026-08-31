@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Scopes\TenantScope;
 use App\Enums\WorkOrderStatus;
 use App\Exports\WorkOrderClosuresExport;
 use App\Models\WorkOrder;
@@ -199,7 +200,7 @@ class WorkOrderClosuresReport extends Page
      */
     private function baseQuery()
     {
-        return WorkOrder::withoutGlobalScopes()
+        return WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', CurrentTenant::id() ?? 0)
             ->whereNotNull('completed_at')
             ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value]);

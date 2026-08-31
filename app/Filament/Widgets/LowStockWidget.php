@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\InventoryItem;
 use App\Support\CurrentTenant;
 use Filament\Tables;
@@ -35,7 +36,7 @@ class LowStockWidget extends BaseWidget
 
         return $table
             ->query(
-                InventoryItem::withoutGlobalScopes()
+                InventoryItem::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->where('is_active', true)
                     ->where('min_stock', '>', 0)

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Scopes\TenantScope;
 use App\Models\Customer;
 use App\Models\Reminder;
 use Illuminate\Database\Eloquent\Collection;
@@ -15,7 +16,7 @@ class ReminderService
 
     public function getDueReminders(int $tenantId): Collection
     {
-        return Reminder::withoutGlobalScopes()
+        return Reminder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'pending')
             ->where('due_at', '<=', now()->addDays(3))
@@ -25,7 +26,7 @@ class ReminderService
 
     public function getInactiveCustomers(int $tenantId, int $months = 6): Collection
     {
-        return Customer::withoutGlobalScopes()
+        return Customer::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'active')
             ->where(function ($q) use ($months) {
@@ -39,7 +40,7 @@ class ReminderService
 
     public function getUpcomingMaintenances(int $tenantId, int $days = 30): Collection
     {
-        return Reminder::withoutGlobalScopes()
+        return Reminder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'pending')
             ->whereBetween('due_at', [now(), now()->addDays($days)])

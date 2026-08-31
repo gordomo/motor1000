@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -34,24 +35,24 @@ class TenantsReportWidget extends BaseWidget
             $monthEnd   = now()->endOfMonth();
 
             return [
-                'monthly_revenue' => (float) Invoice::withoutGlobalScopes()
+                'monthly_revenue' => (float) Invoice::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->where('status', 'paid')
                     ->whereBetween('paid_at', [$monthStart, $monthEnd])
                     ->sum('total'),
 
-                'open_work_orders' => WorkOrder::withoutGlobalScopes()
+                'open_work_orders' => WorkOrder::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->whereNotIn('status', ['delivered'])
                     ->count(),
 
-                'completed_this_month' => WorkOrder::withoutGlobalScopes()
+                'completed_this_month' => WorkOrder::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->where('status', 'completed')
                     ->whereBetween('completed_at', [$monthStart, $monthEnd])
                     ->count(),
 
-                'inactive_customers' => Customer::withoutGlobalScopes()
+                'inactive_customers' => Customer::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->where('status', 'active')
                     ->where(fn ($q) => $q->whereNull('last_visit_at')
@@ -99,7 +100,7 @@ class TenantsReportWidget extends BaseWidget
                     ->label('Turnos web s/confirmar')
                     ->badge()
                     ->color(fn (int $state): string => $state > 0 ? 'warning' : 'gray')
-                    ->state(fn (Tenant $r): int => Appointment::withoutGlobalScopes()
+                    ->state(fn (Tenant $r): int => Appointment::withoutGlobalScopes([TenantScope::class])
                         ->where('tenant_id', $r->id)
                         ->where('source', 'web_turnero')
                         ->whereNull('client_confirmed_at')

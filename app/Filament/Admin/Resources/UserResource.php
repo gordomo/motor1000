@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Scopes\TenantScope;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Models\Tenant;
 use App\Models\User;
@@ -142,6 +143,6 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
-        return User::withoutGlobalScopes()->orderBy('name');
+        return User::withoutGlobalScopes([TenantScope::class])->orderBy('name');
     }
 }

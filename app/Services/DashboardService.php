@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Scopes\TenantScope;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Reminder;
@@ -17,30 +18,30 @@ class DashboardService
         $monthEnd   = now()->endOfMonth();
 
         return [
-            'monthly_revenue' => Invoice::withoutGlobalScopes()
+            'monthly_revenue' => Invoice::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'paid')
                 ->whereBetween('paid_at', [$monthStart, $monthEnd])
                 ->sum('total'),
 
-            'open_work_orders' => WorkOrder::withoutGlobalScopes()
+            'open_work_orders' => WorkOrder::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->whereNotIn('status', ['delivered'])
                 ->count(),
 
-            'completed_this_month' => WorkOrder::withoutGlobalScopes()
+            'completed_this_month' => WorkOrder::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'completed')
                 ->whereBetween('completed_at', [$monthStart, $monthEnd])
                 ->count(),
 
-            'average_ticket' => Invoice::withoutGlobalScopes()
+            'average_ticket' => Invoice::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'paid')
                 ->whereBetween('paid_at', [$monthStart, $monthEnd])
                 ->avg('total') ?? 0,
 
-            'inactive_customers' => Customer::withoutGlobalScopes()
+            'inactive_customers' => Customer::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'active')
                 ->where(function ($q) {
@@ -49,18 +50,18 @@ class DashboardService
                 })
                 ->count(),
 
-            'pending_reminders' => Reminder::withoutGlobalScopes()
+            'pending_reminders' => Reminder::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'pending')
                 ->where('due_at', '<=', now()->addDays(7))
                 ->count(),
 
-            'open_tasks' => Task::withoutGlobalScopes()
+            'open_tasks' => Task::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->where('status', 'open')
                 ->count(),
 
-            'work_orders_by_status' => WorkOrder::withoutGlobalScopes()
+            'work_orders_by_status' => WorkOrder::withoutGlobalScopes([TenantScope::class])
                 ->where('tenant_id', $tenantId)
                 ->whereNotIn('status', ['delivered'])
                 ->select('status', DB::raw('count(*) as total'))
@@ -74,7 +75,7 @@ class DashboardService
 
     private function getMonthlyRevenueTrend(int $tenantId): array
     {
-        return Invoice::withoutGlobalScopes()
+        return Invoice::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'paid')
             ->where('paid_at', '>=', now()->subMonths(6))
@@ -90,7 +91,7 @@ class DashboardService
 
     public function getMechanicProductivity(int $tenantId): array
     {
-        return WorkOrder::withoutGlobalScopes()
+        return WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'completed')
             ->where('completed_at', '>=', now()->startOfMonth())

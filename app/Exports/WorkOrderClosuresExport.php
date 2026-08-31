@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Scopes\TenantScope;
 use App\Enums\WorkOrderStatus;
 use App\Models\WorkOrder;
 use App\Support\CurrentTenant;
@@ -29,7 +30,7 @@ class WorkOrderClosuresExport implements FromCollection, WithHeadings, WithTitle
 
     public function collection()
     {
-        return WorkOrder::withoutGlobalScopes()
+        return WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', CurrentTenant::id() ?? 0)
             ->whereNotNull('completed_at')
             ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value])

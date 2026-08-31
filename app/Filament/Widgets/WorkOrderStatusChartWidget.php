@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\WorkOrder;
 use App\Enums\WorkOrderStatus;
 use Filament\Widgets\ChartWidget;
@@ -24,7 +25,7 @@ class WorkOrderStatusChartWidget extends ChartWidget
     {
         $tenantId = \App\Support\CurrentTenant::id() ?? 0;
 
-        $data = WorkOrder::withoutGlobalScopes()
+        $data = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->whereNotIn('status', ['delivered'])
             ->select('status', DB::raw('count(*) as total'))

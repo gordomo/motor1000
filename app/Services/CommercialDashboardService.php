@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Scopes\TenantScope;
 use App\Enums\QuoteStatus;
 use App\Enums\WorkOrderStatus;
 use App\Models\Payment;
@@ -39,7 +40,7 @@ class CommercialDashboardService
     /** Lo cotizado en el período y en qué terminó. */
     private function presupuestado(int $tenantId, CarbonInterface $desde, CarbonInterface $hasta): array
     {
-        $base = fn () => Quote::withoutGlobalScopes()
+        $base = fn () => Quote::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->whereBetween('created_at', [$desde, $hasta]);
 
@@ -67,7 +68,7 @@ class CommercialDashboardService
      */
     private function porCobrar(int $tenantId): array
     {
-        $ordenes = WorkOrder::withoutGlobalScopes()
+        $ordenes = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', WorkOrderStatus::Completed->value)
             ->where('total', '>', 0)
@@ -85,7 +86,7 @@ class CommercialDashboardService
     /** Plata que entró en el período, por fecha real de cada cobro. */
     private function cobrado(int $tenantId, CarbonInterface $desde, CarbonInterface $hasta): array
     {
-        $cobros = Payment::withoutGlobalScopes()
+        $cobros = Payment::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->whereBetween('paid_at', [$desde, $hasta])
             ->get();
@@ -108,7 +109,7 @@ class CommercialDashboardService
      */
     private function rubros(int $tenantId, CarbonInterface $desde, CarbonInterface $hasta): array
     {
-        $ordenes = WorkOrder::withoutGlobalScopes()
+        $ordenes = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', WorkOrderStatus::Delivered->value)
             ->whereBetween('delivered_at', [$desde, $hasta])
@@ -131,7 +132,7 @@ class CommercialDashboardService
     /** Trabajo entregado sin cargo: no es plata, pero es trabajo hecho. */
     private function gratis(int $tenantId, CarbonInterface $desde, CarbonInterface $hasta): array
     {
-        $cantidad = WorkOrder::withoutGlobalScopes()
+        $cantidad = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', WorkOrderStatus::Delivered->value)
             ->whereBetween('delivered_at', [$desde, $hasta])

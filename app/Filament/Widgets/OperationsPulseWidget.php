@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\Reminder;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderStatusHistory;
@@ -21,14 +22,14 @@ class OperationsPulseWidget extends Widget
     {
         $tenantId = \App\Support\CurrentTenant::id() ?? 0;
 
-        $recentWorkOrders = WorkOrder::withoutGlobalScopes()
+        $recentWorkOrders = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->with(['customer:id,name', 'vehicle:id,license_plate,brand,model', 'mechanic:id,name'])
             ->latest()
             ->limit(6)
             ->get();
 
-        $reminders = Reminder::withoutGlobalScopes()
+        $reminders = Reminder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('status', 'pending')
             ->orderBy('due_at')

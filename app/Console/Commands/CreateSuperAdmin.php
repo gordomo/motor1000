@@ -21,12 +21,14 @@ class CreateSuperAdmin extends Command
         $email    = $this->option('email')    ?? $this->ask('Correo electrónico');
         $password = $this->option('password') ?? $this->secret('Contraseña');
 
-        if (User::withoutGlobalScopes()->where('email', $email)->exists()) {
+        // Acá se miran TODOS los usuarios, incluidos los borrados: el email es
+        // único en la base y un usuario borrado lo sigue ocupando.
+        if (User::withoutGlobalScopes()->withTrashed()->where('email', $email)->exists()) {
             $this->error("Ya existe un usuario con el correo: {$email}");
             return self::FAILURE;
         }
 
-        $user = User::withoutGlobalScopes()->create([
+        $user = User::withoutGlobalScopes([TenantScope::class])->create([
             'tenant_id'      => null,
             'name'           => $name,
             'email'          => $email,

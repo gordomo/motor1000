@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\Reminder;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,7 +24,7 @@ class UpcomingRemindersWidget extends BaseWidget
 
         return $table
             ->query(
-                Reminder::withoutGlobalScopes()
+                Reminder::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
                     ->where('status', 'pending')
                     ->where('due_at', '<=', now()->addDays(30))

@@ -239,3 +239,49 @@ it('el mecánico no ve los números comerciales', function () {
     expect(\App\Filament\Widgets\CommercialOverviewWidget::canView())->toBeFalse()
         ->and(\App\Filament\Widgets\RevenueBreakdownWidget::canView())->toBeFalse();
 });
+
+// ─── Regresión: no contar lo borrado ────────────────────────────────────────
+
+it('no cuenta las órdenes borradas', function () {
+    // withoutGlobalScopes() sin argumentos también saca el scope de borrado
+    // lógico, así que el tablero contaba órdenes que ya no existen. En prod
+    // apareció como "Listo para cobrar $1" con el kanban en cero.
+    $o = ot(['status' => 'completed', 'total' => 1, 'work_performed' => 'Prueba']);
+    $o->delete();
+
+    $m = metrics();
+
+    expect($m['por_cobrar']['monto'])->toEqual(0.0)
+        ->and($m['por_cobrar']['cantidad'])->toBe(0);
+});
+
+it('no cuenta los presupuestos borrados', function () {
+    $q = Quote::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'mileage' => 50000,
+        'status' => QuoteStatus::Pending,
+        'items' => [['tipo' => 'mano_de_obra', 'descripcion' => 'X', 'cantidad' => 1, 'precio_unitario' => 99999]],
+    ]);
+    $q->delete();
+
+    expect(metrics()['presupuestado']['cantidad'])->toBe(0)
+        ->and(metrics()['presupuestado']['monto'])->toEqual(0.0);
+});
+
+it('no cuenta los cobros ni las entregas de órdenes borradas', function () {
+    $o = ot(['status' => 'delivered', 'total' => 50000, 'delivered_at' => now(), 'work_performed' => 'Prueba']);
+
+    Payment::create([
+        'tenant_id' => $this->t->id, 'work_order_id' => $o->id,
+        'amount' => 50000, 'method' => 'efectivo',
+    ]);
+
+    expect(metrics()['cobrado']['monto'])->toEqual(50000.0);
+
+    $o->delete();
+
+    $m = metrics();
+
+    expect($m['rubros']['cantidad'])->toBe(0)
+        ->and($m['rubros']['total'])->toEqual(0.0);
+});

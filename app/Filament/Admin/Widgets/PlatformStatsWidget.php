@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Scopes\TenantScope;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -24,20 +25,20 @@ class PlatformStatsWidget extends BaseWidget
         $monthStart = now()->startOfMonth();
         $monthEnd   = now()->endOfMonth();
 
-        $ingresos = (float) Invoice::withoutGlobalScopes()
+        $ingresos = (float) Invoice::withoutGlobalScopes([TenantScope::class])
             ->where('status', 'paid')
             ->whereBetween('paid_at', [$monthStart, $monthEnd])
             ->sum('total');
 
-        $abiertas = WorkOrder::withoutGlobalScopes()
+        $abiertas = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->whereNotIn('status', ['delivered'])
             ->count();
 
-        $citasHoy = Appointment::withoutGlobalScopes()
+        $citasHoy = Appointment::withoutGlobalScopes([TenantScope::class])
             ->whereDate('scheduled_at', today())
             ->count();
 
-        $turnosWebPend = Appointment::withoutGlobalScopes()
+        $turnosWebPend = Appointment::withoutGlobalScopes([TenantScope::class])
             ->where('source', 'web_turnero')
             ->whereNull('client_confirmed_at')
             ->whereDate('scheduled_at', '>=', today())
@@ -64,7 +65,7 @@ class PlatformStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('info'),
 
-            Stat::make('Clientes', (string) Customer::withoutGlobalScopes()->count())
+            Stat::make('Clientes', (string) Customer::withoutGlobalScopes([TenantScope::class])->count())
                 ->description('Total en la plataforma')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('gray'),

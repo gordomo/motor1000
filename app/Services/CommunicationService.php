@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Scopes\TenantScope;
 use App\DTOs\SendCommunicationDTO;
 use App\Jobs\SendCommunicationJob;
 use App\Models\Communication;
@@ -109,7 +110,7 @@ class CommunicationService
 
     private function resolveTemplate(int $tenantId, string $event, string $channel): ?CommunicationTemplate
     {
-        return CommunicationTemplate::withoutGlobalScopes()
+        return CommunicationTemplate::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
             ->where('event', $event)
             ->where('channel', $channel)
