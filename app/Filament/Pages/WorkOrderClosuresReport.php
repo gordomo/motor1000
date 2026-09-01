@@ -34,6 +34,16 @@ class WorkOrderClosuresReport extends Page
 
     protected static string $view = 'filament.pages.work-order-closures-report';
 
+    /**
+     * Cuándo se considera cerrada una orden.
+     *
+     * La definición es "cuando terminó el trabajo" (completed_at). Pero muchas
+     * órdenes se movieron directo a Entregado sin pasar por Completado, así que no
+     * tienen esa fecha: de 49 entregadas en prod, 27 quedaban afuera del informe.
+     * Para esas se usa la fecha de entrega, que es el mejor dato disponible.
+     */
+    private const FECHA_CIERRE = 'COALESCE(work_orders.completed_at, work_orders.delivered_at)';
+
     public ?string $desde = null;
 
     public ?string $hasta = null;
@@ -141,18 +151,23 @@ class WorkOrderClosuresReport extends Page
     {
         [$desde, $hasta] = $this->rango();
 
-        $total = $this->baseQuery()->whereBetween('completed_at', [$desde, $hasta])->count();
+        $total = $this->enRango($desde, $hasta)->count();
         $dias  = max(1, $desde->diffInDays($hasta) + 1);
 
         return [
-            'total'     => $total,
-            'dias'      => $dias,
-            'por_dia'   => round($total / $dias, 1),
+            'total'      => $total,
+            'dias'       => $dias,
+            'por_dia'    => round($total / $dias, 1),
             'por_semana' => round($total / max(1, $dias / 7), 1),
-            'por_mes'   => round($total / max(1, $dias / 30), 1),
-            'hoy'       => $this->baseQuery()->whereDate('completed_at', today())->count(),
-            'semana'    => $this->baseQuery()->whereBetween('completed_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'mes'       => $this->baseQuery()->whereBetween('completed_at', [now()->startOfMonth(), now()->endOfMonth()])->count(),
+            'por_mes'    => round($total / max(1, $dias / 30), 1),
+            'hoy'        => $this->baseQuery()
+                ->whereRaw('DATE(' . self::FECHA_CIERRE . ') = ?', [today()->toDateString()])
+                ->count(),
+            'semana'     => $this->enRango(now()->startOfWeek(), now()->endOfWeek())->count(),
+            'mes'        => $this->enRango(now()->startOfMonth(), now()->endOfMonth())->count(),
+            // Cuántas usan la fecha de entrega por no tener fecha de cierre, para
+            // poder aclararlo en pantalla en vez de que el número no cierre.
+            'sin_cierre' => $this->enRango($desde, $hasta)->whereNull('completed_at')->count(),
         ];
     }
 
@@ -161,9 +176,8 @@ class WorkOrderClosuresReport extends Page
     {
         [$desde, $hasta] = $this->rango();
 
-        $filas = $this->baseQuery()
-            ->whereBetween('completed_at', [$desde, $hasta])
-            ->selectRaw('DATE(completed_at) as dia, COUNT(*) as total')
+        $filas = $this->enRango($desde, $hasta)
+            ->selectRaw('DATE(' . self::FECHA_CIERRE . ') as dia, COUNT(*) as total')
             ->groupBy('dia')
             ->orderByDesc('dia')
             ->get();
@@ -181,11 +195,10 @@ class WorkOrderClosuresReport extends Page
 
         // DATE_FORMAT es de MySQL; en SQLite (tests) se usa strftime.
         $expr = DB::connection()->getDriverName() === 'sqlite'
-            ? "strftime('%Y-%m', completed_at)"
-            : "DATE_FORMAT(completed_at, '%Y-%m')";
+            ? "strftime('%Y-%m', " . self::FECHA_CIERRE . ")"
+            : "DATE_FORMAT(" . self::FECHA_CIERRE . ", '%Y-%m')";
 
-        return $this->baseQuery()
-            ->whereBetween('completed_at', [$desde, $hasta])
+        return $this->enRango($desde, $hasta)
             ->selectRaw("{$expr} as mes, COUNT(*) as total")
             ->groupBy('mes')
             ->orderByDesc('mes')
@@ -202,7 +215,17 @@ class WorkOrderClosuresReport extends Page
     {
         return WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', CurrentTenant::id() ?? 0)
-            ->whereNotNull('completed_at')
-            ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value]);
+            ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value])
+            // Tiene que tener alguna de las dos fechas para poder ubicarla en el
+            // tiempo. Antes se exigía completed_at y eso escondía las órdenes que
+            // se movieron directo a Entregado.
+            ->where(fn ($q) => $q->whereNotNull('completed_at')->orWhereNotNull('delivered_at'));
+    }
+
+    /** Órdenes cerradas dentro del rango, por su fecha de cierre real. */
+    private function enRango($desde, $hasta)
+    {
+        return $this->baseQuery()
+            ->whereRaw(self::FECHA_CIERRE . ' BETWEEN ? AND ?', [$desde, $hasta]);
     }
 }

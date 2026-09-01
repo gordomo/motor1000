@@ -268,3 +268,68 @@ it('3: una orden sin fotos no rompe nada', function () {
 
     $this->get(route('work-orders.pdf', $this->orden))->assertOk();
 });
+
+// ─── Regresión: órdenes entregadas sin fecha de cierre ──────────────────────
+
+it('nuevo: cuenta las entregadas que nunca pasaron por Completado', function () {
+    // El informe exigía completed_at, pero muchas órdenes se movieron directo a
+    // Entregado. En prod había 49 entregadas y el informe mostraba 22.
+    WorkOrder::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'status' => 'delivered',
+        'complaint' => 'Sin pasar por completado', 'mileage_in' => 50000,
+        'completed_at' => null,
+        'delivered_at' => now()->subDays(3),
+    ]);
+
+    WorkOrder::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'status' => 'completed',
+        'complaint' => 'Con fecha de cierre', 'mileage_in' => 50000,
+        'completed_at' => now()->subDays(2),
+    ]);
+
+    $page = Livewire::test(WorkOrderClosuresReport::class)
+        ->set('desde', now()->subMonth()->toDateString())
+        ->set('hasta', now()->toDateString());
+
+    $resumen = $page->instance()->resumen;
+
+    expect($resumen['total'])->toBe(2)
+        // Y avisa que una usa la fecha de entrega, para que el número se entienda.
+        ->and($resumen['sin_cierre'])->toBe(1);
+});
+
+it('nuevo: la orden entregada sin ninguna fecha no rompe el informe', function () {
+    WorkOrder::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'status' => 'delivered',
+        'complaint' => 'Sin fechas', 'mileage_in' => 50000,
+        'completed_at' => null, 'delivered_at' => null,
+    ]);
+
+    $resumen = Livewire::test(WorkOrderClosuresReport::class)->instance()->resumen;
+
+    // No se puede ubicar en el tiempo, así que no cuenta, pero tampoco explota.
+    expect($resumen['total'])->toBe(0);
+});
+
+it('nuevo: la serie diaria usa la fecha de entrega cuando no hay fecha de cierre', function () {
+    $entregaHace5 = now()->subDays(5);
+
+    WorkOrder::create([
+        'tenant_id' => $this->t->id, 'customer_id' => $this->customer->id,
+        'vehicle_id' => $this->vehicle->id, 'status' => 'delivered',
+        'complaint' => 'Vieja', 'mileage_in' => 50000,
+        'completed_at' => null, 'delivered_at' => $entregaHace5,
+    ]);
+
+    $page = Livewire::test(WorkOrderClosuresReport::class)
+        ->set('desde', now()->subMonth()->toDateString())
+        ->set('hasta', now()->toDateString());
+
+    $dias = collect($page->instance()->porDia);
+
+    expect($dias)->toHaveCount(1)
+        ->and($dias->first()['dia']->toDateString())->toBe($entregaHace5->toDateString());
+});

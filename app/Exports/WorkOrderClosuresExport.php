@@ -30,21 +30,25 @@ class WorkOrderClosuresExport implements FromCollection, WithHeadings, WithTitle
 
     public function collection()
     {
+        // Misma definición que el informe en pantalla: si la orden no registró
+        // cuándo se completó, se usa la fecha de entrega.
+        $fechaCierre = 'COALESCE(work_orders.completed_at, work_orders.delivered_at)';
+
         return WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', CurrentTenant::id() ?? 0)
-            ->whereNotNull('completed_at')
             ->whereIn('status', [WorkOrderStatus::Completed->value, WorkOrderStatus::Delivered->value])
-            ->whereBetween('completed_at', [$this->desde, $this->hasta])
+            ->where(fn ($q) => $q->whereNotNull('completed_at')->orWhereNotNull('delivered_at'))
+            ->whereRaw($fechaCierre . ' BETWEEN ? AND ?', [$this->desde, $this->hasta])
             ->with(['customer', 'vehicle', 'mechanic'])
-            ->orderBy('completed_at')
+            ->orderByRaw($fechaCierre)
             ->get()
             ->map(fn (WorkOrder $o): array => [
                 $o->number,
-                $o->completed_at?->format('d/m/Y'),
-                $o->completed_at?->format('H:i'),
+                ($o->completed_at ?? $o->delivered_at)?->format('d/m/Y'),
+                ($o->completed_at ?? $o->delivered_at)?->format('H:i'),
                 $o->created_at?->format('d/m/Y'),
-                $o->created_at && $o->completed_at
-                    ? $o->created_at->diffInDays($o->completed_at)
+                $o->created_at && ($cierre = $o->completed_at ?? $o->delivered_at)
+                    ? $o->created_at->diffInDays($cierre)
                     : null,
                 $o->customer?->name ?? '—',
                 $o->vehicle?->license_plate ?? '—',

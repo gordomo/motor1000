@@ -22,6 +22,19 @@
         </x-filament::section>
     </div>
 
+    @if (($resumen['sin_cierre'] ?? 0) > 0)
+        <div class="rounded-lg border-l-4 border-warning-500 bg-warning-50 p-3 text-sm dark:bg-warning-500/10">
+            <p class="font-semibold">{{ __('Nota sobre las órdenes más viejas') }}</p>
+            <p class="text-gray-700 dark:text-gray-300">
+                {{ trans_choice(
+                    '{1} 1 de estas órdenes no registró cuándo se terminó el trabajo, porque se pasó directo a Entregado. Para esa se usa la fecha de entrega.|[2,*] :count de estas órdenes no registraron cuándo se terminó el trabajo, porque se pasaron directo a Entregado. Para esas se usa la fecha de entrega.',
+                    $resumen['sin_cierre'],
+                    ['count' => $resumen['sin_cierre']],
+                ) }}
+            </p>
+        </div>
+    @endif
+
     <x-filament::section>
         <x-slot name="heading">{{ __('Período seleccionado') }}</x-slot>
         <x-slot name="description">
