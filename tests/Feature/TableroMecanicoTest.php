@@ -327,3 +327,21 @@ it('recepción sí ve el calendario y el listado', function () {
     expect(\App\Filament\Pages\AppointmentsCalendar::canAccess())->toBeTrue()
         ->and(\App\Filament\Resources\WorkOrderResource::shouldRegisterNavigation())->toBeTrue();
 });
+
+// ─── La barra lateral no tiene sentido con un solo ítem ─────────────────────
+
+it('al mecánico se le oculta la barra lateral en el tablero', function () {
+    Livewire::test(MechanicBoard::class);
+
+    expect(Filament::getCurrentPanel()->hasNavigation())->toBeFalse();
+});
+
+it('quien además administra conserva la barra lateral', function () {
+    $admin = User::factory()->create(['tenant_id' => $this->t->id]);
+    $admin->assignRole('admin');
+    $this->actingAs($admin);
+
+    Livewire::test(MechanicBoard::class);
+
+    expect(Filament::getCurrentPanel()->hasNavigation())->toBeTrue();
+});

@@ -7,6 +7,7 @@ use App\Enums\WorkOrderStatus;
 use App\Models\Mechanic;
 use App\Models\WorkOrder;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -47,6 +48,22 @@ class MechanicBoard extends Page
     public static function canAccess(): bool
     {
         return auth()->user()?->hasAnyRole(['mechanic', 'admin']) ?? false;
+    }
+
+    /**
+     * El mecánico tiene un solo ítem en el menú, así que la barra lateral es
+     * lugar desperdiciado en una tablet: se oculta y el tablero usa toda la
+     * pantalla. Quien además administra o atiende el mostrador la conserva,
+     * porque para esa persona el menú sí sirve.
+     *
+     * Se hace acá y no en el panel porque la configuración del panel se arma
+     * antes de que exista el usuario autenticado.
+     */
+    public function mount(): void
+    {
+        if (auth()->user()?->isOnlyMechanic()) {
+            Filament::getCurrentPanel()?->navigation(false);
+        }
     }
 
     protected function getHeaderActions(): array
