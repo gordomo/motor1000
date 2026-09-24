@@ -148,7 +148,6 @@ it('el administrador ve los tipos de usuario y la tabla de permisos', function (
 
     Livewire::test(Manual::class)
         ->assertSee('Tipos de usuario')
-        ->assertSee('Super administrador')
         ->assertSee('Quién ve qué');
 });
 
@@ -163,15 +162,62 @@ it('el comercial y el mecánico no ven la tabla de permisos', function () {
     }
 });
 
-it('los tipos de usuario incluyen al super admin, que no usa este panel', function () {
+it('el manual ya no menciona al super administrador', function () {
+    // No usa este panel ni ve datos del taller: para quien trabaja acá es ruido.
     comoRol('admin');
 
-    $tipos = Livewire::test(Manual::class)->instance()->tiposDeUsuario;
+    Livewire::test(Manual::class)->assertDontSee('Super administrador');
 
-    expect(collect($tipos)->pluck('nombre')->all())
-        ->toBe(['Administrador', 'Comercial', 'Mecánico', 'Super administrador'])
-        ->and(collect($tipos)->firstWhere('nombre', 'Super administrador')['donde'])
-        ->toBe('Otro panel (/admin)');
+    expect(collect(Livewire::test(Manual::class)->instance()->tiposDeUsuario)->pluck('nombre')->all())
+        ->toBe(['Administrador', 'Comercial', 'Mecánico']);
+});
+
+it('cada rol trae sus pantallas y sus acciones', function () {
+    comoRol('admin');
+
+    $tipos = collect(Livewire::test(Manual::class)->instance()->tiposDeUsuario)->keyBy('nombre');
+
+    foreach (['Administrador', 'Comercial', 'Mecánico'] as $nombre) {
+        expect($tipos[$nombre]['pantallas'])->not->toBeEmpty()
+            ->and($tipos[$nombre]['puede'])->not->toBeEmpty()
+            ->and($tipos[$nombre]['no_puede'])->not->toBeEmpty();
+    }
+
+    Livewire::test(Manual::class)
+        ->assertSee('Pantallas que ve:')
+        ->assertSee('Me pongo a trabajar')
+        ->assertSee('Borrar cobros');
+});
+
+it('lo que el manual promete coincide con el acceso real de cada rol', function () {
+    // El manual afirma qué ve cada uno; esto lo comprueba contra las clases que
+    // deciden el acceso, para que no quede desactualizado en silencio.
+    comoRol('mechanic');
+    expect(\App\Filament\Pages\MechanicBoard::canAccess())->toBeTrue()
+        ->and(\App\Filament\Pages\Dashboard::canAccess())->toBeFalse()
+        ->and(\App\Filament\Pages\WorkOrdersBoard::canAccess())->toBeFalse()
+        ->and(\App\Filament\Pages\AppointmentsCalendar::canAccess())->toBeFalse()
+        ->and(\App\Filament\Resources\QuoteResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\InvoiceResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\InventoryItemResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\CustomerResource::canViewAny())->toBeFalse();
+
+    comoRol('receptionist');
+    expect(\App\Filament\Resources\QuoteResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\InvoiceResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Pages\Dashboard::canAccess())->toBeTrue()
+        ->and(\App\Filament\Pages\WorkOrdersBoard::canAccess())->toBeTrue()
+        ->and(\App\Filament\Pages\WorkOrderClosuresReport::canAccess())->toBeTrue()
+        // Lo que el manual dice que NO puede:
+        ->and(\App\Filament\Resources\UserResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\ChecklistItemResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Pages\WorkshopSettings::canAccess())->toBeFalse();
+
+    comoRol('admin');
+    expect(\App\Filament\Resources\UserResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\ChecklistItemResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Pages\WorkshopSettings::canAccess())->toBeTrue()
+        ->and(\App\Filament\Pages\Dashboard::canAccess())->toBeTrue();
 });
 
 it('el manual se puede imprimir desde cualquier rol', function () {

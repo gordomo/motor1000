@@ -172,20 +172,49 @@
             <x-slot name="heading">{{ __('Tipos de usuario') }}</x-slot>
             <x-slot name="description">{{ __('Qué es cada uno y para qué sirve, antes de dar de alta a alguien.') }}</x-slot>
 
-            <div class="grid gap-3 md:grid-cols-2">
+            <div class="space-y-4">
                 @foreach ($this->tiposDeUsuario as $tipo)
-                    <div class="rounded-lg border border-gray-200 p-3 dark:border-white/10">
-                        <div class="mb-1 flex items-center justify-between gap-2">
+                    <div class="rounded-lg border border-gray-200 p-4 dark:border-white/10">
+                        <div class="mb-2 flex flex-wrap items-baseline gap-2">
                             <span @class([
-                                'font-bold',
+                                'text-base font-bold',
                                 'text-primary-600' => $tipo['color'] === 'primary',
                                 'text-warning-600' => $tipo['color'] === 'warning',
                                 'text-success-600' => $tipo['color'] === 'success',
-                                'text-gray-500' => $tipo['color'] === 'gray',
                             ])>{{ $tipo['nombre'] }}</span>
-                            <span class="shrink-0 text-xs text-gray-400">{{ $tipo['donde'] }}</span>
+                            <span class="text-sm text-gray-500">{{ $tipo['quien'] }}</span>
                         </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $tipo['para'] }}</p>
+
+                        <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                            <span class="font-semibold text-gray-700 dark:text-gray-300">{{ __('Pantallas que ve:') }}</span>
+                            {{ $tipo['pantallas'] }}
+                        </p>
+
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <p class="mb-1 text-xs font-bold uppercase tracking-wide text-success-600">{{ __('Puede') }}</p>
+                                <ul class="space-y-1">
+                                    @foreach ($tipo['puede'] as $accion)
+                                        <li class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                            <x-filament::icon icon="heroicon-o-check" class="mt-0.5 h-4 w-4 shrink-0 text-success-600" />
+                                            <span>{{ $accion }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+
+                            <div>
+                                <p class="mb-1 text-xs font-bold uppercase tracking-wide text-gray-400">{{ __('No puede') }}</p>
+                                <ul class="space-y-1">
+                                    @foreach ($tipo['no_puede'] as $limite)
+                                        <li class="flex items-start gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <x-filament::icon icon="heroicon-o-x-mark" class="mt-0.5 h-4 w-4 shrink-0 text-gray-300 dark:text-gray-600" />
+                                            <span>{{ $limite }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 @endforeach
             </div>

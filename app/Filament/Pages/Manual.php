@@ -119,38 +119,73 @@ class Manual extends Page
     }
 
     /**
-     * Los tipos de usuario del sistema y para qué sirve cada uno.
+     * Qué es cada rol, qué pantallas ve y qué puede hacer.
      *
-     * Incluye al super admin, que no aparecía en ningún lado del manual: no usa
-     * este panel (entra por /admin), pero el administrador del taller tiene que
-     * saber que existe y qué hace.
+     * No incluye al super administrador a propósito: no usa este panel ni ve
+     * datos del taller, así que para quien trabaja acá es ruido.
+     *
+     * Lo que dice esta lista está verificado contra las clases que deciden el
+     * acceso real (ver ManualTest), así que no puede quedar desactualizada en
+     * silencio.
      */
     public function getTiposDeUsuarioProperty(): array
     {
         return [
             [
-                'nombre' => __('Administrador'),
-                'donde'  => __('Este panel'),
-                'para'   => __('El dueño o encargado. Hace todo lo del taller y además maneja el equipo, los puntos de revisión y los datos del taller. Es el único que borra cobros y que corrige los cobros que registró otra persona.'),
-                'color'  => 'primary',
+                'nombre'    => __('Administrador'),
+                'quien'     => __('El dueño o el encargado.'),
+                'color'     => 'primary',
+                'pantallas' => __('Todas.'),
+                'puede'     => [
+                    __('Todo lo que hace el comercial'),
+                    __('Dar de alta usuarios y asignarles el rol'),
+                    __('Configurar los puntos de revisión del checklist'),
+                    __('Editar los datos del taller, el logo y los horarios'),
+                    __('Corregir cualquier cobro, incluso el que cargó otro'),
+                    __('Borrar cobros'),
+                    __('Mover una orden por cualquier estado, si falta alguien'),
+                ],
+                'no_puede'  => [
+                    __('Ver otros talleres: solo administra el suyo'),
+                ],
             ],
             [
-                'nombre' => __('Comercial'),
-                'donde'  => __('Este panel'),
-                'para'   => __('El mostrador. Atiende clientes, presupuesta, factura, maneja inventario y turnos, y ve los números. Entrega las órdenes, que es el paso donde se registra el cobro. Puede corregir sus propios cobros, no los de otros.'),
-                'color'  => 'warning',
+                'nombre'    => __('Comercial'),
+                'quien'     => __('El mostrador: quien atiende al cliente.'),
+                'color'     => 'warning',
+                'pantallas' => __('Tablero de Órdenes, Presupuestos, Revisiones, Clientes, Vehículos, Inventario, Turnos y calendario, Facturas, Recordatorios, Tareas, Plantillas, Mecánicos, Centro de Operaciones y Órdenes cerradas.'),
+                'puede'     => [
+                    __('Crear presupuestos, revisiones y órdenes de trabajo'),
+                    __('Cargar clientes, autos e inventario'),
+                    __('Entregar la orden, que es donde se registra el cobro'),
+                    __('Corregir los cobros que registró él mismo'),
+                    __('Borrar clientes y órdenes'),
+                    __('Ver los números del taller y el informe de cerradas'),
+                ],
+                'no_puede'  => [
+                    __('Entrar a Equipo, Puntos de revisión ni Mi Taller'),
+                    __('Borrar cobros, ni corregir los de otra persona'),
+                    __('Poner una orden en reparación o darla por completada: eso es del mecánico'),
+                ],
             ],
             [
-                'nombre' => __('Mecánico'),
-                'donde'  => __('Este panel'),
-                'para'   => __('El taller. Solo ve el tablero con los autos: toma una orden, marca los puntos y la cierra. No ve ningún precio, ni siquiera el total del auto que está trabajando.'),
-                'color'  => 'success',
-            ],
-            [
-                'nombre' => __('Super administrador'),
-                'donde'  => __('Otro panel (/admin)'),
-                'para'   => __('No es del taller: administra la plataforma y puede dar de alta talleres y usuarios. No ve órdenes, presupuestos ni clientes de nadie. Normalmente lo usa solo quien mantiene el sistema.'),
-                'color'  => 'gray',
+                'nombre'    => __('Mecánico'),
+                'quien'     => __('El taller: quien trabaja los autos.'),
+                'color'     => 'success',
+                'pantallas' => __('Solo el Tablero del taller. Entra directo ahí y no tiene menú lateral.'),
+                'puede'     => [
+                    __('Tomar una orden con "Me pongo a trabajar"'),
+                    __('Hacerse cargo de una orden que quedó sin dueño'),
+                    __('Avisar que no puede empezar y dejar el motivo'),
+                    __('Marcar cada punto como hecho o como no realizado'),
+                    __('Cerrar la orden escribiendo el trabajo realizado'),
+                    __('Cambiar su propia contraseña'),
+                ],
+                'no_puede'  => [
+                    __('Ver ningún precio, ni el total del auto que trabaja'),
+                    __('Crear, borrar ni entregar órdenes'),
+                    __('Entrar a presupuestos, facturación, inventario ni clientes'),
+                ],
             ],
         ];
     }
