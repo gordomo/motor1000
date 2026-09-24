@@ -45,6 +45,11 @@ class InvoiceResource extends Resource
         return __('Facturas');
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Facturas pendientes de cobro o vencidas');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) Invoice::whereIn('status', ['pending', 'overdue'])->count() ?: null;

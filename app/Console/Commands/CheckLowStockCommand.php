@@ -35,9 +35,7 @@ class CheckLowStockCommand extends Command
             app()->instance('current.tenant', $tenant);
 
             $bajos = InventoryItem::query()
-                ->where('is_active', true)
-                ->whereColumn('stock_quantity', '<=', 'min_stock')
-                ->where('min_stock', '>', 0)
+                ->belowMinimum()
                 ->orderBy('name')
                 ->get();
 

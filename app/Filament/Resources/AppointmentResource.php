@@ -37,6 +37,11 @@ class AppointmentResource extends Resource
         return __('Taller');
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Turnos agendados para hoy');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) Appointment::where('status', 'scheduled')

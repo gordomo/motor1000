@@ -48,6 +48,11 @@ class WorkOrderResource extends Resource
         return __('Órdenes de Servicio');
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Órdenes abiertas: todo lo que todavía no se entregó');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) WorkOrder::whereNotIn('status', ['delivered'])->count();

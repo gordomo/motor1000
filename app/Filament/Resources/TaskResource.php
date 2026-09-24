@@ -26,6 +26,11 @@ class TaskResource extends Resource
     public static function getModelLabel(): string { return __('Tarea'); }
     public static function getPluralModelLabel(): string { return __('Tareas'); }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Tareas abiertas o en curso');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) Task::whereIn('status', ['open', 'in_progress'])->count() ?: null;

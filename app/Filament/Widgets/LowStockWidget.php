@@ -38,9 +38,7 @@ class LowStockWidget extends BaseWidget
             ->query(
                 InventoryItem::withoutGlobalScopes([TenantScope::class])
                     ->where('tenant_id', $tenantId)
-                    ->where('is_active', true)
-                    ->where('min_stock', '>', 0)
-                    ->whereColumn('stock_quantity', '<=', 'min_stock')
+                    ->belowMinimum()
                     ->orderBy('name')
             )
             ->columns([

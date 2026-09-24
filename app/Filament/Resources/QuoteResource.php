@@ -42,6 +42,11 @@ class QuoteResource extends Resource
         return __('Presupuestos');
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Presupuestos esperando que el cliente los apruebe o rechace');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) Quote::where('status', QuoteStatus::Pending->value)->count();

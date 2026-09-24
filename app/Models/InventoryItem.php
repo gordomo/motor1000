@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,8 +49,26 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
+    /**
+     * Repuesto que llegó a su stock mínimo.
+     *
+     * Exige un mínimo definido: con mínimo en cero (el valor por defecto) el
+     * taller está diciendo que no controla ese repuesto, así que no corresponde
+     * avisar. Antes el badge del menú no pedía esto y se encendía por ítems que
+     * después no aparecían ni en el tablero ni en el aviso diario.
+     */
+    public function scopeBelowMinimum(Builder $query): Builder
+    {
+        return $query
+            ->where('is_active', true)
+            ->where('min_stock', '>', 0)
+            ->whereColumn('stock_quantity', '<=', 'min_stock');
+    }
+
     public function isLowStock(): bool
     {
-        return $this->stock_quantity <= $this->min_stock;
+        return $this->is_active
+            && $this->min_stock > 0
+            && $this->stock_quantity <= $this->min_stock;
     }
 }

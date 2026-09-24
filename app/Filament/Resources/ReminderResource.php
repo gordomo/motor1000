@@ -35,6 +35,11 @@ class ReminderResource extends Resource
         return __('CRM');
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Recordatorios pendientes de enviar');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return (string) Reminder::where('status', 'pending')->count() ?: null;

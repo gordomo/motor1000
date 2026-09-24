@@ -37,11 +37,15 @@ class InventoryItemResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $low = InventoryItem::whereColumn('stock_quantity', '<=', 'min_stock')->count();
-        return $low > 0 ? (string) $low : null;
+        return (string) InventoryItem::query()->belowMinimum()->count() ?: null;
     }
 
     public static function getNavigationBadgeColor(): string { return 'danger'; }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return __('Repuestos activos que llegaron a su stock mínimo');
+    }
 
     public static function form(Form $form): Form
     {
