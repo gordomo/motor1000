@@ -49,11 +49,20 @@ class Manual extends Page
      */
     protected function getHeaderActions(): array
     {
+        // Imprimir o guardar en PDF: el manual es también el papel que se le deja
+        // a alguien que recién entra al taller.
+        $imprimir = \Filament\Actions\Action::make('imprimir')
+            ->label(__('Imprimir'))
+            ->icon('heroicon-o-printer')
+            ->color('gray')
+            ->extraAttributes(['onclick' => 'window.print()']);
+
         if (! auth()->user()?->isOnlyMechanic()) {
-            return [];
+            return [$imprimir];
         }
 
         return [
+            $imprimir,
             \Filament\Actions\Action::make('volver')
                 ->label(__('Volver al tablero'))
                 ->icon('heroicon-o-arrow-left')
@@ -105,6 +114,43 @@ class Manual extends Page
                 'quien'  => __('Lo mueve el comercial'),
                 'que'    => __('Pide la forma de pago y el monto. Ese es el momento en que la plata queda registrada como cobrada. Si la orden es sin cargo, no pide nada.'),
                 'color'  => 'warning',
+            ],
+        ];
+    }
+
+    /**
+     * Los tipos de usuario del sistema y para qué sirve cada uno.
+     *
+     * Incluye al super admin, que no aparecía en ningún lado del manual: no usa
+     * este panel (entra por /admin), pero el administrador del taller tiene que
+     * saber que existe y qué hace.
+     */
+    public function getTiposDeUsuarioProperty(): array
+    {
+        return [
+            [
+                'nombre' => __('Administrador'),
+                'donde'  => __('Este panel'),
+                'para'   => __('El dueño o encargado. Hace todo lo del taller y además maneja el equipo, los puntos de revisión y los datos del taller. Es el único que borra cobros y que corrige los cobros que registró otra persona.'),
+                'color'  => 'primary',
+            ],
+            [
+                'nombre' => __('Comercial'),
+                'donde'  => __('Este panel'),
+                'para'   => __('El mostrador. Atiende clientes, presupuesta, factura, maneja inventario y turnos, y ve los números. Entrega las órdenes, que es el paso donde se registra el cobro. Puede corregir sus propios cobros, no los de otros.'),
+                'color'  => 'warning',
+            ],
+            [
+                'nombre' => __('Mecánico'),
+                'donde'  => __('Este panel'),
+                'para'   => __('El taller. Solo ve el tablero con los autos: toma una orden, marca los puntos y la cierra. No ve ningún precio, ni siquiera el total del auto que está trabajando.'),
+                'color'  => 'success',
+            ],
+            [
+                'nombre' => __('Super administrador'),
+                'donde'  => __('Otro panel (/admin)'),
+                'para'   => __('No es del taller: administra la plataforma y puede dar de alta talleres y usuarios. No ve órdenes, presupuestos ni clientes de nadie. Normalmente lo usa solo quien mantiene el sistema.'),
+                'color'  => 'gray',
             ],
         ];
     }

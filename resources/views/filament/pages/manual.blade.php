@@ -162,6 +162,39 @@
         </p>
     </x-filament::section>
 
+    {{-- ── Tipos de usuario y permisos ────────────────────────────────
+         Solo para el administrador: es quien crea los usuarios y decide quién es
+         qué. Al mecánico y al comercial les alcanza con la guía de su rol; una
+         tabla con lo que pueden los demás es ruido y genera preguntas. --}}
+
+    @if ($rol === 'admin')
+        <x-filament::section icon="heroicon-o-identification" collapsible collapsed>
+            <x-slot name="heading">{{ __('Tipos de usuario') }}</x-slot>
+            <x-slot name="description">{{ __('Qué es cada uno y para qué sirve, antes de dar de alta a alguien.') }}</x-slot>
+
+            <div class="grid gap-3 md:grid-cols-2">
+                @foreach ($this->tiposDeUsuario as $tipo)
+                    <div class="rounded-lg border border-gray-200 p-3 dark:border-white/10">
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <span @class([
+                                'font-bold',
+                                'text-primary-600' => $tipo['color'] === 'primary',
+                                'text-warning-600' => $tipo['color'] === 'warning',
+                                'text-success-600' => $tipo['color'] === 'success',
+                                'text-gray-500' => $tipo['color'] === 'gray',
+                            ])>{{ $tipo['nombre'] }}</span>
+                            <span class="shrink-0 text-xs text-gray-400">{{ $tipo['donde'] }}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $tipo['para'] }}</p>
+                    </div>
+                @endforeach
+            </div>
+
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                {{ __('Una persona puede tener más de un rol. El alta se hace en Equipo, y la contraseña la puede cambiar después cada uno desde su propio perfil.') }}
+            </p>
+        </x-filament::section>
+
     {{-- ── Quién ve qué ──────────────────────────────────────────────── --}}
 
     <x-filament::section icon="heroicon-o-lock-closed" collapsible collapsed>
@@ -202,7 +235,8 @@
         <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
             {{ __('Borrar clientes y órdenes lo pueden hacer el administrador y el comercial. El mecánico no borra nada, y no ve ningún importe.') }}
         </p>
-    </x-filament::section>
+        </x-filament::section>
+    @endif
 
     {{-- ── Dudas frecuentes ──────────────────────────────────────────── --}}
 
@@ -231,4 +265,15 @@
     <p class="text-sm text-gray-500">
         {{ __('Si algo no funciona como dice acá, avisá: puede ser un error del sistema o del manual, y los dos se arreglan.') }}
     </p>
+
+    {{-- Al imprimir: sin barra ni botones, y todo el contenido visible --}}
+    <style>
+        @media print {
+            .fi-sidebar, .fi-topbar, .fi-header-actions, .fi-btn { display: none !important; }
+            .fi-main, .fi-main-ctn { padding: 0 !important; max-width: 100% !important; }
+            .fi-section-content-ctn { display: block !important; height: auto !important; }
+            .fi-section { break-inside: avoid; border: 1px solid #e5e7eb !important; box-shadow: none !important; }
+        }
+    </style>
+
 </x-filament-panels::page>

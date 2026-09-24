@@ -140,3 +140,44 @@ it('el manual dice quién puede registrar cobros', function () {
         // que puede borrar.
         ->assertSee('Cobros: corregir cualquiera y borrar');
 });
+
+// ─── Tipos de usuario: solo para quien da de alta a la gente ────────────────
+
+it('el administrador ve los tipos de usuario y la tabla de permisos', function () {
+    comoRol('admin');
+
+    Livewire::test(Manual::class)
+        ->assertSee('Tipos de usuario')
+        ->assertSee('Super administrador')
+        ->assertSee('Quién ve qué');
+});
+
+it('el comercial y el mecánico no ven la tabla de permisos', function () {
+    // No es secreto, pero para ellos es ruido: les alcanza la guía de su rol.
+    foreach (['receptionist', 'mechanic'] as $rol) {
+        comoRol($rol);
+
+        Livewire::test(Manual::class)
+            ->assertDontSee('Tipos de usuario')
+            ->assertDontSee('Quién ve qué');
+    }
+});
+
+it('los tipos de usuario incluyen al super admin, que no usa este panel', function () {
+    comoRol('admin');
+
+    $tipos = Livewire::test(Manual::class)->instance()->tiposDeUsuario;
+
+    expect(collect($tipos)->pluck('nombre')->all())
+        ->toBe(['Administrador', 'Comercial', 'Mecánico', 'Super administrador'])
+        ->and(collect($tipos)->firstWhere('nombre', 'Super administrador')['donde'])
+        ->toBe('Otro panel (/admin)');
+});
+
+it('el manual se puede imprimir desde cualquier rol', function () {
+    foreach (['admin', 'receptionist', 'mechanic'] as $rol) {
+        comoRol($rol);
+
+        Livewire::test(Manual::class)->assertActionExists('imprimir');
+    }
+});
