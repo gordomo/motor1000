@@ -20,6 +20,16 @@ class WorkOrdersBoard extends Page
 
     protected static string $view = 'filament.pages.work-orders-board';
 
+    /**
+     * El mecánico tiene su propio tablero y no debe entrar acá: esta pantalla
+     * muestra todas las órdenes con sus importes. No figura en su menú, pero sin
+     * esto podía abrirla escribiendo la dirección.
+     */
+    public static function canAccess(): bool
+    {
+        return ! (auth()->user()?->isOnlyMechanic() ?? false);
+    }
+
     public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
     {
         return __('Tablero de Órdenes');

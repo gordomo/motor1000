@@ -345,3 +345,20 @@ it('quien además administra conserva la barra lateral', function () {
 
     expect(Filament::getCurrentPanel()->hasNavigation())->toBeTrue();
 });
+
+it('el mecánico no puede abrir el Tablero de Órdenes ni escribiendo la dirección', function () {
+    // Esa pantalla muestra todas las órdenes con sus importes.
+    expect(\App\Filament\Pages\WorkOrdersBoard::canAccess())->toBeFalse();
+
+    $this->get(\App\Filament\Pages\WorkOrdersBoard::getUrl())->assertForbidden();
+});
+
+it('el mostrador sí entra al Tablero de Órdenes', function () {
+    $comercial = User::factory()->create(['tenant_id' => $this->t->id]);
+    $comercial->assignRole('receptionist');
+    $this->actingAs($comercial);
+
+    expect(\App\Filament\Pages\WorkOrdersBoard::canAccess())->toBeTrue();
+
+    $this->get(\App\Filament\Pages\WorkOrdersBoard::getUrl())->assertOk();
+});
