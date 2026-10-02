@@ -13,8 +13,8 @@ use Illuminate\Console\Command;
  * Pedido 6: revisa el inventario de cada taller y avisa a sus administradores
  * qué repuestos quedaron por debajo del mínimo configurado.
  *
- * Sigue el patrón de ProcessRemindersCommand: fija el tenant actual en el
- * contenedor para que el TenantScope filtre bien en cada vuelta.
+ * Fija el tenant actual en el contenedor para que el TenantScope filtre bien
+ * en cada vuelta.
  */
 class CheckLowStockCommand extends Command
 {

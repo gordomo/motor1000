@@ -13,8 +13,6 @@ class Kernel extends ConsoleKernel
         // Send appointment reminders every hour
         $schedule->job(new SendAppointmentReminderJob)->hourly();
 
-        // Process pending reminder notifications daily at 9am
-        $schedule->command('reminders:process')->dailyAt('09:00');
 
         // Horizon snapshot for metrics
         $schedule->command('horizon:snapshot')->everyFiveMinutes();

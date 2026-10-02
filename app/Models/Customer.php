@@ -24,6 +24,7 @@ class Customer extends Model
         'tax_id',
         'tax_id_type',
         'birthday',
+        'birthday_contacted_at',
         'address',
         'city',
         'state',
@@ -38,6 +39,7 @@ class Customer extends Model
 
     protected $casts = [
         'birthday'         => 'date',
+        'birthday_contacted_at' => 'datetime',
         'last_visit_at'    => 'datetime',
         'tags'             => 'array',
         'whatsapp_opted_in' => 'boolean',

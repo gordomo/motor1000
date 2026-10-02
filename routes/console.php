@@ -10,7 +10,10 @@ Artisan::command('inspire', function () {
 
 // Scheduled tasks
 Schedule::job(new \App\Jobs\SendAppointmentReminderJob)->hourly();
-Schedule::command('reminders:process')->dailyAt('09:00');
+// "Para hoy": resumen en la campanita de admin y recepción (cumpleaños,
+// recordatorios vencidos, turnos de mañana). Reemplaza a reminders:process,
+// que marcaba los recordatorios como enviados sin que WhatsApp mandara nada.
+Schedule::command('para-hoy:avisar')->dailyAt('08:00');
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
 // Pedido 6: aviso diario de repuestos por debajo del mínimo. A las 8, antes de
