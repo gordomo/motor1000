@@ -78,7 +78,7 @@ class AppointmentsCalendar extends Page
                     'end' => $start?->copy()->addMinutes(30)->toIso8601String(),
                     'allDay' => false,
                     'editable' => false,
-                    'color' => '#f59e0b',
+                    'classNames' => ['evento-entrega'],
                     'url' => \App\Filament\Resources\WorkOrderResource::getUrl('view', ['record' => $order]),
                     'extendedProps' => [
                         'estado' => __('Entrega prevista'),
@@ -125,6 +125,10 @@ class AppointmentsCalendar extends Page
                     'end' => $end?->toIso8601String(),
                     'allDay' => false,
                     'url' => AppointmentResource::getUrl('edit', ['record' => $appointment]),
+                    // Los colores van por clase en la vista (appointments-calendar.blade.php).
+                    'classNames' => in_array($appointment->status, ['cancelled', 'no_show'], true)
+                        ? ['evento-cancelado']
+                        : ['evento-turno'],
                     'extendedProps' => [
                         'estado' => $statusLabel,
                         'mecanico' => $appointment->mechanic?->name ?: __('Sin asignar'),
