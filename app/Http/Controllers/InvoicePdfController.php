@@ -12,6 +12,8 @@ class InvoicePdfController extends Controller
     {
         abort_unless(auth()->check(), 401);
         abort_unless($invoice->tenant_id === auth()->user()->tenant_id, 403);
+        // Facturas: solo el administrador.
+        abort_unless(auth()->user()->hasAnyRole(['admin']), 403);
 
         $invoice->load([
             'tenant',

@@ -27,6 +27,8 @@ class InspectionPdfController extends Controller
     {
         abort_unless(auth()->check(), 401);
         abort_unless($inspection->tenant_id === auth()->user()->tenant_id, 403);
+        // Revisiones: solo el administrador.
+        abort_unless(auth()->user()->hasAnyRole(['admin']), 403);
 
         $inspection->load(['tenant', 'customer', 'vehicle']);
 

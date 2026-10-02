@@ -100,7 +100,7 @@
         <x-filament::section icon="heroicon-o-cube" icon-color="gray">
             <x-slot name="heading">{{ __('Inventario') }}</x-slot>
             <p class="text-sm">
-                {{ __('Al cargar una pieza en una orden podés elegir el repuesto del inventario: completa la descripción y el precio, y el stock baja solo cuando la orden pasa a Completado. Si reabrís una orden cerrada, los repuestos vuelven al stock. Cada mañana a las 8 llega un aviso a la campanita con los repuestos por debajo del mínimo.') }}
+                {{ __('Al cargar una pieza en una orden podés elegir el repuesto del inventario: completa la descripción y el precio, y el stock baja solo cuando la orden pasa a Completado. Si reabrís una orden cerrada, los repuestos vuelven al stock. Cada mañana a las 8 le llega al administrador un aviso a la campanita con los repuestos por debajo del mínimo.') }}
             </p>
         </x-filament::section>
     @endif

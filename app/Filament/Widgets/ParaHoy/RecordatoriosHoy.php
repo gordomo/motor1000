@@ -79,7 +79,8 @@ class RecordatoriosHoy extends TableWidget
                     Tables\Actions\Action::make('ver')
                         ->label(__('Abrir'))
                         ->icon('heroicon-o-pencil-square')
-                        ->url(fn (Reminder $record): string => ReminderResource::getUrl('edit', ['record' => $record])),
+                        ->url(fn (Reminder $record): string => ReminderResource::getUrl('edit', ['record' => $record]))
+                        ->visible(fn (): bool => ReminderResource::canViewAny()),
                 ]),
             ]);
     }

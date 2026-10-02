@@ -12,6 +12,8 @@ class WorkOrderPdfController extends Controller
     {
         abort_unless(auth()->check(), 401);
         abort_unless($workOrder->tenant_id === auth()->user()->tenant_id, 403);
+        // Órdenes: admin y comercial. El mecánico no ve precios.
+        abort_unless(auth()->user()->hasAnyRole(['admin', 'receptionist']), 403);
 
         $workOrder->load([
             'tenant',

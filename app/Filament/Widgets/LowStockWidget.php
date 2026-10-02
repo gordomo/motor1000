@@ -26,8 +26,8 @@ class LowStockWidget extends BaseWidget
 
     public static function canView(): bool
     {
-        // El mecánico no compra repuestos; esto es para quien repone.
-        return auth()->user()?->hasAnyRole(['admin', 'receptionist']) ?? false;
+        // Inventario es solo del administrador (ver SoloAdministrador).
+        return \App\Filament\Resources\InventoryItemResource::canViewAny();
     }
 
     public function table(Table $table): Table

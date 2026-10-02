@@ -14,6 +14,8 @@ class QuotePdfController extends Controller
     {
         abort_unless(auth()->check(), 401);
         abort_unless($quote->tenant_id === auth()->user()->tenant_id, 403);
+        // Presupuestos: admin y comercial. El mecánico no ve precios.
+        abort_unless(auth()->user()->hasAnyRole(['admin', 'receptionist']), 403);
 
         $quote->load(['tenant', 'customer', 'vehicle']);
 
@@ -29,6 +31,8 @@ class QuotePdfController extends Controller
     {
         abort_unless(auth()->check(), 401);
         abort_unless($quote->tenant_id === auth()->user()->tenant_id, 403);
+        // Presupuestos: admin y comercial. El mecánico no ve precios.
+        abort_unless(auth()->user()->hasAnyRole(['admin', 'receptionist']), 403);
 
         $quote->load(['tenant', 'customer', 'vehicle']);
 

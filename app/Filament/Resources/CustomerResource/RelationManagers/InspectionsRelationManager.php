@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\CustomerResource\RelationManagers;
 
+use App\Filament\Resources\InspectionResource;
 use App\Models\Inspection;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Historial de revisiones del cliente (pedido 17: "que me quede guardado en el
@@ -17,6 +19,12 @@ class InspectionsRelationManager extends RelationManager
     protected static string $relationship = 'inspections';
 
     protected static ?string $title = 'Revisiones';
+
+    /** Revisiones es solo del administrador (ver SoloAdministrador). */
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return InspectionResource::canViewAny();
+    }
 
     public function table(Table $table): Table
     {

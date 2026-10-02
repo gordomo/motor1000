@@ -183,6 +183,6 @@ it('el mecánico no puede registrar cobros', function () {
     $mecanico->assignRole('mechanic');
     $this->actingAs($mecanico);
 
-    Livewire::test(ListWorkOrders::class)
-        ->assertTableActionHidden('registrar_cobro', $this->entregadaVieja);
+    // Ni siquiera entra al listado de órdenes (ve precios): trabaja desde su tablero.
+    Livewire::test(ListWorkOrders::class)->assertForbidden();
 });

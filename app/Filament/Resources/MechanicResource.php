@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MechanicResource\Pages;
 use App\Models\Mechanic;
-use App\Filament\Concerns\HiddenFromMechanics;
+use App\Filament\Concerns\SoloAdministrador;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,7 +13,7 @@ use Filament\Tables\Table;
 
 class MechanicResource extends Resource
 {
-    use HiddenFromMechanics;
+    use SoloAdministrador;
 
     protected static ?string $model = Mechanic::class;
 

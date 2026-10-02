@@ -36,13 +36,17 @@ it('recepcionista puede eliminar clientes y órdenes', function(){
         ->and($u->can('delete', $wo))->toBeTrue();
 });
 
-it('mecánico no puede eliminar órdenes pero sí editarlas', function(){
+// 2026-10: el mecánico trabaja solo desde su tablero; el listado y la ficha de
+// la orden muestran precios, así que ya no puede verlas ni editarlas por URL.
+it('mecánico no puede ver, editar ni eliminar órdenes desde el listado', function(){
     $u = mkUser('mechanic', $this->tenant);
     $c = Customer::factory()->create(['tenant_id'=>$this->tenant->id]);
     $v = Vehicle::factory()->create(['tenant_id'=>$this->tenant->id,'customer_id'=>$c->id]);
     $wo = WorkOrder::factory()->create(['tenant_id'=>$this->tenant->id,'customer_id'=>$c->id,'vehicle_id'=>$v->id]);
     expect($u->can('delete', $wo))->toBeFalse()
-        ->and($u->can('update', $wo))->toBeTrue()
+        ->and($u->can('update', $wo))->toBeFalse()
+        ->and($u->can('view', $wo))->toBeFalse()
+        ->and($u->can('viewAny', WorkOrder::class))->toBeFalse()
         ->and($u->can('viewAny', Customer::class))->toBeFalse();
 });
 

@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Services\Pdf\BulkPdfZipService;
 use App\Models\Invoice;
-use App\Filament\Concerns\HiddenFromMechanics;
+use App\Filament\Concerns\SoloAdministrador;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -18,7 +18,7 @@ use Illuminate\Support\Collection;
 
 class InvoiceResource extends Resource
 {
-    use HiddenFromMechanics;
+    use SoloAdministrador;
 
     protected static ?string $model = Invoice::class;
 

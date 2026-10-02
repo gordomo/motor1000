@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventoryItemResource\Pages;
 use App\Models\InventoryItem;
-use App\Filament\Concerns\HiddenFromMechanics;
+use App\Filament\Concerns\SoloAdministrador;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class InventoryItemResource extends Resource
 {
-    use HiddenFromMechanics;
+    use SoloAdministrador;
 
     protected static ?string $model = InventoryItem::class;
     protected static ?string $navigationIcon = 'heroicon-o-cube';

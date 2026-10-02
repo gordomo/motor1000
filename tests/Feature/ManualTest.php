@@ -200,18 +200,33 @@ it('lo que el manual promete coincide con el acceso real de cada rol', function 
         ->and(\App\Filament\Resources\QuoteResource::canViewAny())->toBeFalse()
         ->and(\App\Filament\Resources\InvoiceResource::canViewAny())->toBeFalse()
         ->and(\App\Filament\Resources\InventoryItemResource::canViewAny())->toBeFalse()
-        ->and(\App\Filament\Resources\CustomerResource::canViewAny())->toBeFalse();
+        ->and(\App\Filament\Resources\CustomerResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\WorkOrderResource::canViewAny())->toBeFalse();
 
+    // 2026-10: el comercial ve Órdenes, Citas y calendario, Clientes y vehículos,
+    // Presupuestos, Plantillas, Para hoy y los números.
     comoRol('receptionist');
     expect(\App\Filament\Resources\QuoteResource::canViewAny())->toBeTrue()
-        ->and(\App\Filament\Resources\InvoiceResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\WorkOrderResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\CustomerResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\VehicleResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\AppointmentResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Resources\CommunicationTemplateResource::canViewAny())->toBeTrue()
+        ->and(\App\Filament\Pages\AppointmentsCalendar::canAccess())->toBeTrue()
+        ->and(\App\Filament\Pages\ParaHoyPage::canAccess())->toBeTrue()
         ->and(\App\Filament\Pages\Dashboard::canAccess())->toBeTrue()
         ->and(\App\Filament\Pages\WorkOrdersBoard::canAccess())->toBeTrue()
         ->and(\App\Filament\Pages\WorkOrderClosuresReport::canAccess())->toBeTrue()
         // Lo que el manual dice que NO puede:
         ->and(\App\Filament\Resources\UserResource::canViewAny())->toBeFalse()
         ->and(\App\Filament\Resources\ChecklistItemResource::canViewAny())->toBeFalse()
-        ->and(\App\Filament\Pages\WorkshopSettings::canAccess())->toBeFalse();
+        ->and(\App\Filament\Pages\WorkshopSettings::canAccess())->toBeFalse()
+        ->and(\App\Filament\Resources\InvoiceResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\InventoryItemResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\InspectionResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\ReminderResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\TaskResource::canViewAny())->toBeFalse()
+        ->and(\App\Filament\Resources\MechanicResource::canViewAny())->toBeFalse();
 
     comoRol('admin');
     expect(\App\Filament\Resources\UserResource::canViewAny())->toBeTrue()
