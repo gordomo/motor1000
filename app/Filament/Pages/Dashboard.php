@@ -74,10 +74,12 @@ class Dashboard extends BaseDashboard
                     DatePicker::make('desde')
                         ->label(__('Desde'))
                         ->native(false)
+                        ->displayFormat('d/m/Y')
                         ->default(now()->startOfMonth()),
                     DatePicker::make('hasta')
                         ->label(__('Hasta'))
                         ->native(false)
+                        ->displayFormat('d/m/Y')
                         ->default(now()->endOfMonth()),
                 ]),
         ]);

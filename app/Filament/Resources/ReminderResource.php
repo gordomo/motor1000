@@ -97,15 +97,15 @@ class ReminderResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('customer.name')->label(__('Cliente'))->searchable(),
                 Tables\Columns\TextColumn::make('vehicle.license_plate')->label(__('Vehículo'))->placeholder('—'),
-                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo')),
+                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::tipoRecordatorio($state)),
                 Tables\Columns\TextColumn::make('title')->label(__('Recordatorio')),
                 Tables\Columns\TextColumn::make('due_at')->label(__('Vencimiento'))->dateTime('d/m/Y')->sortable(),
-                Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
+                Tables\Columns\BadgeColumn::make('status')->label(__('Estado'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoRecordatorio($state)),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('status')->label(__('Estado'))
                     ->options(['pending' => __('Pendiente'), 'sent' => __('Enviado'), 'dismissed' => __('Descartado'), 'completed' => __('Completado')]),
-                Tables\Filters\SelectFilter::make('type')->options(ReminderType::class),
+                Tables\Filters\SelectFilter::make('type')->label(__('Tipo'))->options(ReminderType::class),
                 Tables\Filters\Filter::make('overdue')
                     ->label(__('Vencidos'))
                     ->query(fn($q) => $q->where('due_at', '<', now())->where('status', 'pending')),

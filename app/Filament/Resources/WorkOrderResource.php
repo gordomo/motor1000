@@ -261,6 +261,7 @@ class WorkOrderResource extends Resource
             Forms\Components\Section::make(__('Ítems de la OS'))
                 ->schema([
                     Forms\Components\Repeater::make('items')
+                        ->label(__('Ítems'))
                         ->relationship()
                         ->schema([
                             Forms\Components\Select::make('type')
@@ -387,7 +388,8 @@ class WorkOrderResource extends Resource
                         'primary' => 'normal',
                         'warning' => 'high',
                         'danger'  => 'urgent',
-                    ]),
+                    ])
+                    ->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::prioridad($state)),
                 Tables\Columns\TextColumn::make('total')
                     ->label(__('Total'))
                     ->money('ARS')
@@ -711,7 +713,7 @@ class WorkOrderResource extends Resource
                 ->schema([
                     Infolists\Components\TextEntry::make('number')->label(__('Número'))->weight('bold'),
                     Infolists\Components\TextEntry::make('status')->label(__('Estado'))->badge(),
-                    Infolists\Components\TextEntry::make('priority')->label(__('Prioridad'))->badge(),
+                    Infolists\Components\TextEntry::make('priority')->label(__('Prioridad'))->badge()->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::prioridad($state)),
                     Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
                     Infolists\Components\TextEntry::make('vehicle.display_name')->label(__('Vehículo')),
                     Infolists\Components\TextEntry::make('mechanic.name')->label(__('Mecánico'))->placeholder(__('No asignado')),

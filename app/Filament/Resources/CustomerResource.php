@@ -62,7 +62,7 @@ class CustomerResource extends Resource
                         ->tel()
                         ->maxLength(20),
                     Forms\Components\TextInput::make('email')
-                        ->label(__('E-mail'))
+                        ->label(__('Email'))
                         ->email()
                         ->maxLength(255),
                     Forms\Components\DatePicker::make('birthday')
@@ -196,7 +196,8 @@ class CustomerResource extends Resource
                         'danger'  => 'inactive',
                         'warning' => 'vip',
                         'info'    => 'prospect',
-                    ]),
+                    ])
+                    ->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoCliente($state)),
                 Tables\Columns\TextColumn::make('last_visit_at')
                     ->label(__('Última visita'))
                     ->dateTime('d/m/Y')
@@ -295,10 +296,11 @@ class CustomerResource extends Resource
                 ->schema([
                     Infolists\Components\TextEntry::make('name')->label(__('Nombre')),
                     Infolists\Components\TextEntry::make('phone')->label(__('Teléfono')),
-                    Infolists\Components\TextEntry::make('email')->label(__('E-mail')),
+                    Infolists\Components\TextEntry::make('email')->label(__('Email')),
                     Infolists\Components\TextEntry::make('status')
                         ->label(__('Estado'))
-                        ->badge(),
+                        ->badge()
+                        ->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoCliente($state)),
                     Infolists\Components\TextEntry::make('last_visit_at')
                         ->label(__('Última Visita'))
                         ->dateTime('d/m/Y')

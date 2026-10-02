@@ -35,9 +35,9 @@ class RemindersRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('title')->label(__('Título')),
-                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo')),
+                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::tipoRecordatorio($state)),
                 Tables\Columns\TextColumn::make('due_at')->label(__('Vencimiento'))->dateTime('d/m/Y'),
-                Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
+                Tables\Columns\BadgeColumn::make('status')->label(__('Estado'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoRecordatorio($state)),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()

@@ -102,7 +102,7 @@ class UserResource extends Resource
                     ->label(__('Activo'))
                     ->boolean(),
                 Tables\Columns\IconColumn::make('is_super_admin')
-                    ->label(__('Super admin'))
+                    ->label(__('Superadministrador'))
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('Creado'))
@@ -119,7 +119,7 @@ class UserResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label(__('Activo')),
                 Tables\Filters\TernaryFilter::make('is_super_admin')
-                    ->label(__('Super admin')),
+                    ->label(__('Superadministrador')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label(__('Editar')),

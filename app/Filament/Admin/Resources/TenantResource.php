@@ -42,7 +42,7 @@ class TenantResource extends Resource
                                 $set('slug', Str::slug($state ?? ''))
                             ),
                         Forms\Components\TextInput::make('slug')
-                            ->label(__('Slug (URL)'))
+                            ->label(__('Identificador (URL)'))
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
@@ -172,7 +172,7 @@ class TenantResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label(__('Slug'))
+                    ->label(__('Identificador'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('Correo'))

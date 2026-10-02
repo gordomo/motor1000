@@ -129,7 +129,7 @@
             </td>
             <td>
                 <strong>Estado</strong><br>
-                <span class="badge">{{ strtoupper((string) $invoice->status) }}</span>
+                <span class="badge">{{ mb_strtoupper((string) \App\Support\Etiquetas::estadoFactura($invoice->status)) }}</span>
             </td>
         </tr>
         <tr>
@@ -143,7 +143,7 @@
             </td>
             <td>
                 <strong>Método de pago</strong><br>
-                {{ $invoice->payment_method ?? '-' }}
+                {{ \App\Support\Etiquetas::formaDePago($invoice->payment_method) ?? '-' }}
             </td>
         </tr>
         <tr>

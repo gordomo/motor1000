@@ -19,9 +19,9 @@ class CommunicationsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\BadgeColumn::make('channel')->label(__('Canal')),
+                Tables\Columns\BadgeColumn::make('channel')->label(__('Canal'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::canal($state)),
                 Tables\Columns\TextColumn::make('body')->label(__('Mensaje'))->limit(60),
-                Tables\Columns\BadgeColumn::make('status')->label(__('Estado')),
+                Tables\Columns\BadgeColumn::make('status')->label(__('Estado'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoComunicacion($state)),
                 Tables\Columns\TextColumn::make('sent_at')->label(__('Enviado el'))->dateTime('d/m/Y H:i'),
             ])
             ->defaultSort('created_at', 'desc');

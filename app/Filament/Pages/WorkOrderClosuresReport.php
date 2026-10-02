@@ -124,10 +124,12 @@ class WorkOrderClosuresReport extends Page
                         DatePicker::make('desde')
                             ->label(__('Desde'))
                             ->native(false)
+                            ->displayFormat('d/m/Y')
                             ->live(),
                         DatePicker::make('hasta')
                             ->label(__('Hasta'))
                             ->native(false)
+                            ->displayFormat('d/m/Y')
                             ->live(),
                     ]),
             ])

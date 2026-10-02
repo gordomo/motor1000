@@ -15,7 +15,7 @@ enum CommunicationChannel: string implements HasLabel, HasColor
     {
         return match($this) {
             self::WhatsApp => 'WhatsApp',
-            self::Email    => 'E-mail',
+            self::Email    => 'Email',
             self::Sms      => 'SMS',
         };
     }

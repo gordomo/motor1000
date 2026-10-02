@@ -290,7 +290,8 @@ class InvoiceResource extends Resource
                     Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
                     Infolists\Components\TextEntry::make('status')
                         ->badge()
-                        ->label(__('Estado')),
+                        ->label(__('Estado'))
+                        ->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoFactura($state)),
                     Infolists\Components\TextEntry::make('subtotal')->money('ARS')->label(__('Subtotal')),
                     Infolists\Components\TextEntry::make('tax')->money('ARS')->label(__('Impuestos')),
                     Infolists\Components\TextEntry::make('discount')->money('ARS')->label(__('Descuento')),

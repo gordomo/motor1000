@@ -75,10 +75,10 @@
 
         <div class="qr-container">
             @if($qrSvg)
-                <img src="data:image/svg+xml;base64,{{ $qrSvg }}" alt="QR Code">
+                <img src="data:image/svg+xml;base64,{{ $qrSvg }}" alt="Código QR">
             @else
                 <div class="qr-placeholder">
-                    <span>QR disponible al instalar simplesoftwareio/simple-qrcode</span>
+                    <span>Código QR no disponible</span>
                 </div>
             @endif
         </div>

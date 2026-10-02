@@ -55,12 +55,12 @@ class CommunicationTemplateResource extends Resource
                         ->required()
                         ->maxLength(100)
                         ->unique(ignoreRecord: true)
-                        ->label(__('Slug')),
+                        ->label(__('Identificador')),
 
                     Forms\Components\Select::make('channel')
                         ->options([
                             'whatsapp' => 'WhatsApp',
-                            'email'    => 'E-mail',
+                            'email'    => 'Email',
                             'sms'      => 'SMS',
                         ])
                         ->required()
@@ -107,7 +107,7 @@ class CommunicationTemplateResource extends Resource
                     ->label(__('Nombre')),
 
                 Tables\Columns\TextColumn::make('slug')
-                    ->label(__('Slug')),
+                    ->label(__('Identificador')),
 
                 Tables\Columns\BadgeColumn::make('channel')
                     ->colors([
@@ -117,7 +117,7 @@ class CommunicationTemplateResource extends Resource
                     ])
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'whatsapp' => 'WhatsApp',
-                        'email'    => 'E-mail',
+                        'email'    => 'Email',
                         'sms'      => 'SMS',
                         default    => $state,
                     })
@@ -139,7 +139,7 @@ class CommunicationTemplateResource extends Resource
                 Tables\Filters\SelectFilter::make('channel')
                     ->options([
                         'whatsapp' => 'WhatsApp',
-                        'email'    => 'E-mail',
+                        'email'    => 'Email',
                         'sms'      => 'SMS',
                     ])
                     ->label(__('Canal')),

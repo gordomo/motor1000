@@ -34,7 +34,7 @@ class UpcomingRemindersWidget extends BaseWidget
             ->columns([
                 Tables\Columns\TextColumn::make('customer.name')->label(__('Cliente'))->searchable(),
                 Tables\Columns\TextColumn::make('vehicle.license_plate')->label(__('Vehículo'))->placeholder('—'),
-                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo')),
+                Tables\Columns\BadgeColumn::make('type')->label(__('Tipo'))->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::tipoRecordatorio($state)),
                 Tables\Columns\TextColumn::make('title')->label(__('Recordatorio')),
                 Tables\Columns\TextColumn::make('due_at')->label(__('Vencimiento'))->dateTime('d/m/Y')->sortable(),
             ]);

@@ -150,7 +150,7 @@
             <td>
                 <strong>Mecánico</strong><br>
                 {{ $workOrder->mechanic->name ?? 'No asignado' }}<br>
-                Prioridad: {{ strtoupper((string) $workOrder->priority) }}
+                Prioridad: {{ mb_strtoupper((string) \App\Support\Etiquetas::prioridad($workOrder->priority)) }}
             </td>
         </tr>
         <tr>
@@ -201,7 +201,7 @@
         <tbody>
             @forelse($workOrder->items as $item)
                 <tr>
-                    <td>{{ ucfirst((string) $item->type) }}</td>
+                    <td>{{ \App\Support\Etiquetas::tipoItem($item->type) }}</td>
                     <td>{{ $item->description }}</td>
                     <td class="right">{{ number_format((float) $item->quantity, 2, ',', '.') }}</td>
                     <td class="right">$ {{ number_format((float) $item->unit_price, 2, ',', '.') }}</td>
