@@ -74,42 +74,36 @@ class ParaHoy
     }
 
     // ---------------------------------------------------------------
-    // Mensajes de WhatsApp (los manda el usuario, con un clic)
+    // Mensajes de WhatsApp (los manda el usuario, con un clic). Los textos
+    // se editan en Plantillas de comunicación (ver Mensajes).
     // ---------------------------------------------------------------
 
     public static function mensajeCumpleanos(Customer $c): string
     {
-        return sprintf(
-            '¡Hola %s! Desde %s te deseamos un muy feliz cumpleaños. ¡Que lo pases genial!',
-            self::nombre($c),
-            self::taller(),
-        );
+        return Mensajes::cuerpo('cumpleanos', 'whatsapp', [
+            'nombre' => self::nombre($c),
+            'taller' => self::taller(),
+        ]);
     }
 
     public static function mensajeRecordatorio(Reminder $r): string
     {
-        $patente = $r->vehicle?->license_plate ? " de tu vehículo {$r->vehicle->license_plate}" : '';
-
-        return sprintf(
-            'Hola %s, te escribimos de %s. Te recordamos: %s%s. ¿Querés que te reservemos un turno?',
-            self::nombre($r->customer),
-            self::taller(),
-            rtrim((string) $r->title, '.'),
-            $patente,
-        );
+        return Mensajes::cuerpo('recordatorio', 'whatsapp', [
+            'nombre'       => self::nombre($r->customer),
+            'taller'       => self::taller(),
+            'recordatorio' => rtrim((string) $r->title, '.'),
+            'patente'      => $r->vehicle?->license_plate,
+        ]);
     }
 
     public static function mensajeTurno(Appointment $a): string
     {
-        $servicio = $a->title ? " ({$a->title})" : '';
-
-        return sprintf(
-            'Hola %s, te escribimos de %s para recordarte tu turno de mañana a las %s%s. ¿Nos confirmás que venís?',
-            self::nombre($a->customer),
-            self::taller(),
-            $a->scheduled_at->format('H:i'),
-            $servicio,
-        );
+        return Mensajes::cuerpo('turno_manana', 'whatsapp', [
+            'nombre'   => self::nombre($a->customer),
+            'taller'   => self::taller(),
+            'hora'     => $a->scheduled_at->format('H:i'),
+            'servicio' => $a->title,
+        ]);
     }
 
     private static function nombre(?Customer $c): string

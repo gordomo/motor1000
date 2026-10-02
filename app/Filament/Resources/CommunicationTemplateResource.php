@@ -3,10 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CommunicationTemplateResource\Pages;
+use App\Support\Mensajes;
 use App\Models\CommunicationTemplate;
 use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -43,58 +46,114 @@ class CommunicationTemplateResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Section::make(__('Identificación'))
+            Forms\Components\Section::make(__('Mensaje'))
+                ->description(__('Elegí qué mensaje querés cambiar. Si no hay una plantilla activa, el sistema usa el texto de siempre.'))
                 ->columns(2)
                 ->schema([
+                    Forms\Components\Select::make('event')
+                        ->label(__('Mensaje'))
+                        ->options(fn (?CommunicationTemplate $record): array => self::opcionesDeEvento($record))
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set, ?string $state, string $operation): void {
+                            $canales = array_keys(Mensajes::catalogo()[$state]['canales'] ?? []);
+                            if (! in_array($get('channel'), $canales, true)) {
+                                $set('channel', $canales[0] ?? null);
+                            }
+                            if ($operation === 'create') {
+                                self::completarConElTextoDeSiempre($get, $set);
+                            }
+                        }),
+
+                    Forms\Components\Select::make('channel')
+                        ->label(__('Canal'))
+                        ->options(fn (Get $get): array => collect(Mensajes::catalogo()[$get('event')]['canales'] ?? ['whatsapp' => [], 'email' => []])
+                            ->keys()
+                            ->mapWithKeys(fn (string $c): array => [$c => self::nombreDeCanal($c)])
+                            ->all())
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set, string $operation): void {
+                            if ($operation === 'create') {
+                                self::completarConElTextoDeSiempre($get, $set);
+                            }
+                        }),
+
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(255)
                         ->label(__('Nombre')),
 
-                    Forms\Components\TextInput::make('slug')
-                        ->required()
-                        ->maxLength(100)
-                        ->unique(ignoreRecord: true)
-                        ->label(__('Identificador')),
-
-                    Forms\Components\Select::make('channel')
-                        ->options([
-                            'whatsapp' => 'WhatsApp',
-                            'email'    => 'Email',
-                            'sms'      => 'SMS',
-                        ])
-                        ->required()
-                        ->label(__('Canal')),
-
-                    Forms\Components\TextInput::make('event')
-                        ->maxLength(100)
-                        ->placeholder(__('ex: work_order.completed'))
-                        ->label(__('Evento')),
-
                     Forms\Components\Toggle::make('is_active')
                         ->default(true)
-                        ->label(__('Activo')),
+                        ->inline(false)
+                        ->helperText(__('Si la desactivás, se vuelve a usar el texto de siempre.'))
+                        ->label(__('Activa')),
                 ]),
 
-            Forms\Components\Section::make(__('Contenido'))
+            Forms\Components\Section::make(__('Texto'))
                 ->schema([
                     Forms\Components\TextInput::make('subject')
                         ->maxLength(255)
-                        ->placeholder(__('Asunto (solo correo)'))
-                        ->label(__('Asunto')),
+                        ->label(__('Asunto'))
+                        ->visible(fn (Get $get): bool => $get('channel') === 'email'),
 
                     Forms\Components\Textarea::make('body')
                         ->required()
-                        ->rows(8)
-                        ->hint(__('Usa {variable} para insertar datos dinámicos'))
-                        ->label(__('Cuerpo del mensaje')),
-
-                    Forms\Components\KeyValue::make('variables')
-                        ->nullable()
-                        ->label(__('Variables disponibles'))
-                        ->hint(__('Clave: nombre de variable | Valor: descripción')),
+                        ->rows(6)
+                        ->label(__('Texto del mensaje'))
+                        ->helperText(fn (Get $get): string => self::ayudaDeVariables($get('event'))),
                 ]),
         ]);
+    }
+
+    /** Los mensajes del sistema, más el evento guardado si es uno viejo que ya no está en la lista. */
+    private static function opcionesDeEvento(?CommunicationTemplate $record): array
+    {
+        $opciones = Mensajes::opciones();
+
+        if ($record?->event && ! isset($opciones[$record->event])) {
+            $opciones[$record->event] = $record->event . ' ' . __('(el sistema no lo usa)');
+        }
+
+        return $opciones;
+    }
+
+    private static function completarConElTextoDeSiempre(Get $get, Set $set): void
+    {
+        $mensaje = Mensajes::catalogo()[$get('event')] ?? null;
+        $canal = $mensaje['canales'][$get('channel')] ?? null;
+
+        if (! $mensaje || ! $canal) {
+            return;
+        }
+
+        $set('name', $mensaje['nombre'] . ' (' . self::nombreDeCanal($get('channel')) . ')');
+        $set('body', $canal['cuerpo']);
+        $set('subject', $canal['asunto'] ?? null);
+    }
+
+    private static function ayudaDeVariables(?string $evento): string
+    {
+        $variables = Mensajes::catalogo()[$evento]['variables'] ?? [];
+
+        if (! $variables) {
+            return __('Elegí un mensaje para ver qué datos podés usar.');
+        }
+
+        return __('Podés usar:') . ' ' . collect($variables)
+            ->map(fn (string $descripcion, string $clave): string => '{' . $clave . '} ' . mb_strtolower($descripcion))
+            ->implode(' · ');
+    }
+
+    public static function nombreDeCanal(?string $canal): string
+    {
+        return match ($canal) {
+            'whatsapp' => 'WhatsApp',
+            'email'    => 'Email',
+            'sms'      => 'SMS',
+            default    => (string) $canal,
+        };
     }
 
     public static function table(Table $table): Table
@@ -106,8 +165,6 @@ class CommunicationTemplateResource extends Resource
                     ->sortable()
                     ->label(__('Nombre')),
 
-                Tables\Columns\TextColumn::make('slug')
-                    ->label(__('Identificador')),
 
                 Tables\Columns\BadgeColumn::make('channel')
                     ->colors([
@@ -125,7 +182,8 @@ class CommunicationTemplateResource extends Resource
 
                 Tables\Columns\TextColumn::make('event')
                     ->placeholder('—')
-                    ->label(__('Evento')),
+                    ->formatStateUsing(fn (?string $state): string => Mensajes::opciones()[$state] ?? (string) $state)
+                    ->label(__('Mensaje')),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()

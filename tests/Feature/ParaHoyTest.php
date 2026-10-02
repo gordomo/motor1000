@@ -217,5 +217,5 @@ it('con WhatsApp conectado, sí lo manda (en español) y marca el turno', functi
     app()->call([new SendAppointmentReminderJob, 'handle']);
 
     expect($turno->fresh()->reminder_sent)->toBeTruthy()
-        ->and(Communication::sole()->body)->toStartWith('Hola Juan Pérez, te recordamos tu turno de mañana a las 10:00');
+        ->and(Communication::sole()->body)->toBe('Hola Juan, te escribimos de 341 Boxes para recordarte tu turno de mañana a las 10:00 (Service). ¿Nos confirmás que venís?');
 });

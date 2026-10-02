@@ -22,6 +22,8 @@ class CreateCommunicationTemplate extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['tenant_id'] = \App\Support\CurrentTenant::id();
+        // Identificador interno (único por taller): ya no se pide en el formulario.
+        $data['slug'] ??= \App\Support\Mensajes::slugNuevo($data['event'] ?? 'mensaje', $data['channel'] ?? '');
 
         return $data;
     }

@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Scopes\TenantScope;
 use App\DTOs\SendCommunicationDTO;
 use App\Jobs\SendCommunicationJob;
 use App\Models\Communication;
-use App\Models\CommunicationTemplate;
 use App\Models\WorkOrder;
+use App\Support\Mensajes;
 
 class CommunicationService
 {
@@ -51,15 +50,20 @@ class CommunicationService
             return;
         }
 
-        $template = $this->resolveTemplate($order->tenant_id, 'vehicle_ready', 'whatsapp');
-        $body = $template
-            ? $template->render([
-                'customer_name'   => $customer->name,
-                'vehicle'         => $order->vehicle->display_name,
-                'work_order'      => $order->number,
-                'workshop_name'   => $order->tenant->name,
-            ])
-            : "Hola {$customer->name}, tu vehículo {$order->vehicle->display_name} ya está listo para retirar. Orden: {$order->number}";
+        // Textos editables en Plantillas de comunicación (evento "vehicle_ready").
+        // customer_name, vehicle, work_order y workshop_name son los nombres que
+        // usaban las plantillas viejas: se siguen completando.
+        $variables = [
+            'nombre'        => strtok(trim((string) $customer->name), ' ') ?: $customer->name,
+            'taller'        => $order->tenant?->name,
+            'vehiculo'      => $order->vehicle?->display_name,
+            'orden'         => $order->number,
+            'customer_name' => $customer->name,
+            'vehicle'       => $order->vehicle?->display_name,
+            'work_order'    => $order->number,
+            'workshop_name' => $order->tenant?->name,
+        ];
+        $body = Mensajes::cuerpo('vehicle_ready', 'whatsapp', $variables);
 
         if (self::whatsappConectado() && $customer->whatsapp && $customer->whatsapp_opted_in) {
             $this->send(new SendCommunicationDTO(
@@ -74,22 +78,13 @@ class CommunicationService
         }
 
         if ($customer->email && $customer->email_opted_in) {
-            $emailTemplate = $this->resolveTemplate($order->tenant_id, 'vehicle_ready', 'email');
-            $emailBody = $emailTemplate
-                ? $emailTemplate->render([
-                    'customer_name' => $customer->name,
-                    'vehicle'       => $order->vehicle->display_name,
-                    'work_order'    => $order->number,
-                ])
-                : $body;
-
             $this->send(new SendCommunicationDTO(
                 tenantId:    $order->tenant_id,
                 customerId:  $customer->id,
                 channel:     'email',
                 to:          $customer->email,
-                subject:     "Tu vehículo está listo - Orden {$order->number}",
-                body:        $emailBody,
+                subject:     Mensajes::asunto('vehicle_ready', 'email', $variables),
+                body:        Mensajes::cuerpo('vehicle_ready', 'email', $variables),
                 template:    'vehicle_ready',
                 workOrderId: $order->id,
             ));
@@ -105,7 +100,8 @@ class CommunicationService
             return false;
         }
 
-        $body = "Hola {$customer->name}, te recordamos tu turno de mañana a las {$appointment->scheduled_at->format('H:i')}. ¡Te esperamos!";
+        // Mismo texto que "Para hoy" (evento "turno_manana", editable en Plantillas).
+        $body = \App\Support\ParaHoy::mensajeTurno($appointment);
 
         $this->send(new SendCommunicationDTO(
             tenantId:   $appointment->tenant_id,
@@ -117,15 +113,5 @@ class CommunicationService
         ));
 
         return true;
-    }
-
-    private function resolveTemplate(int $tenantId, string $event, string $channel): ?CommunicationTemplate
-    {
-        return CommunicationTemplate::withoutGlobalScopes([TenantScope::class])
-            ->where('tenant_id', $tenantId)
-            ->where('event', $event)
-            ->where('channel', $channel)
-            ->where('is_active', true)
-            ->first();
     }
 }

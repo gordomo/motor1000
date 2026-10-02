@@ -431,9 +431,14 @@ class QuoteResource extends Resource
                         $pdfUrl  = \App\Http\Controllers\QuotePdfController::linkPublico($record);
                         // ?-> porque Customer usa SoftDeletes y la relación puede venir null.
                         $name = $record->customer?->name ?? '';
-                        $msg = urlencode(
-                            "Hola {$name}, le enviamos el presupuesto {$record->code} de {$record->vehicle?->display_name}.\n\nPuede verlo aquí: {$pdfUrl}"
-                        );
+                        // Texto editable en Plantillas de comunicación (evento "presupuesto").
+                        $msg = urlencode(\App\Support\Mensajes::cuerpo('presupuesto', 'whatsapp', [
+                            'nombre'   => $name,
+                            'taller'   => \App\Support\CurrentTenant::get()?->name,
+                            'codigo'   => $record->code,
+                            'vehiculo' => $record->vehicle?->display_name,
+                            'link'     => $pdfUrl,
+                        ]));
                         $phone = preg_replace('/\D/', '', $record->customer?->whatsapp ?? $record->customer?->phone ?? '');
                         return "https://wa.me/{$phone}?text={$msg}";
                     })
