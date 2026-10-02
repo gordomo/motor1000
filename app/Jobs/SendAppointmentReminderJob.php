@@ -23,8 +23,11 @@ class SendAppointmentReminderJob implements ShouldQueue
             ->chunk(50, function ($appointments) use ($service) {
                 foreach ($appointments as $appointment) {
                     app()->instance('current.tenant', $appointment->tenant);
-                    $service->notifyAppointmentReminder($appointment);
-                    $appointment->update(['reminder_sent' => true]);
+                    // Solo se marca si de verdad salió: sin WhatsApp conectado queda en
+                    // false y el turno aparece en "Para hoy" para confirmarlo a mano.
+                    if ($service->notifyAppointmentReminder($appointment)) {
+                        $appointment->update(['reminder_sent' => true]);
+                    }
                 }
             });
     }

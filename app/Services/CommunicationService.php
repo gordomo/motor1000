@@ -11,6 +11,16 @@ use App\Models\WorkOrder;
 
 class CommunicationService
 {
+    /**
+     * Con el proveedor 'log' (el de prod hoy) los WhatsApp no salen: solo se
+     * escriben en el log. Antes se registraban como enviados igual, y el
+     * taller creía que el cliente recibía los avisos. Ver docs/WHATSAPP.md.
+     */
+    public static function whatsappConectado(): bool
+    {
+        return config('services.whatsapp.provider', 'log') !== 'log';
+    }
+
     public function send(SendCommunicationDTO $dto): Communication
     {
         $communication = Communication::create([
@@ -49,9 +59,9 @@ class CommunicationService
                 'work_order'      => $order->number,
                 'workshop_name'   => $order->tenant->name,
             ])
-            : "Olá {$customer->name}, seu veículo {$order->vehicle->display_name} está pronto para retirada! OS: {$order->number}";
+            : "Hola {$customer->name}, tu vehículo {$order->vehicle->display_name} ya está listo para retirar. Orden: {$order->number}";
 
-        if ($customer->whatsapp && $customer->whatsapp_opted_in) {
+        if (self::whatsappConectado() && $customer->whatsapp && $customer->whatsapp_opted_in) {
             $this->send(new SendCommunicationDTO(
                 tenantId:    $order->tenant_id,
                 customerId:  $customer->id,
@@ -78,7 +88,7 @@ class CommunicationService
                 customerId:  $customer->id,
                 channel:     'email',
                 to:          $customer->email,
-                subject:     "Seu veículo está pronto - OS {$order->number}",
+                subject:     "Tu vehículo está listo - Orden {$order->number}",
                 body:        $emailBody,
                 template:    'vehicle_ready',
                 workOrderId: $order->id,
@@ -86,26 +96,27 @@ class CommunicationService
         }
     }
 
-    public function notifyAppointmentReminder(\App\Models\Appointment $appointment): void
+    /** @return bool si se mandó el aviso (false si WhatsApp no está conectado o el cliente no tiene). */
+    public function notifyAppointmentReminder(\App\Models\Appointment $appointment): bool
     {
         $customer = $appointment->customer;
 
-        if (! $customer) {
-            return;
+        if (! $customer || ! self::whatsappConectado() || ! $customer->whatsapp || ! $customer->whatsapp_opted_in) {
+            return false;
         }
 
-        $body = "Olá {$customer->name}, lembrando do seu agendamento amanhã às {$appointment->scheduled_at->format('H:i')}. Te esperamos!";
+        $body = "Hola {$customer->name}, te recordamos tu turno de mañana a las {$appointment->scheduled_at->format('H:i')}. ¡Te esperamos!";
 
-        if ($customer->whatsapp && $customer->whatsapp_opted_in) {
-            $this->send(new SendCommunicationDTO(
-                tenantId:   $appointment->tenant_id,
-                customerId: $customer->id,
-                channel:    'whatsapp',
-                to:         $customer->whatsapp,
-                body:       $body,
-                template:   'appointment_reminder',
-            ));
-        }
+        $this->send(new SendCommunicationDTO(
+            tenantId:   $appointment->tenant_id,
+            customerId: $customer->id,
+            channel:    'whatsapp',
+            to:         $customer->whatsapp,
+            body:       $body,
+            template:   'appointment_reminder',
+        ));
+
+        return true;
     }
 
     private function resolveTemplate(int $tenantId, string $event, string $channel): ?CommunicationTemplate
