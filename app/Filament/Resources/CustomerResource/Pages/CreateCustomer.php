@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CustomerResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Models\Vehicle;
@@ -11,7 +12,16 @@ use Illuminate\Support\Facades\DB;
 
 class CreateCustomer extends CreateRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = CustomerResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->volverAction(),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WorkOrderResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\WorkOrderResource;
 use App\Models\Tenant;
 use App\Models\WorkOrder;
@@ -11,7 +12,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class CreateWorkOrder extends CreateRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = WorkOrderResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->volverAction(),
+        ];
+    }
 
     protected function handleRecordCreation(array $data): Model
     {

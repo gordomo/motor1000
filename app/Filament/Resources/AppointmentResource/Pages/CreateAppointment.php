@@ -2,12 +2,22 @@
 
 namespace App\Filament\Resources\AppointmentResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\AppointmentResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateAppointment extends CreateRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = AppointmentResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->volverAction(),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

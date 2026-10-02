@@ -2,13 +2,23 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\InvoiceResource;
 use App\Models\Invoice;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateInvoice extends CreateRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = InvoiceResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->volverAction(),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

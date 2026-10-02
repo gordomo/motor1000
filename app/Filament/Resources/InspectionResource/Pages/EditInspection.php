@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InspectionResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\InspectionResource;
 use App\Models\Inspection;
 use Filament\Actions;
@@ -9,11 +10,14 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditInspection extends EditRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = InspectionResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->volverAction(),
             Actions\Action::make('pdf')
                 ->label(__('Descargar PDF'))
                 ->icon('heroicon-o-document-arrow-down')

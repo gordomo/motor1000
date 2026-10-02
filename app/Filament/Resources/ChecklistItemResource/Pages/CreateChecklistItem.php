@@ -2,12 +2,22 @@
 
 namespace App\Filament\Resources\ChecklistItemResource\Pages;
 
+use App\Filament\Concerns\ConBotonVolver;
 use App\Filament\Resources\ChecklistItemResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateChecklistItem extends CreateRecord
 {
+    use ConBotonVolver;
+
     protected static string $resource = ChecklistItemResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->volverAction(),
+        ];
+    }
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
