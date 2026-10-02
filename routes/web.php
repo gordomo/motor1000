@@ -66,6 +66,12 @@ Route::get('/quotes/{quote}/pdf', [QuotePdfController::class, '__invoke'])
 Route::get('/quotes/{quote}/pdf/stream', [QuotePdfController::class, 'stream'])
     ->name('quotes.pdf.stream');
 
+// Presupuesto para el cliente (link firmado que va por WhatsApp, sin login).
+// El de arriba exige usuario del taller: al cliente le daba error.
+Route::get('/presupuesto/{quoteId}', [QuotePdfController::class, 'publico'])
+    ->name('public.quotes.pdf')
+    ->middleware('signed');
+
 // Revisión PDF (pedido 17, requiere login)
 Route::get('/inspections/{inspection}/pdf', [InspectionPdfController::class, '__invoke'])
     ->name('inspections.pdf');

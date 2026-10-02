@@ -428,7 +428,7 @@ class QuoteResource extends Resource
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
                     ->color('success')
                     ->url(function (Quote $record): string {
-                        $pdfUrl  = route('quotes.pdf.stream', $record);
+                        $pdfUrl  = \App\Http\Controllers\QuotePdfController::linkPublico($record);
                         // ?-> porque Customer usa SoftDeletes y la relación puede venir null.
                         $name = $record->customer?->name ?? '';
                         $msg = urlencode(
