@@ -166,4 +166,28 @@ class Quote extends Model
     {
         return $this->workOrder()->exists();
     }
+
+    /**
+     * Aprobado, pero no todo: algún ítem quedó con 'aprobado' => false
+     * (ver AprobarPresupuestoAction). Los aprobados antes de esto no tienen
+     * la marca, y cuentan como aprobados.
+     */
+    public function esAprobacionParcial(): bool
+    {
+        return $this->isAccepted() && $this->itemsNoAprobados() !== [];
+    }
+
+    /** @return list<array> */
+    public function itemsNoAprobados(): array
+    {
+        return array_values(array_filter($this->items ?? [], fn (array $i): bool => ($i['aprobado'] ?? true) === false));
+    }
+
+    /** Suma de los ítems aprobados (sin impuestos ni descuento). */
+    public function subtotalAprobado(): float
+    {
+        return (float) collect($this->items ?? [])
+            ->reject(fn (array $i): bool => ($i['aprobado'] ?? true) === false)
+            ->sum(fn (array $i): float => (float) ($i['total'] ?? 0));
+    }
 }

@@ -145,7 +145,7 @@ it('genera la OT desde un presupuesto sin falla declarada', function () {
     ]);
 
     Livewire::test(\App\Filament\Resources\QuoteResource\Pages\ListQuotes::class)
-        ->callTableAction('generate_work_order', $quote, data: [])
+        ->callTableAction('aprobar_total', $quote, data: [])
         ->assertHasNoTableActionErrors();
 
     $wo = WorkOrder::where('quote_id', $quote->id)->first();

@@ -5,16 +5,13 @@ namespace App\Filament\Resources;
 use App\Enums\QuoteStatus;
 use App\Enums\QuoteType;
 use App\Filament\Resources\QuoteResource\Pages;
-use App\Models\Mechanic;
 use App\Models\Quote;
 use App\Models\Vehicle;
-use App\Models\WorkOrder;
 use App\Filament\Concerns\HiddenFromMechanics;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -22,6 +19,15 @@ use Filament\Tables\Table;
 class QuoteResource extends Resource
 {
     use HiddenFromMechanics;
+
+    /**
+     * Con la orden ya generada el presupuesto no se edita: los cambios no
+     * pasaban a la orden y quedaban dos versiones distintas.
+     */
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return static::canViewAny() && ! $record->hasWorkOrder();
+    }
 
     protected static ?string $model = Quote::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
@@ -203,6 +209,16 @@ class QuoteResource extends Resource
             // ── Items del presupuesto ────────────────────────────────────────
             Forms\Components\Section::make(__('Items del presupuesto'))
                 ->schema([
+                    Forms\Components\Placeholder::make('aprobacion')
+                        ->label(__('Aprobación'))
+                        ->visible(fn (?Quote $record): bool => (bool) $record?->esAprobacionParcial())
+                        ->content(fn (Quote $record): string => __('Aprobado parcialmente: :aprobados de :total ítems (:monto). No aceptado: :no.', [
+                            'aprobados' => count($record->items ?? []) - count($record->itemsNoAprobados()),
+                            'total'     => count($record->items ?? []),
+                            'monto'     => '$' . number_format($record->subtotalAprobado(), 0, ',', '.'),
+                            'no'        => collect($record->itemsNoAprobados())->pluck('descripcion')->implode(', '),
+                        ])),
+
                     Forms\Components\Repeater::make('items')
                         ->label('')
                         ->columns(12)
@@ -336,7 +352,10 @@ class QuoteResource extends Resource
 
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('Estado'))
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn ($state, Quote $record): string => $record->esAprobacionParcial()
+                        ? __('Aprobado parcial')
+                        : ($state instanceof QuoteStatus ? $state->getLabel() : (string) $state)),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('Fecha'))
@@ -352,67 +371,9 @@ class QuoteResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
 
-                // Botón "Generar OT" solo si está Aceptado y no tiene OT aún
-                Tables\Actions\Action::make('generate_work_order')
-                    ->label(__('Generar OT'))
-                    ->icon('heroicon-o-wrench-screwdriver')
-                    ->color('success')
-                    ->visible(fn (Quote $record): bool =>
-                        $record->isAccepted() && ! $record->hasWorkOrder()
-                    )
-                    ->requiresConfirmation()
-                    ->modalHeading(__('Generar Orden de Trabajo'))
-                    ->modalDescription(__('¿Confirma que desea generar la Orden de Trabajo a partir de este presupuesto aceptado?'))
-                    ->form([
-                        Forms\Components\Select::make('mechanic_id')
-                            ->label(__('Mecánico asignado'))
-                            ->options(fn () => Mechanic::where('is_active', true)->pluck('name', 'id'))
-                            ->searchable(),
-                        Forms\Components\DateTimePicker::make('estimated_at')
-                            ->label(__('Fecha promesa de entrega')),
-                    ])
-                    ->action(function (Quote $record, array $data): void {
-                        $items = collect($record->items ?? [])->map(fn ($i) => [
-                            'type'        => $i['tipo'] === 'mano_de_obra' ? 'labor' : ($i['tipo'] === 'repuesto' ? 'part' : 'other'),
-                            'description' => $i['descripcion'],
-                            'quantity'    => $i['cantidad'] ?? 1,
-                            'unit_price'  => $i['precio_unitario'] ?? 0,
-                            'total'       => $i['total'] ?? 0,
-                        ])->toArray();
-
-                        $wo = WorkOrder::create([
-                            'tenant_id'   => $record->tenant_id,
-                            'customer_id' => $record->customer_id,
-                            'vehicle_id'  => $record->vehicle_id,
-                            'quote_id'    => $record->id,
-                            'mechanic_id' => $data['mechanic_id'] ?? null,
-                            'estimated_at' => $data['estimated_at'] ?? null,
-                            // work_orders.complaint es NOT NULL y la falla detectada del
-                            // presupuesto es opcional: sin este respaldo, generar la OT
-                            // desde un presupuesto sin falla declarada tiraba un 500.
-                            'complaint'   => $record->detected_fault
-                                ?: __('Generada desde el presupuesto :code', ['code' => $record->code]),
-                            'status'      => 'received',
-                            // El KM del presupuesto manda; el del vehículo es el respaldo.
-                            'mileage_in'  => $record->mileage ?: ($record->vehicle?->mileage ?? 0),
-                            'discount'    => $record->discount,
-                            // El mecánico trabaja los puntos que el presupuesto marcó
-                            // como REGULAR o MAL: los que estaban bien no se tocan.
-                            'checklist'   => WorkOrder::buildChecklistFromQuote($record->checklist),
-                            'work_type'   => $record->type?->value,
-                        ]);
-
-                        foreach ($items as $item) {
-                            $wo->items()->create($item);
-                        }
-                        $wo->recalculateTotal();
-
-                        Notification::make()
-                            ->success()
-                            ->title('Orden de Trabajo creada')
-                            ->body("OT {$wo->number} generada correctamente.")
-                            ->send();
-                    }),
+                // Aprobar total / parcial: generan la orden (ver AccionesAprobar).
+                QuoteResource\AccionesAprobar::total(Tables\Actions\Action::make('aprobar_total')),
+                QuoteResource\AccionesAprobar::parcial(Tables\Actions\Action::make('aprobar_parcial')),
 
                 // Botón PDF
                 Tables\Actions\Action::make('pdf')

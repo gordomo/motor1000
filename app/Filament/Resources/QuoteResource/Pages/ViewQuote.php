@@ -17,6 +17,8 @@ class ViewQuote extends ViewRecord
     {
         return [
             $this->volverAction(),
+            QuoteResource\AccionesAprobar::parcial(Actions\Action::make('aprobar_parcial')),
+            QuoteResource\AccionesAprobar::total(Actions\Action::make('aprobar_total')),
             Actions\EditAction::make(),
         ];
     }
