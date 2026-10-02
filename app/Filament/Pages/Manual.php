@@ -153,7 +153,7 @@ class Manual extends Page
                 'nombre'    => __('Comercial'),
                 'quien'     => __('El mostrador: quien atiende al cliente.'),
                 'color'     => 'warning',
-                'pantallas' => __('Tablero de Órdenes, Presupuestos, Clientes y vehículos, Turnos y calendario, Para hoy, Plantillas, Centro de Operaciones y Órdenes cerradas.'),
+                'pantallas' => __('Tablero de Órdenes, Presupuestos, Clientes y vehículos, Turnos y calendario, Para hoy, Plantillas, Recargos con tarjeta, Centro de Operaciones y Órdenes cerradas.'),
                 'puede'     => [
                     __('Crear presupuestos, revisiones y órdenes de trabajo'),
                     __('Cargar clientes y autos'),
@@ -207,6 +207,7 @@ class Manual extends Page
             [__('Inventario'),                         true,  false, false],
             [__('Para hoy'),                           true,  true,  false],
             [__('Plantillas de mensajes'),             true,  true,  false],
+            [__('Recargos con tarjeta'),               true,  true,  false],
             [__('Turnos y calendario'),                true,  true,  false],
             [__('Facturas'),                           true,  false, false],
             [__('Recordatorios, Tareas y Mecánicos'),  true,  false, false],

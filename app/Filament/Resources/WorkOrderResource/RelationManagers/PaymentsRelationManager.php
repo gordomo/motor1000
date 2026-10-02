@@ -44,7 +44,10 @@ class PaymentsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('amount')
                     ->label(__('Monto'))
                     ->money('ARS')
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn (Payment $record): ?string => (float) $record->surcharge > 0
+                        ? __('incluye recargo :r', ['r' => \App\Support\Recargos::plata((float) $record->surcharge)])
+                        : null),
                 Tables\Columns\TextColumn::make('method')
                     ->label(__('Forma de pago'))
                     ->badge()
@@ -70,16 +73,16 @@ class PaymentsRelationManager extends RelationManager
                     ->label(__('Corregir'))
                     ->modalHeading(__('Corregir el cobro'))
                     ->modalDescription(__('Se recalcula el estado de pago de la orden y los números del tablero.'))
+                    // Se corrige lo que cancela de la orden; el recargo se recalcula.
+                    ->mutateRecordDataUsing(fn (array $data, Payment $record): array => array_merge($data, [
+                        'amount' => $record->montoAplicado(),
+                    ]))
+                    ->mutateFormDataUsing(fn (array $data): array => array_merge(
+                        $data,
+                        \App\Filament\Resources\WorkOrderResource\CamposDeCobro::datos($data, (float) $data['amount']),
+                    ))
                     ->form([
-                        Forms\Components\TextInput::make('amount')
-                            ->label(__('Monto cobrado'))
-                            ->numeric()
-                            ->prefix('$')
-                            ->required(),
-                        Forms\Components\Select::make('method')
-                            ->label(__('Forma de pago'))
-                            ->options(Payment::METHODS)
-                            ->required(),
+                        ...\App\Filament\Resources\WorkOrderResource\CamposDeCobro::campos($orden, null),
                         Forms\Components\DateTimePicker::make('paid_at')
                             ->label(__('Cuándo se cobró'))
                             ->maxDate(now())

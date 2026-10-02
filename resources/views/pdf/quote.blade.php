@@ -225,6 +225,20 @@
             <td colspan="4" class="text-right">TOTAL</td>
             <td class="text-right">$ {{ number_format($totalCalc, 2, ',', '.') }}</td>
         </tr>
+        {{-- Forma de pago elegida: el recargo quedó calculado al guardar el presupuesto. --}}
+        @if($quote->payment_method)
+        @php
+            $conRecargo = $totalCalc + (float) $quote->surcharge;
+            $cuotas = max(1, (int) $quote->installments);
+            $metodo = \App\Models\Payment::METHODS[$quote->payment_method] ?? $quote->payment_method;
+        @endphp
+        <tr class="total-row">
+            <td colspan="4" class="text-right">
+                {{ $metodo }}@if($cuotas > 1) en {{ $cuotas }} cuotas de $ {{ number_format($conRecargo / $cuotas, 2, ',', '.') }}@endif
+            </td>
+            <td class="text-right">$ {{ number_format($conRecargo, 2, ',', '.') }}</td>
+        </tr>
+        @endif
     </tfoot>
 </table>
 @endif

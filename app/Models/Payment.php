@@ -38,6 +38,8 @@ class Payment extends Model
         'type',
         'amount',
         'method',
+        'installments',
+        'surcharge',
         'paid_at',
         'user_id',
         'notes',
@@ -45,6 +47,8 @@ class Payment extends Model
 
     protected $casts = [
         'amount'  => 'decimal:2',
+        'surcharge' => 'decimal:2',
+        'installments' => 'integer',
         'paid_at' => 'datetime',
     ];
 
@@ -72,7 +76,15 @@ class Payment extends Model
 
     public function methodLabel(): string
     {
-        return __(self::METHODS[$this->method] ?? $this->method);
+        $nombre = __(self::METHODS[$this->method] ?? $this->method);
+
+        return $this->installments > 1 ? $nombre . ' (' . $this->installments . ' ' . __('cuotas') . ')' : $nombre;
+    }
+
+    /** Lo que se descuenta del saldo de la orden: lo pagado menos el recargo. */
+    public function montoAplicado(): float
+    {
+        return round((float) $this->amount - (float) $this->surcharge, 2);
     }
 
     public function typeLabel(): string

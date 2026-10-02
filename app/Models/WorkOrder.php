@@ -196,9 +196,13 @@ class WorkOrder extends Model
         return (float) $this->total <= 0;
     }
 
+    /**
+     * Lo cobrado que cancela la orden. El recargo de la tarjeta (surcharge) no
+     * descuenta saldo: es lo que cuesta cobrar así, no parte del trabajo.
+     */
     public function totalPaid(): float
     {
-        return (float) $this->payments()->sum('amount');
+        return round((float) $this->payments()->sum('amount') - (float) $this->payments()->sum('surcharge'), 2);
     }
 
     public function balance(): float

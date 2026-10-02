@@ -304,6 +304,39 @@ class QuoteResource extends Resource
                     ]),
                 ]),
 
+            // ── Forma de pago ────────────────────────────────────────────────
+            // El cliente elige una; el recargo (tarjeta, cuotas) lo calcula el
+            // sistema con lo configurado en "Recargos con tarjeta".
+            Forms\Components\Section::make(__('Forma de pago'))
+                ->description(__('La que eligió el cliente. Si quiere comparar, mirá las opciones acá y mandale el presupuesto con la que prefiera.'))
+                ->columns(3)
+                ->schema([
+                    Forms\Components\Select::make('payment_method')
+                        ->label(__('Forma de pago'))
+                        ->options(collect(\App\Models\Payment::METHODS)->map(fn (string $m): string => __($m))->all())
+                        ->placeholder(__('Sin definir'))
+                        ->live(),
+                    Forms\Components\Select::make('installments')
+                        ->label(__('Cuotas'))
+                        ->options(fn (): array => \App\Support\Recargos::opcionesDeCuotas())
+                        ->visible(fn (Get $get): bool => \App\Support\Recargos::usaCuotas($get('payment_method')))
+                        ->required(fn (Get $get): bool => \App\Support\Recargos::usaCuotas($get('payment_method')))
+                        ->live(),
+                    Forms\Components\Placeholder::make('total_con_recargo')
+                        ->label(__('El cliente paga'))
+                        ->visible(fn (Get $get): bool => filled($get('payment_method')))
+                        ->content(function (Get $get, ?Quote $record): string {
+                            // Mismo cálculo que el del servidor, con el total que se ve en pantalla.
+                            $base = (float) ($get('total') ?? $record?->total ?? 0);
+                            $c = \App\Support\Recargos::calcular($base, $get('payment_method'), (int) $get('installments'));
+                            $texto = \App\Support\Recargos::describir($base, $get('payment_method'), (int) $get('installments'));
+
+                            return $c['recargo'] > 0
+                                ? $texto . ' · ' . __('recargo :r', ['r' => \App\Support\Recargos::plata($c['recargo'])])
+                                : $texto;
+                        }),
+                ]),
+
             // ── Notas ────────────────────────────────────────────────────────
             Forms\Components\Section::make(__('Notas internas'))
                 ->collapsed()

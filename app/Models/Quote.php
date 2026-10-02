@@ -30,6 +30,9 @@ class Quote extends Model
         'tax',
         'discount',
         'total',
+        'payment_method',
+        'installments',
+        'surcharge',
         'notes',
         'sent_at',
         'accepted_at',
@@ -46,6 +49,8 @@ class Quote extends Model
         'tax'         => 'decimal:2',
         'discount'    => 'decimal:2',
         'total'       => 'decimal:2',
+        'installments' => 'integer',
+        'surcharge'   => 'decimal:2',
         'sent_at'     => 'datetime',
         'accepted_at' => 'datetime',
         'rejected_at' => 'datetime',
@@ -80,6 +85,16 @@ class Quote extends Model
             $subtotal = (float) $items->sum(fn ($i) => $i['total']);
             $quote->subtotal = $subtotal;
             $quote->total = max(0, $subtotal + (float) $quote->tax - (float) $quote->discount);
+
+            // Recargo de la forma de pago elegida (tarjeta, cuotas). Queda fijo
+            // en el presupuesto: si después cambian los porcentajes, se
+            // recalcula recién al volver a guardarlo.
+            if (! \App\Support\Recargos::usaCuotas($quote->payment_method)) {
+                $quote->installments = null;
+            }
+            $quote->surcharge = $quote->payment_method
+                ? \App\Support\Recargos::calcular((float) $quote->total, $quote->payment_method, $quote->installments, $quote->tenant)['recargo']
+                : 0;
         });
 
         static::creating(function (Quote $quote) {
@@ -155,6 +170,12 @@ class Quote extends Model
         $this->subtotal = $subtotal;
         $this->total    = max(0, $subtotal + $this->tax - $this->discount);
         $this->saveQuietly();
+    }
+
+    /** Lo que paga el cliente con la forma de pago elegida (total + recargo). */
+    public function totalConRecargo(): float
+    {
+        return round((float) $this->total + (float) $this->surcharge, 2);
     }
 
     public function isAccepted(): bool

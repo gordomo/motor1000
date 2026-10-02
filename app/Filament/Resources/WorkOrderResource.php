@@ -482,16 +482,7 @@ class WorkOrderResource extends Resource
                                 'pagado' => '$ ' . number_format($r->totalPaid(), 2, ',', '.'),
                                 'saldo'  => '$ ' . number_format($r->balance(), 2, ',', '.'),
                             ])),
-                        Forms\Components\TextInput::make('amount')
-                            ->label(__('Monto cobrado'))
-                            ->numeric()
-                            ->prefix('$')
-                            ->default($r->balance())
-                            ->required(),
-                        Forms\Components\Select::make('method')
-                            ->label(__('Forma de pago'))
-                            ->options(Payment::METHODS)
-                            ->required(),
+                        ...WorkOrderResource\CamposDeCobro::campos($r, $r->balance()),
                         Forms\Components\DateTimePicker::make('paid_at')
                             ->label(__('Cuándo se cobró'))
                             // Por defecto la fecha de entrega: es cuando la plata
@@ -510,8 +501,7 @@ class WorkOrderResource extends Resource
                             'tenant_id'     => $record->tenant_id,
                             'work_order_id' => $record->id,
                             'type'          => $record->status === WorkOrderStatus::Delivered ? 'saldo' : 'adelanto',
-                            'amount'        => (float) $data['amount'],
-                            'method'        => $data['method'],
+                            ...WorkOrderResource\CamposDeCobro::datos($data, (float) $data['amount']),
                             'paid_at'       => $data['paid_at'],
                             'notes'         => $data['notes'] ?? null,
                         ]);
@@ -563,16 +553,7 @@ class WorkOrderResource extends Resource
                                         . ($record->totalPaid() > 0
                                             ? ' (' . __('ya pagó') . ' $ ' . number_format($record->totalPaid(), 2, ',', '.') . ')'
                                             : '')),
-                                Forms\Components\TextInput::make('amount')
-                                    ->label(__('Monto cobrado'))
-                                    ->numeric()
-                                    ->prefix('$')
-                                    ->default($saldo)
-                                    ->required(),
-                                Forms\Components\Select::make('method')
-                                    ->label(__('Forma de pago'))
-                                    ->options(Payment::METHODS)
-                                    ->required(),
+                                ...WorkOrderResource\CamposDeCobro::campos($record, $saldo),
                                 Forms\Components\Textarea::make('notes')
                                     ->label(__('Observaciones'))
                                     ->rows(2),
@@ -595,8 +576,7 @@ class WorkOrderResource extends Resource
                             app(UpdateWorkOrderStatusAction::class)->execute($record, $next, options: [
                                 'mechanic_id' => $data['mechanic_id'] ?? null,
                                 'payment'     => isset($data['amount']) ? [
-                                    'amount' => (float) $data['amount'],
-                                    'method' => $data['method'],
+                                    ...WorkOrderResource\CamposDeCobro::datos($data, (float) $data['amount']),
                                     'type'   => 'saldo',
                                     'notes'  => $data['notes'] ?? null,
                                 ] : null,
@@ -645,10 +625,8 @@ class WorkOrderResource extends Resource
                         ->modalDescription(__('Se registra el saldo completo de cada orden. Las que ya están cobradas o son sin cargo se saltean.'))
                         ->modalSubmitActionLabel(__('Registrar'))
                         ->form([
-                            Forms\Components\Select::make('method')
-                                ->label(__('Forma de pago'))
-                                ->options(Payment::METHODS)
-                                ->required(),
+                            // Sin monto: es el saldo de cada orden. El recargo se calcula por orden.
+                            ...WorkOrderResource\CamposDeCobro::campos(null, null, conMonto: false),
                             Forms\Components\Radio::make('fecha')
                                 ->label(__('Fecha del cobro'))
                                 ->options([
@@ -675,8 +653,7 @@ class WorkOrderResource extends Resource
                                     'tenant_id'     => $record->tenant_id,
                                     'work_order_id' => $record->id,
                                     'type'          => 'saldo',
-                                    'amount'        => $record->balance(),
-                                    'method'        => $data['method'],
+                                    ...WorkOrderResource\CamposDeCobro::datos($data, $record->balance()),
                                     'paid_at'       => $data['fecha'] === 'hoy'
                                         ? now()
                                         : ($record->delivered_at ?? $record->completed_at ?? now()),

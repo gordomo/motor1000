@@ -112,6 +112,8 @@ class UpdateWorkOrderStatusAction
             'type'          => $pago['type'] ?? 'saldo',
             'amount'        => $pago['amount'],
             'method'        => $pago['method'],
+            'installments'  => $pago['installments'] ?? null,
+            'surcharge'     => $pago['surcharge'] ?? 0,
             'paid_at'       => $pago['paid_at'] ?? now(),
             'notes'         => $pago['notes'] ?? null,
         ]);
