@@ -26,7 +26,7 @@ class VehicleFactory extends Factory
             'color'           => fake()->colorName(),
             'vin'             => strtoupper(fake()->bothify('?????????????????')),
             'mileage'         => fake()->numberBetween(5000, 200000),
-            'fuel_type'       => fake()->randomElement(['gasoline', 'flex', 'diesel', 'ethanol']),
+            'fuel_type'       => fake()->randomElement(['gasoline', 'diesel', 'gnc', 'nafta_gnc']),
             'transmission'    => fake()->randomElement(['manual', 'automatic']),
             'last_service_at' => fake()->optional()->dateTimeBetween('-2 years', 'now'),
         ];

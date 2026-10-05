@@ -55,7 +55,7 @@ class CreateCustomer extends CreateRecord
                     'year' => (int) $vehicleData['year'],
                     'vin' => $vehicleData['vin'] ?? null,
                     'mileage' => (int) ($vehicleData['mileage'] ?? 0),
-                    'fuel_type' => $vehicleData['fuel_type'] ?? 'flex',
+                    'fuel_type' => $vehicleData['fuel_type'] ?? 'gasoline',
                     'transmission' => $vehicleData['transmission'] ?? 'manual',
                     'notes' => $vehicleData['notes'] ?? null,
                 ]);

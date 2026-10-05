@@ -81,15 +81,32 @@ class Etiquetas
         ]);
     }
 
+    /**
+     * Combustibles de Argentina. El sistema venía de Brasil (Gasolina, Etanol,
+     * Flex). La clave 'gasoline' se mantiene para no tocar los datos guardados:
+     * ahora se muestra como Nafta.
+     *
+     * @return array<string, string>
+     */
+    public static function opcionesCombustible(): array
+    {
+        return [
+            'gasoline'  => __('Nafta'),
+            'diesel'    => __('Diésel'),
+            'gnc'       => __('GNC'),
+            'nafta_gnc' => __('Nafta/GNC'),
+            'electric'  => __('Eléctrico'),
+            'hybrid'    => __('Híbrido'),
+        ];
+    }
+
     public static function combustible(?string $valor): ?string
     {
-        return self::de($valor, [
-            'gasoline' => __('Gasolina'),
-            'ethanol'  => __('Etanol'),
-            'flex'     => __('Flex'),
-            'diesel'   => __('Diesel'),
-            'electric' => __('Eléctrico'),
-            'hybrid'   => __('Híbrido'),
+        // Etanol y Flex quedaron de cuando el sistema era para Brasil ('flex'
+        // era el valor por defecto): no se sabe qué combustible es en realidad.
+        return self::de($valor, self::opcionesCombustible() + [
+            'flex'    => __('Sin definir'),
+            'ethanol' => __('Sin definir'),
         ]);
     }
 
@@ -121,6 +138,7 @@ class Etiquetas
             'bank_transfer' => __('Transferencia bancaria'),
             'mercado_pago'  => __('Mercado Pago'),
             'check'         => __('Cheque'),
+            // Medios de Brasil que ya no se ofrecen; se siguen mostrando en datos viejos.
             'pix'           => __('PIX'),
             'bank_slip'     => __('Boleto'),
         ]);

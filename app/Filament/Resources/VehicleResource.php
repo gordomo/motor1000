@@ -76,10 +76,11 @@ class VehicleResource extends Resource
                 Forms\Components\TextInput::make('engine')->label(__('Motor')),
                 Forms\Components\Select::make('fuel_type')
                     ->label(__('Combustible'))
-                    ->options([
-                        'gasoline' => __('Gasolina'), 'ethanol' => __('Etanol'), 'flex' => __('Flex'),
-                        'diesel'   => __('Diesel'), 'electric' => __('Eléctrico'), 'hybrid' => __('Híbrido'),
-                    ])->default('flex'),
+                    ->options(\App\Support\Etiquetas::opcionesCombustible())
+                    // Los vehículos viejos en "Flex" piden elegir el combustible real al editarlos.
+                    ->required()
+                    ->in(array_keys(\App\Support\Etiquetas::opcionesCombustible()))
+                    ->default('gasoline'),
                 Forms\Components\Select::make('transmission')
                     ->label(__('Transmisión'))
                     ->options(['manual' => __('Manual'), 'automatic' => __('Automática'), 'cvt' => __('CVT')])

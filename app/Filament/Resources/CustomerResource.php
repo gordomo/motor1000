@@ -139,15 +139,8 @@ class CustomerResource extends Resource
                         ->default(0),
                     Forms\Components\Select::make('vehicle.fuel_type')
                         ->label(__('Combustible'))
-                        ->options([
-                            'gasoline' => __('Gasolina'),
-                            'ethanol' => __('Etanol'),
-                            'flex' => 'Flex',
-                            'diesel' => 'Diesel',
-                            'electric' => __('Eléctrico'),
-                            'hybrid' => __('Híbrido'),
-                        ])
-                        ->default('flex'),
+                        ->options(\App\Support\Etiquetas::opcionesCombustible())
+                        ->default('gasoline'),
                     Forms\Components\Select::make('vehicle.transmission')
                         ->label(__('Transmisión'))
                         ->options([

@@ -331,8 +331,6 @@ class WorkOrderResource extends Resource
                             'cash'         => __('Efectivo'),
                             'credit_card'  => __('Tarjeta de Crédito'),
                             'debit_card'   => __('Tarjeta de Débito'),
-                            'pix'          => __('PIX'),
-                            'bank_slip'    => __('Boleto'),
                         ]),
                     Forms\Components\Select::make('payment_status')
                         ->label(__('Estado de pago'))

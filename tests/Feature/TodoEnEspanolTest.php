@@ -84,3 +84,33 @@ it('el mail de recuperar contraseña y los errores están en español', function
 
     $this->get('/esta-pagina-no-existe')->assertNotFound()->assertSee('Página no encontrada');
 });
+
+it('combustibles de Argentina: Nafta, GNC... y los de Brasil se ven como Sin definir', function () {
+    expect(Etiquetas::opcionesCombustible())->toBe([
+        'gasoline' => 'Nafta', 'diesel' => 'Diésel', 'gnc' => 'GNC',
+        'nafta_gnc' => 'Nafta/GNC', 'electric' => 'Eléctrico', 'hybrid' => 'Híbrido',
+    ])
+        ->and(Etiquetas::combustible('gasoline'))->toBe('Nafta')
+        ->and(Etiquetas::combustible('flex'))->toBe('Sin definir')
+        ->and(Etiquetas::combustible('ethanol'))->toBe('Sin definir');
+});
+
+it('un vehículo viejo en Flex pide elegir el combustible real al editarlo', function () {
+    $this->vehicle->update(['fuel_type' => 'flex']);
+
+    \Livewire\Livewire::test(\App\Filament\Resources\VehicleResource\Pages\EditVehicle::class, ['record' => $this->vehicle->id])
+        ->call('save')
+        ->assertHasFormErrors(['fuel_type'])
+        ->fillForm(['fuel_type' => 'gnc'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($this->vehicle->fresh()->fuel_type)->toBe('gnc');
+});
+
+it('la orden ya no ofrece PIX ni Boleto', function () {
+    $this->get(\App\Filament\Resources\WorkOrderResource::getUrl('create'))
+        ->assertOk()
+        ->assertDontSee('PIX')
+        ->assertDontSee('Boleto');
+});

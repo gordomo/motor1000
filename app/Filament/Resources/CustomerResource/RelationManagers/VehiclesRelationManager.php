@@ -37,15 +37,11 @@ class VehiclesRelationManager extends RelationManager
                 ->dehydrateStateUsing(fn (?string $state): int => (int) $state),
             Forms\Components\Select::make('fuel_type')
                 ->label(__('Combustible'))
-                ->options([
-                    'gasoline' => __('Gasolina'),
-                    'ethanol'  => __('Etanol'),
-                    'flex'     => 'Flex',
-                    'diesel'   => __('Diésel'),
-                    'electric' => __('Eléctrico'),
-                    'hybrid'   => __('Híbrido'),
-                ])
-                ->default('flex'),
+                ->options(\App\Support\Etiquetas::opcionesCombustible())
+                // Los vehículos viejos en "Flex" piden elegir el combustible real al editarlos.
+                ->required()
+                ->in(array_keys(\App\Support\Etiquetas::opcionesCombustible()))
+                ->default('gasoline'),
             Forms\Components\Select::make('transmission')
                 ->label(__('Transmisión'))
                 ->options([
