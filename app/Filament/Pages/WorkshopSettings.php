@@ -149,8 +149,8 @@ class WorkshopSettings extends Page implements HasForms
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('booking.slot_capacity')
-                            ->label(__('Turnos por franja'))
-                            ->helperText(__('Cuántos turnos simultáneos podés atender en cada horario.'))
+                            ->label(__('Autos a la vez'))
+                            ->helperText(__('Cuántos autos puede atender el taller al mismo tiempo. Lo usan el turnero de la web y la agenda: un horario lleno no se puede reservar.'))
                             ->numeric()->minValue(1)->default(1)->required(),
                         Forms\Components\Select::make('booking.slot_minutes')
                             ->label(__('Duración de la franja'))

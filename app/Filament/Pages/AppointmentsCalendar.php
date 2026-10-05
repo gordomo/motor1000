@@ -160,6 +160,17 @@ class AppointmentsCalendar extends Page
 
             $duration = max(1, $startAt->diffInMinutes($endAt));
 
+            // Misma regla que al crear la cita: cuántos autos se atienden a la vez.
+            $tenant = \App\Support\CurrentTenant::get();
+            if ($tenant) {
+                $ocupados = app(\App\Services\Booking\SlotAvailability::class)
+                    ->ocupacionEntre($tenant, $startAt, (int) $duration, (int) $appointment->id);
+
+                if ($ocupados >= \App\Services\Booking\SlotAvailability::capacidad($tenant)) {
+                    throw new \RuntimeException(__('A esa hora el taller ya está completo (autos a la vez configurados en Mi Taller).'));
+                }
+            }
+
             $appointment->update([
                 'scheduled_at' => $startAt,
                 'ends_at' => $endAt,

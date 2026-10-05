@@ -100,6 +100,50 @@ class AppointmentResource extends Resource
         return $horas;
     }
 
+    /**
+     * Lugares libres por horario para un turno de $duracion minutos ese día,
+     * según cuántos autos se atienden a la vez (Mi Taller → capacidad).
+     *
+     * @return array<string, int> [hora => lugares libres]
+     */
+    public static function lugaresLibres(?string $fecha, int $duracion, ?int $exceptoId, ?string $actual = null): array
+    {
+        $tenant = \App\Support\CurrentTenant::get();
+
+        if (! $tenant || ! $fecha) {
+            return [];
+        }
+
+        // Se pide una vez por horario al dibujar la lista: se calcula una sola vez.
+        static $memo = [];
+        $clave = implode('|', [$tenant->id, $fecha, $duracion, $exceptoId, $actual]);
+        if (isset($memo[$clave])) {
+            return $memo[$clave];
+        }
+
+        $servicio = app(\App\Services\Booking\SlotAvailability::class);
+        $dia = \Carbon\Carbon::parse($fecha);
+        $turnos = $servicio->turnosDelDia($tenant, $dia, $exceptoId);
+        $capacidad = \App\Services\Booking\SlotAvailability::capacidad($tenant);
+
+        $libres = [];
+        foreach (array_keys(self::opcionesDeHora($actual)) as $hora) {
+            $desde = $dia->copy()->setTimeFromTimeString($hora);
+            $libres[$hora] = max(0, $capacidad - $servicio->ocupacion($turnos, $desde, max(1, $duracion), self::minutosPorTurno()));
+        }
+
+        return $memo[$clave] = $libres;
+    }
+
+    private static function etiquetaDeHora(string $hora, ?int $libres): string
+    {
+        return match (true) {
+            $libres === null => $hora,
+            $libres === 0    => $hora . ' · ' . __('completo'),
+            default          => $hora . ' · ' . trans_choice('{1} queda 1 lugar|[2,*] quedan :n lugares', $libres, ['n' => $libres]),
+        };
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -152,6 +196,7 @@ class AppointmentResource extends Resource
                 // navegadores y se agendaban turnos a otra hora sin querer.
                 Forms\Components\DatePicker::make('fecha')
                     ->label(__('Fecha'))
+                    ->live()
                     ->native(false)
                     ->displayFormat('d/m/Y')
                     ->closeOnDateSelection()
@@ -162,7 +207,42 @@ class AppointmentResource extends Resource
                     )),
                 Forms\Components\Select::make('hora')
                     ->label(__('Hora'))
-                    ->options(fn (?Appointment $record): array => self::opcionesDeHora(self::horarioInicial($record)->format('H:i')))
+                    // Cada horario dice cuántos lugares quedan (autos a la vez,
+                    // Mi Taller) para un turno de esta duración; los llenos no se
+                    // pueden elegir, salvo la hora que ya tiene el turno.
+                    ->options(function (Get $get, ?Appointment $record): array {
+                        $actual = self::horarioInicial($record)->format('H:i');
+                        $libres = self::lugaresLibres($get('fecha'), (int) ($get('duration_minutes') ?: 60), $record?->id, $actual);
+
+                        return collect(self::opcionesDeHora($actual))
+                            ->mapWithKeys(fn (string $h): array => [$h => self::etiquetaDeHora($h, $libres[$h] ?? null)])
+                            ->all();
+                    })
+                    ->disableOptionWhen(function (string $value, Get $get, ?Appointment $record): bool {
+                        if ($record?->scheduled_at && $record->scheduled_at->format('Y-m-d H:i') === \Carbon\Carbon::parse($get('fecha'))->format('Y-m-d') . ' ' . $value) {
+                            return false;
+                        }
+
+                        $libres = self::lugaresLibres($get('fecha'), (int) ($get('duration_minutes') ?: 60), $record?->id, $value);
+
+                        return ($libres[$value] ?? 1) === 0;
+                    })
+                    // La misma regla al guardar (no alcanza con deshabilitar en la lista).
+                    ->rule(fn (Get $get, ?Appointment $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record): void {
+                        if (! $value || ! $get('fecha')) {
+                            return;
+                        }
+
+                        $mismoHorario = $record?->scheduled_at
+                            && $record->scheduled_at->format('Y-m-d H:i') === \Carbon\Carbon::parse($get('fecha'))->format('Y-m-d') . ' ' . $value
+                            && (int) $record->duration_minutes === (int) ($get('duration_minutes') ?: 60);
+
+                        $libres = self::lugaresLibres($get('fecha'), (int) ($get('duration_minutes') ?: 60), $record?->id, $value);
+
+                        if (! $mismoHorario && ($libres[$value] ?? 1) === 0) {
+                            $fail(__('A esa hora el taller ya está completo (autos a la vez configurados en Mi Taller). Elegí otro horario o acortá la duración.'));
+                        }
+                    })
                     // Lista con buscador (no el desplegable del navegador, que en
                     // Windows también cambia con la ruedita): escribir "14" filtra.
                     ->searchable()
@@ -178,6 +258,7 @@ class AppointmentResource extends Resource
                 Forms\Components\TextInput::make('duration_minutes')
                     ->label(__('Duración (min)'))
                     ->numeric()
+                    ->live(onBlur: true)
                     ->default(fn (): int => max(15, (int) request()->query('duration_minutes', 60))),
                 Forms\Components\Select::make('status')
                     ->label(__('Estado'))
