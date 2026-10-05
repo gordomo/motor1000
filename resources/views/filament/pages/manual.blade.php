@@ -45,7 +45,7 @@
             <div class="mt-4 rounded-lg border-l-4 border-danger-500 bg-danger-50 p-3 text-sm dark:bg-danger-500/10">
                 <p class="font-semibold text-danger-700 dark:text-danger-400">{{ __('Ojo con este botón') }}</p>
                 <p class="text-gray-700 dark:text-gray-300">
-                    {{ __('"Terminé el trabajo" le avisa al cliente que su auto está listo. No lo uses para probar.') }}
+                    {{ __('"Terminé el trabajo" pasa la orden a Completado, descuenta los repuestos del stock y, si el cliente tiene email cargado, le avisa que su auto está listo. No lo uses para probar.') }}
                 </p>
             </div>
 
@@ -66,8 +66,16 @@
             </ul>
             <p class="mt-3 text-sm">{{ __('El kilometraje es obligatorio y queda impreso en el PDF, así se sabe con qué kilometraje se cotizó.') }}</p>
             <p class="mt-3 text-sm">
+                <strong>{{ __('Forma de pago:') }}</strong>
+                {{ __('elegí la que va a usar el cliente. Si es con tarjeta, el sistema suma solo el recargo (facturación y, en crédito, las cuotas) y en el PDF aparece, por ejemplo, "3 cuotas de $421.667". Si el cliente quiere comparar, mirá las opciones en pantalla o mandale un presupuesto con cada una.') }}
+            </p>
+            <p class="mt-3 text-sm">
+                <strong>{{ __('Mandarlo:') }}</strong>
+                {{ __('el botón de WhatsApp del listado arma el mensaje con un link al PDF que el cliente abre sin usuario ni contraseña.') }}
+            </p>
+            <p class="mt-3 text-sm">
                 <strong>{{ __('Del presupuesto a la orden:') }}</strong>
-                {{ __('cuando el cliente aprueba, la orden hereda solo los puntos que quedaron en REGULAR o MAL. Eso es lo que el mecánico va a trabajar; lo que estaba bien no se toca.') }}
+                {{ __('si el cliente acepta todo, tocá "Aprobar total". Si acepta solo una parte, "Aprobar parcial": destildás lo que no aceptó y revisás el descuento. La orden sale con lo aprobado y el presupuesto guarda todo lo cotizado, marcado como "Aprobado parcial". La orden hereda solo los puntos de la revisión que quedaron en REGULAR o MAL. Con la orden generada, el presupuesto ya no se edita.') }}
             </p>
         </x-filament::section>
 
@@ -77,6 +85,7 @@
 
             <ul class="ml-4 list-disc space-y-2 text-sm">
                 <li>{{ __('Cada cobro queda registrado con su fecha, su monto y la forma de pago. En los números aparece en la fecha en que entró la plata.') }}</li>
+                <li>{{ __('Si paga con tarjeta, elegís débito o crédito y las cuotas: el sistema suma el recargo y muestra cuánto paga el cliente. El recargo no descuenta saldo de la orden. Si la orden viene de un presupuesto, propone la forma de pago que había elegido el cliente.') }}</li>
                 <li>{{ __('Si el cliente paga una parte, la orden queda como pago parcial y el saldo sigue contando en "Por cobrar", incluso si ya se llevó el auto.') }}</li>
                 <li>{{ __('Una orden sin cargo se entrega sin pedir nada y se cuenta aparte, no como plata.') }}</li>
                 <li>{{ __('Si una orden se entregó sin registrar la forma de pago, usá "Registrar cobro" en el listado de órdenes. La fecha viene con la de entrega, así el cobro cuenta en el mes en que realmente entró la plata.') }}</li>
@@ -95,6 +104,33 @@
                 <li><strong>{{ __('Por rubro:') }}</strong> {{ __('mano de obra, repuestos y otros, con los descuentos aparte.') }}</li>
             </ul>
             <p class="mt-3 text-sm">{{ __('En Órdenes cerradas ves cuántas se cerraron hoy, esta semana y este mes, con promedios. Se baja en PDF para imprimir o en Excel para trabajar los datos.') }}</p>
+        </x-filament::section>
+
+        <x-filament::section icon="heroicon-o-sun" icon-color="warning">
+            <x-slot name="heading">{{ __('Para hoy') }}</x-slot>
+            <x-slot name="description">{{ __('En el menú, dentro de CRM. Lo que hay que atender en el día.') }}</x-slot>
+
+            <ul class="ml-4 list-disc space-y-2 text-sm">
+                <li>{{ __('Tres pestañas: los clientes que cumplen años hoy, los recordatorios que vencen (cambio de aceite, revisión…) y los turnos de mañana que falta confirmar.') }}</li>
+                <li>{{ __('El botón de WhatsApp abre el chat del cliente con el mensaje ya escrito: revisalo y mandalo vos. Después tocá "Listo", "Hecho" o "Confirmó" para que salga de la lista.') }}</li>
+                <li>{{ __('Todas las mañanas a las 8 llega a la campanita el resumen de lo que hay para hoy.') }}</li>
+                <li>{{ __('El sistema todavía no le escribe solo al cliente por WhatsApp: por eso el mensaje lo mandás vos con un clic.') }}</li>
+            </ul>
+        </x-filament::section>
+
+        <x-filament::section icon="heroicon-o-chat-bubble-left-ellipsis" icon-color="gray">
+            <x-slot name="heading">{{ __('Textos de los mensajes y recargos') }}</x-slot>
+
+            <div class="space-y-3 text-sm">
+                <p>
+                    <strong>{{ __('Plantillas de comunicación') }}</strong> ({{ __('en Configuraciones') }}):
+                    {{ __('ahí se cambian los textos de los mensajes al cliente: cumpleaños, recordatorio, turno de mañana, presupuesto y vehículo listo. "Cargar los mensajes del sistema" los trae con el texto de siempre. Las palabras entre llaves, como {nombre} o {taller}, se reemplazan solas por los datos de cada cliente. Si desactivás una plantilla, vuelve el texto de siempre.') }}
+                </p>
+                <p>
+                    <strong>{{ __('Recargos con tarjeta') }}</strong> ({{ __('en Configuraciones') }}):
+                    {{ __('el porcentaje de facturación, a qué formas de pago se aplica y el recargo de cada cantidad de cuotas. Se aplican uno sobre otro, y la pantalla muestra un ejemplo con $1.000.000. Lo usan el presupuesto y el cobro: nadie escribe el recargo a mano.') }}
+                </p>
+            </div>
         </x-filament::section>
 
         <x-filament::section icon="heroicon-o-cube" icon-color="gray">
@@ -157,6 +193,11 @@
         </div>
 
         <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <strong>{{ __('Volver atrás o saltear un paso') }}</strong>
+            {{ __('(por ejemplo reabrir una orden completada) lo hace solo el administrador. Cada uno mueve su paso hacia adelante; quien tiene dos roles, mueve los dos pasos.') }}
+        </p>
+
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
             <strong>{{ __('"Trabada" no es un estado.') }}</strong>
             {{ __('Es una marca sobre la orden, para que el mostrador vea que falta algo sin que el auto cambie de columna. Cuando se resuelve, se destraba y el trabajo arranca.') }}
         </p>
@@ -276,7 +317,9 @@
             @foreach ([
                 [__('¿Por qué no puedo cerrar una orden?'), __('Por una de dos razones: quedan puntos sin marcar, o falta escribir el trabajo realizado. Si algún punto quedó como "No se pudo", tiene que tener el motivo escrito.')],
                 [__('Una orden tiene puntos que no tienen que ver con la falla'), __('Son órdenes viejas, creadas antes de este circuito y sin presupuesto: el sistema les había puesto una lista genérica. Arriba de la lista, la tarjeta aclara si los puntos vienen de un presupuesto o si estaban cargados en la orden.')],
-                [__('¿Puedo probar los botones sin romper nada?'), __('Sí. Marcar puntos, desmarcarlos y tomar una orden se deshace y no le avisa a nadie. La única excepción es "Terminé el trabajo", que avanza la orden y le notifica al cliente.')],
+                [__('¿Puedo probar los botones sin romper nada?'), __('Sí. Marcar puntos, desmarcarlos y tomar una orden se deshace y no le avisa a nadie. La única excepción es "Terminé el trabajo", que avanza la orden, descuenta el stock y, si el cliente tiene email, le avisa.')],
+                [__('¿El sistema le manda WhatsApp a los clientes?'), __('Todavía no: falta conectar la cuenta de WhatsApp del taller. Mientras tanto, en "Para hoy" y en presupuestos el botón de WhatsApp abre el chat con el mensaje armado y lo mandás vos.')],
+                [__('¿Uso la flecha "atrás" del navegador?'), __('Mejor usá el botón "Volver" que está arriba de cada pantalla: te lleva a donde estabas, con tus filtros. La flecha del navegador a veces te devuelve a un formulario viejo.')],
                 [__('¿Dónde cambio mi contraseña?'), __('Arriba a la derecha, en el menú con la inicial de tu nombre. Y si te la olvidaste, en la pantalla de ingreso está el link para recuperarla por correo.')],
                 [__('¿Por qué el mecánico no ve los precios?'), __('Porque no los necesita para trabajar, y su tablero está pensado para una tablet compartida en el taller.')],
                 [__('Los presupuestos ya no dicen "Borrador"'), __('Ahora hay tres estados: Pendiente de aprobación, Aprobado y Rechazado. Los que estaban en Borrador o Enviado pasaron a Pendiente de aprobación. No se perdió ninguno.')],

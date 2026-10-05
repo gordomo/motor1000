@@ -143,7 +143,7 @@ class Manual extends Page
                     __('Editar los datos del taller, el logo y los horarios'),
                     __('Corregir cualquier cobro, incluso el que cargó otro'),
                     __('Borrar cobros'),
-                    __('Mover una orden por cualquier estado, si falta alguien'),
+                    __('Mover una orden por cualquier estado, para atrás o salteando pasos, si falta alguien'),
                 ],
                 'no_puede'  => [
                     __('Ver otros talleres: solo administra el suyo'),
@@ -155,7 +155,8 @@ class Manual extends Page
                 'color'     => 'warning',
                 'pantallas' => __('Tablero de Órdenes, Presupuestos, Clientes y vehículos, Turnos y calendario, Para hoy, Plantillas, Recargos con tarjeta, Centro de Operaciones y Órdenes cerradas.'),
                 'puede'     => [
-                    __('Crear presupuestos, revisiones y órdenes de trabajo'),
+                    __('Crear presupuestos y órdenes de trabajo, y aprobar presupuestos (total o parcial)'),
+                    __('Configurar los recargos con tarjeta'),
                     __('Cargar clientes y autos'),
                     __('Editar los textos de los mensajes (Plantillas)'),
                     __('Entregar la orden, que es donde se registra el cobro'),
@@ -168,6 +169,7 @@ class Manual extends Page
                     __('Entrar a Revisiones, Inventario, Facturas, Recordatorios, Tareas ni Mecánicos'),
                     __('Borrar cobros, ni corregir los de otra persona'),
                     __('Poner una orden en reparación o darla por completada: eso es del mecánico'),
+                    __('Volver una orden a un estado anterior: eso es del administrador'),
                 ],
             ],
             [
