@@ -480,4 +480,20 @@
             font-size: 1.3rem;
         }
     }
+
+    /* Sin flechitas en los campos numéricos (montos, duración del turno...): el
+       usuario las tocaba sin querer y cambiaba el número. Ver también el bloqueo
+       de la ruedita en theme-scripts. */
+    input[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="time"]::-webkit-inner-spin-button,
+    input[type="datetime-local"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 </style>

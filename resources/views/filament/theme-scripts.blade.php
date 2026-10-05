@@ -34,3 +34,18 @@
         document.addEventListener('livewire:init', avisoPaginaVencidaEnEspanol);
     }
 </script>
+<script>
+    // La ruedita del mouse sobre un campo numérico o de fecha/hora seleccionado
+    // le cambiaba el valor (un monto, el horario del turno) sin que el usuario
+    // se diera cuenta. Se saca el foco antes de que cambie: la página scrollea
+    // normal y el número queda como estaba.
+    document.addEventListener('wheel', (evento) => {
+        const campo = evento.target;
+
+        if (campo instanceof HTMLInputElement
+            && ['number', 'time', 'date', 'datetime-local'].includes(campo.type)
+            && document.activeElement === campo) {
+            campo.blur();
+        }
+    }, { capture: true, passive: true });
+</script>
