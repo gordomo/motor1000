@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Mail;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -47,6 +48,56 @@ class AppointmentResource extends Resource
         return (string) Appointment::where('status', 'scheduled')
             ->whereDate('scheduled_at', today())
             ->count();
+    }
+
+    /**
+     * Fecha y hora con que arranca el formulario: la del turno al editar; al
+     * crear, la que viene del calendario (clic en un horario) o la próxima
+     * franja desde ahora.
+     */
+    private static function horarioInicial(?Appointment $record): \Carbon\Carbon
+    {
+        if ($record?->scheduled_at) {
+            return $record->scheduled_at->copy();
+        }
+
+        if ($desdeCalendario = request()->query('scheduled_at')) {
+            return \Carbon\Carbon::parse($desdeCalendario);
+        }
+
+        $minutos = self::minutosPorTurno();
+        $ahora = now()->second(0);
+
+        return $ahora->minute((int) (ceil($ahora->minute / $minutos) * $minutos));
+    }
+
+    /** Cada cuántos minutos van los turnos (Mi Taller → Reservas). */
+    private static function minutosPorTurno(): int
+    {
+        return max(5, (int) (\App\Support\CurrentTenant::get()?->bookingConfig()['slot_minutes'] ?? 30));
+    }
+
+    /**
+     * Horarios de 07:00 a 21:00 (el rango del calendario), cada
+     * minutosPorTurno(). Si el turno tiene una hora fuera de la grilla
+     * (10:15 con franjas de 30), se conserva.
+     *
+     * @return array<string, string>
+     */
+    public static function opcionesDeHora(?string $actual = null): array
+    {
+        $horas = [];
+        for ($m = 7 * 60; $m <= 21 * 60; $m += self::minutosPorTurno()) {
+            $h = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+            $horas[$h] = $h;
+        }
+
+        if ($actual && ! isset($horas[$actual])) {
+            $horas[$actual] = $actual;
+            ksort($horas);
+        }
+
+        return $horas;
     }
 
     public static function form(Form $form): Form
@@ -96,11 +147,34 @@ class AppointmentResource extends Resource
                     ->label(__('Título'))
                     ->placeholder(__('Ej: Service, revisión...'))
                     ->default(fn (): string => request()->query('title', 'Turno')),
-                Forms\Components\DateTimePicker::make('scheduled_at')
-                    ->label(__('Fecha/Hora'))
+                // Fecha y hora por separado, con clics. El selector nativo de
+                // fecha/hora cambiaba con la ruedita del mouse en algunos
+                // navegadores y se agendaban turnos a otra hora sin querer.
+                Forms\Components\DatePicker::make('fecha')
+                    ->label(__('Fecha'))
+                    ->native(false)
+                    ->displayFormat('d/m/Y')
+                    ->closeOnDateSelection()
                     ->required()
-                    ->seconds(false)
-                    ->default(fn (): string => request()->query('scheduled_at') ?? now()->format('Y-m-d H:i:s')),
+                    ->dehydrated(false)
+                    ->afterStateHydrated(fn (Forms\Components\DatePicker $component, ?Appointment $record) => $component->state(
+                        self::horarioInicial($record)->format('Y-m-d')
+                    )),
+                Forms\Components\Select::make('hora')
+                    ->label(__('Hora'))
+                    ->options(fn (?Appointment $record): array => self::opcionesDeHora(self::horarioInicial($record)->format('H:i')))
+                    // Lista con buscador (no el desplegable del navegador, que en
+                    // Windows también cambia con la ruedita): escribir "14" filtra.
+                    ->searchable()
+                    ->required()
+                    ->dehydrated(false)
+                    ->afterStateHydrated(fn (Forms\Components\Select $component, ?Appointment $record) => $component->state(
+                        self::horarioInicial($record)->format('H:i')
+                    )),
+                Forms\Components\Hidden::make('scheduled_at')
+                    ->dehydrateStateUsing(fn (Get $get): ?string => filled($get('fecha')) && filled($get('hora'))
+                        ? \Carbon\Carbon::parse($get('fecha'))->format('Y-m-d') . ' ' . $get('hora') . ':00'
+                        : null),
                 Forms\Components\TextInput::make('duration_minutes')
                     ->label(__('Duración (min)'))
                     ->numeric()

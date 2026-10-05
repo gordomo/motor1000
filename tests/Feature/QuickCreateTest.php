@@ -15,7 +15,7 @@ beforeEach(function(){
 it('las páginas de alta rápida (cliente y cita) renderizan sin error', function(){
     Livewire::test(CreateCustomer::class)->assertOk();
     Livewire::test(CreateAppointment::class)->assertOk()
-        ->assertFormSet(fn (array $s): bool => !empty($s['scheduled_at'])); // fecha precargada
+        ->assertFormSet(fn (array $s): bool => filled($s['fecha']) && filled($s['hora'])); // fecha y hora precargadas
 });
 it('5: el form de cita precarga el cliente del query', function(){
     $c=Customer::factory()->create(['tenant_id'=>$this->t->id]);
