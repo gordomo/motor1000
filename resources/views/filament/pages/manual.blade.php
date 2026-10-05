@@ -193,8 +193,8 @@
         </div>
 
         <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            <strong>{{ __('Volver atrás o saltear un paso') }}</strong>
-            {{ __('(por ejemplo reabrir una orden completada) lo hace solo el administrador. Cada uno mueve su paso hacia adelante; quien tiene dos roles, mueve los dos pasos.') }}
+            <strong>{{ __('Volver un paso atrás') }}</strong>
+            {{ __('(reabrir una orden completada, deshacer una entrega) lo puede hacer el comercial: con "Volver un paso" en el listado de órdenes o arrastrándola en el tablero, y se puede dejar el motivo. Si vuelve de Completado, los repuestos regresan al stock; si vuelve de Entregado, los cobros no se borran y al cliente no le llega otro aviso. Saltear pasos, solo el administrador.') }}
         </p>
 
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">

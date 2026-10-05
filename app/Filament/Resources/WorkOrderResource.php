@@ -514,6 +514,47 @@ class WorkOrderResource extends Resource
                             ->success()
                             ->send();
                     }),
+                Tables\Actions\Action::make('volver_paso')
+                    ->label(__('Volver un paso'))
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('gray')
+                    ->visible(function (WorkOrder $r): bool {
+                        $anterior = WorkOrderStatus::previousState($r->status);
+
+                        return $anterior && WorkOrderTransitions::userCanMove(auth()->user(), $r->status, $anterior);
+                    })
+                    ->modalHeading(fn (WorkOrder $r): string => __('Volver :numero a :estado', [
+                        'numero' => $r->number,
+                        'estado' => WorkOrderStatus::previousState($r->status)?->getLabel(),
+                    ]))
+                    ->modalDescription(fn (WorkOrder $r): string => match ($r->status) {
+                        WorkOrderStatus::Completed => __('La orden vuelve a En reparación y los repuestos vuelven al stock hasta que se complete de nuevo.'),
+                        WorkOrderStatus::Delivered => __('La orden vuelve a Completado. Los cobros que ya se registraron no se borran.'),
+                        default                    => __('La orden vuelve al paso anterior.'),
+                    })
+                    ->modalSubmitActionLabel(__('Volver un paso'))
+                    ->form([
+                        Forms\Components\Textarea::make('motivo')
+                            ->label(__('Motivo (opcional)'))
+                            ->helperText(__('Queda en el historial de la orden.'))
+                            ->rows(2),
+                    ])
+                    ->action(function (WorkOrder $record, array $data): void {
+                        $anterior = WorkOrderStatus::previousState($record->status);
+
+                        try {
+                            app(UpdateWorkOrderStatusAction::class)->execute($record, $anterior, comment: $data['motivo'] ?? null);
+                        } catch (\DomainException $e) {
+                            Notification::make()->title(__('No se puede volver'))->body($e->getMessage())->warning()->send();
+
+                            return;
+                        }
+
+                        Notification::make()
+                            ->title(__(':numero volvió a :estado', ['numero' => $record->number, 'estado' => $anterior->getLabel()]))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('advance_status')
                     ->label(__('Avanzar'))
                     ->icon('heroicon-o-arrow-right-circle')

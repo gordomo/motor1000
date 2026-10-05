@@ -74,6 +74,17 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
         return in_array($this, [self::Delivered]);
     }
 
+    /** El estado anterior en el circuito (para "Volver un paso"), o null si es el primero. */
+    public static function previousState(self $current): ?self
+    {
+        return match ($current) {
+            self::Received  => null,
+            self::Repairing => self::Received,
+            self::Completed => self::Repairing,
+            self::Delivered => self::Completed,
+        };
+    }
+
     public static function nextStates(self $current): array
     {
         return match ($current) {

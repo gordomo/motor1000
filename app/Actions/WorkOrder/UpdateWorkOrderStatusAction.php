@@ -42,7 +42,11 @@ class UpdateWorkOrderStatusAction
 
             $timestamps = match ($newStatus) {
                 WorkOrderStatus::Repairing => ['started_at' => $order->started_at ?? now()],
-                WorkOrderStatus::Completed => ['completed_at' => now()],
+                // Al deshacer una entrega, la orden se completó cuando se completó:
+                // pisar la fecha la movería de día en el informe de cerradas.
+                WorkOrderStatus::Completed => ['completed_at' => $previousStatus === WorkOrderStatus::Delivered
+                    ? ($order->completed_at ?? now())
+                    : now()],
                 WorkOrderStatus::Delivered => ['delivered_at' => now()],
                 default                    => [],
             };
@@ -63,7 +67,8 @@ class UpdateWorkOrderStatusAction
                 $order->unblock();
             }
 
-            if ($newStatus === WorkOrderStatus::Completed) {
+            // Deshacer una entrega no es "tu auto está listo" de nuevo.
+            if ($newStatus === WorkOrderStatus::Completed && $previousStatus !== WorkOrderStatus::Delivered) {
                 $this->communicationService->notifyVehicleReady($order);
             }
 

@@ -18,6 +18,10 @@ use App\Models\WorkOrder;
  *   Completado    → Entregado     : el comercial, registrando el cobro. Esto es lo
  *                                   que convierte la orden en plata cobrada.
  *
+ * Volver un paso atrás (reabrir una orden completada, deshacer una entrega o
+ * un "me pongo a trabajar" por error) lo puede hacer el comercial (definido con
+ * el cliente, 2026-10). Saltear pasos, para adelante o para atrás, solo el admin.
+ *
  * El administrador puede hacer todo, para no quedar bloqueado si falta alguien.
  */
 class WorkOrderTransitions
@@ -27,6 +31,11 @@ class WorkOrderTransitions
         'received:repairing'   => ['mechanic'],
         'repairing:completed'  => ['mechanic'],
         'completed:delivered'  => ['receptionist'],
+
+        // Un paso atrás.
+        'repairing:received'   => ['receptionist'],
+        'completed:repairing'  => ['receptionist'],
+        'delivered:completed'  => ['receptionist'],
     ];
 
     public static function key(WorkOrderStatus $from, WorkOrderStatus $to): string
@@ -65,7 +74,10 @@ class WorkOrderTransitions
             return __('La orden está trabada: :motivo', ['motivo' => $order->blocked_reason]);
         }
 
-        if ($to === WorkOrderStatus::Completed) {
+        // Lo que se exige para completar vale al terminar el trabajo, no al
+        // deshacer una entrega (Entregado → Completado): esa orden ya se completó,
+        // y las entregadas antes del checklist no tienen esos datos.
+        if ($to === WorkOrderStatus::Completed && $from !== WorkOrderStatus::Delivered) {
             if (blank($order->work_performed)) {
                 return __('Falta escribir el trabajo realizado.');
             }

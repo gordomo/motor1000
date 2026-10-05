@@ -157,6 +157,7 @@ class Manual extends Page
                 'puede'     => [
                     __('Crear presupuestos y órdenes de trabajo, y aprobar presupuestos (total o parcial)'),
                     __('Configurar los recargos con tarjeta'),
+                    __('Volver una orden un paso atrás (reabrirla, deshacer una entrega)'),
                     __('Cargar clientes y autos'),
                     __('Editar los textos de los mensajes (Plantillas)'),
                     __('Entregar la orden, que es donde se registra el cobro'),
@@ -169,7 +170,7 @@ class Manual extends Page
                     __('Entrar a Revisiones, Inventario, Facturas, Recordatorios, Tareas ni Mecánicos'),
                     __('Borrar cobros, ni corregir los de otra persona'),
                     __('Poner una orden en reparación o darla por completada: eso es del mecánico'),
-                    __('Volver una orden a un estado anterior: eso es del administrador'),
+                    __('Saltear pasos de una orden: eso es del administrador'),
                 ],
             ],
             [
