@@ -26,6 +26,7 @@ it('el panel oculta las flechitas y bloquea la ruedita en campos numéricos y de
         ->get(AppointmentResource::getUrl('create'))
         ->assertOk()
         ->assertSee('input[type="number"]::-webkit-inner-spin-button', false)
-        ->assertSee("['number', 'time', 'date', 'datetime-local'].includes(campo.type)", false)
+        ->assertSee("const camposSinRueda = ['number', 'time', 'date', 'datetime-local', 'month', 'week'];", false)
+        ->assertSee('evento.preventDefault()', false)
         ->assertSee('campo.blur()', false);
 });

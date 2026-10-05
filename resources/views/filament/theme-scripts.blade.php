@@ -35,17 +35,37 @@
     }
 </script>
 <script>
-    // La ruedita del mouse sobre un campo numérico o de fecha/hora seleccionado
-    // le cambiaba el valor (un monto, el horario del turno) sin que el usuario
-    // se diera cuenta. Se saca el foco antes de que cambie: la página scrollea
-    // normal y el número queda como estaba.
+    // La ruedita del mouse sobre un campo numérico o de fecha/hora le cambiaba
+    // el valor (un monto, el horario del turno) sin que el usuario se diera
+    // cuenta. Algunos navegadores lo hacen con solo tener el mouse encima, sin
+    // clic: por eso se cancela siempre, y la página (o el modal) se scrollea a
+    // mano para que no quede trabada al pasar por el campo.
+    const camposSinRueda = ['number', 'time', 'date', 'datetime-local', 'month', 'week'];
+
+    const contenedorScrolleable = (desde) => {
+        for (let el = desde.parentElement; el; el = el.parentElement) {
+            const overflow = getComputedStyle(el).overflowY;
+            if (/(auto|scroll)/.test(overflow) && el.scrollHeight > el.clientHeight) {
+                return el;
+            }
+        }
+
+        return document.scrollingElement;
+    };
+
     document.addEventListener('wheel', (evento) => {
         const campo = evento.target;
 
-        if (campo instanceof HTMLInputElement
-            && ['number', 'time', 'date', 'datetime-local'].includes(campo.type)
-            && document.activeElement === campo) {
+        if (! (campo instanceof HTMLInputElement) || ! camposSinRueda.includes(campo.type)) {
+            return;
+        }
+
+        evento.preventDefault();
+
+        if (document.activeElement === campo) {
             campo.blur();
         }
-    }, { capture: true, passive: true });
+
+        contenedorScrolleable(campo)?.scrollBy({ top: evento.deltaY, left: evento.deltaX });
+    }, { capture: true, passive: false });
 </script>
