@@ -23,6 +23,11 @@ $DC exec -T app php artisan storage:link || true
 $DC exec -T app php artisan optimize:clear
 $DC exec -T app php artisan filament:cache-components || true
 
+echo "→ Permisos de storage (los artisan de arriba corren como root)..."
+# Si un artisan como root crea laravel.log, PHP-FPM (www-data) no puede escribirlo
+# y los errores de la web dejan de registrarse (pasó de junio a octubre de 2026).
+$DC exec -T app chown -R www-data:www-data storage bootstrap/cache
+
 echo "→ Estado:"
 $DC ps
 
