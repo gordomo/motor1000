@@ -21,4 +21,16 @@ class EditWorkOrder extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    /**
+     * discount y payment_status son NOT NULL: vaciar el campo para "volverlo a 0"
+     * mandaba un NULL explícito y el guardado daba error 500 (igual que al crear).
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['discount'] = $data['discount'] ?? 0;
+        $data['payment_status'] = $data['payment_status'] ?? 'pending';
+
+        return $data;
+    }
 }
