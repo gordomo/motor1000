@@ -88,13 +88,13 @@ class DeployGuardTests(unittest.TestCase):
         self.assertEqual(self.calls(), [])
         self.assertEqual((self.repo / 'server-changes.txt').read_text(), 'keep me')
 
-    def test_deploy_requires_revision_and_external_backup(self):
-        for args in (['--deploy'], ['--deploy', self.sha]):
+    def test_deploy_requires_exact_revision(self):
+        for args in (['--deploy'], ['--deploy', 'invalid-revision']):
             self.assertNotEqual(self.run_deploy(*args).returncode, 0)
             self.assertEqual(self.calls(), [])
 
     def test_failed_build_never_stops_production_and_preserves_recovery(self):
-        self.env['MOTOR1000_BACKUP_MIRROR'] = str(self.path / 'mirror')
+        # El backup en el mismo VPS está autorizado y no requiere espejo.
         result = self.run_deploy('--deploy', self.sha)
         self.assertEqual(result.returncode, 17, result.stderr)
         self.assertFalse(any('stop' in call or 'down' in call or 'migrate' in call for call in self.calls()))

@@ -22,8 +22,9 @@ if [[ "$mode" == --deploy ]]; then
     [[ $# == 2 && "$(git rev-parse --verify "${2}^{commit}")" == "$head" ]] || {
         echo 'Indicar el SHA exacto revisado: bash deploy.sh --deploy SHA' >&2; exit 1;
     }
-    [[ -n "$mirror" ]] || { echo 'Falta MOTOR1000_BACKUP_MIRROR: destino de copia fuera del VPS.' >&2; exit 1; }
-    command -v rsync >/dev/null || { echo 'Falta rsync.' >&2; exit 1; }
+    if [[ -n "$mirror" ]]; then
+        command -v rsync >/dev/null || { echo 'Falta rsync para la copia adicional.' >&2; exit 1; }
+    fi
 fi
 check_tmp=$(mktemp -d)
 backup=''
@@ -45,7 +46,8 @@ docker inspect "${ids[@]}" > "$check_tmp/containers.json"
 python3 scripts/deploy-preflight.py "$check_tmp/compose.json" "$check_tmp/containers.json"
 echo "Revisión preparada: $head"
 if [[ "$mode" == --check ]]; then
-    [[ -n "$mirror" ]] || echo 'Pendiente: configurar MOTOR1000_BACKUP_MIRROR fuera del VPS.'
+    echo "Backup principal: $backup_root (verificación por restauración obligatoria)."
+    [[ -n "$mirror" ]] || echo 'Modalidad autorizada: backup solo en este VPS, sin copia externa.'
     echo 'Comprobación terminada. No se modificaron servicios ni datos.'
     exit 0
 fi
@@ -97,10 +99,15 @@ docker cp "$redis_id:/data/dump.rdb" "$backup/redis.rdb"
 mysql_image=$(docker inspect --format '{{.Image}}' "$("${dc[@]}" ps -q mysql)")
 bash scripts/verify-backup.sh "$backup/database.sql.gz" "$backup/counts-before.tsv" "$mysql_image"
 (cd "$backup" && sha256sum database.sql.gz storage.tar.gz redis.rdb environment.env previous-compose.json previous-containers.json recovery-images.json recovery-compose.json recover.sh nginx.conf > SHA256SUMS)
-echo 'Copiando y verificando el backup en el destino externo…'
-mirror_release="${mirror%/}/$run_id/"
-rsync -a -s -- "$backup/" "$mirror_release"
-[[ -z "$(rsync -acni -s -- "$backup/" "$mirror_release")" ]] || { echo 'La copia externa no coincide.' >&2; exit 1; }
+(cd "$backup" && sha256sum -c SHA256SUMS >/dev/null)
+if [[ -n "$mirror" ]]; then
+    echo 'Copiando y verificando el backup en el destino adicional…'
+    mirror_release="${mirror%/}/$run_id/"
+    rsync -a -s -- "$backup/" "$mirror_release"
+    [[ -z "$(rsync -acni -s -- "$backup/" "$mirror_release")" ]] || { echo 'La copia adicional no coincide.' >&2; exit 1; }
+else
+    echo "Backup verificado en el VPS: $backup"
+fi
 "${dc[@]}" up -d --no-deps --no-build --pull never --force-recreate app
 "${dc[@]}" exec -T app php artisan optimize:clear
 "${dc[@]}" exec -T app php scripts/deploy-state.php > "$check_tmp/pending.json"
