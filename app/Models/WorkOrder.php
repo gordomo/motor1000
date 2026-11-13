@@ -62,6 +62,9 @@ class WorkOrder extends Model
         'photos_in',
         'photos_out',
         'quote_id',
+        'cancelled_reason',
+        'cancelled_by',
+        'cancelled_at',
     ];
 
     protected $casts = [
@@ -78,6 +81,7 @@ class WorkOrder extends Model
         'discount'      => 'decimal:2',
         'total'         => 'decimal:2',
         'status'        => WorkOrderStatus::class,
+        'cancelled_at'  => 'datetime',
     ];
 
     /**
@@ -186,6 +190,16 @@ class WorkOrder extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->orderBy('paid_at');
+    }
+
+    public function cancelledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by')->withTrashed();
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === WorkOrderStatus::Cancelled;
     }
 
     // ─── Plata ────────────────────────────────────────────────────────────────

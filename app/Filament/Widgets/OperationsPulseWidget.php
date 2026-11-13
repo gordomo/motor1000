@@ -23,6 +23,7 @@ class OperationsPulseWidget extends Widget
         $tenantId = \App\Support\CurrentTenant::id() ?? 0;
 
         $recentWorkOrders = WorkOrder::withoutGlobalScopes([TenantScope::class])
+            ->where('status', '!=', 'cancelled')
             ->where('tenant_id', $tenantId)
             ->with(['customer:id,name', 'vehicle:id,license_plate,brand,model', 'mechanic:id,name'])
             ->latest()

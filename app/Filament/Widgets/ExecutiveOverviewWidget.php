@@ -2,8 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Scopes\TenantScope;
-use App\Models\Invoice;
 use App\Services\DashboardService;
 use Filament\Widgets\Widget;
 
@@ -20,17 +18,15 @@ class ExecutiveOverviewWidget extends Widget
     protected function getViewData(): array
     {
         $tenantId = \App\Support\CurrentTenant::id() ?? 0;
-        $kpis = app(DashboardService::class)->getKpis($tenantId);
+        $service = app(DashboardService::class);
+        $kpis = $service->getKpis($tenantId);
 
         $currentMonthRevenue = (float) $kpis['monthly_revenue'];
-        $previousMonthRevenue = (float) Invoice::withoutGlobalScopes([TenantScope::class])
-            ->where('tenant_id', $tenantId)
-            ->where('status', 'paid')
-            ->whereBetween('paid_at', [
-                now()->subMonthNoOverflow()->startOfMonth(),
-                now()->subMonthNoOverflow()->endOfMonth(),
-            ])
-            ->sum('total');
+        $previousMonthRevenue = $service->revenueForPeriod(
+            $tenantId,
+            now()->subMonthNoOverflow()->startOfMonth(),
+            now()->subMonthNoOverflow()->endOfMonth(),
+        );
 
         $revenueVariation = null;
         if ($previousMonthRevenue > 0) {

@@ -4,10 +4,7 @@ namespace App\Filament\Admin\Widgets;
 
 use App\Scopes\TenantScope;
 use App\Models\Appointment;
-use App\Models\Customer;
-use App\Models\Invoice;
 use App\Models\Tenant;
-use App\Models\WorkOrder;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -30,36 +27,7 @@ class TenantsReportWidget extends BaseWidget
 
     protected function kpis(int $tenantId): array
     {
-        return $this->kpiCache[$tenantId] ??= (function () use ($tenantId): array {
-            $monthStart = now()->startOfMonth();
-            $monthEnd   = now()->endOfMonth();
-
-            return [
-                'monthly_revenue' => (float) Invoice::withoutGlobalScopes([TenantScope::class])
-                    ->where('tenant_id', $tenantId)
-                    ->where('status', 'paid')
-                    ->whereBetween('paid_at', [$monthStart, $monthEnd])
-                    ->sum('total'),
-
-                'open_work_orders' => WorkOrder::withoutGlobalScopes([TenantScope::class])
-                    ->where('tenant_id', $tenantId)
-                    ->whereNotIn('status', ['delivered'])
-                    ->count(),
-
-                'completed_this_month' => WorkOrder::withoutGlobalScopes([TenantScope::class])
-                    ->where('tenant_id', $tenantId)
-                    ->where('status', 'completed')
-                    ->whereBetween('completed_at', [$monthStart, $monthEnd])
-                    ->count(),
-
-                'inactive_customers' => Customer::withoutGlobalScopes([TenantScope::class])
-                    ->where('tenant_id', $tenantId)
-                    ->where('status', 'active')
-                    ->where(fn ($q) => $q->whereNull('last_visit_at')
-                        ->orWhere('last_visit_at', '<', now()->subMonths(6)))
-                    ->count(),
-            ];
-        })();
+        return $this->kpiCache[$tenantId] ??= app(\App\Services\DashboardService::class)->getKpis($tenantId);
     }
 
     public function table(Table $table): Table

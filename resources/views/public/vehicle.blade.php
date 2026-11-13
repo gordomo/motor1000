@@ -25,13 +25,6 @@
         .plate { display: inline-block; background: #1e3a5f; color: #fff; font-size: 22px; font-weight: 800;
                  letter-spacing: .1em; padding: 6px 18px; border-radius: 6px; margin-bottom: 12px; }
 
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .badge-gray    { background:#e5e7eb; color:#374151; }
-        .badge-warning { background:#fef3c7; color:#92400e; }
-        .badge-success { background:#d1fae5; color:#065f46; }
-        .badge-danger  { background:#fee2e2; color:#991b1b; }
-        .badge-info    { background:#dbeafe; color:#1e40af; }
-
         .list-item { padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
         .list-item:last-child { border-bottom: none; }
         .list-item .date { font-size: 11px; color: #9ca3af; }
@@ -64,98 +57,20 @@
             <div class="info-item"><div class="lbl">Marca</div><div class="val">{{ $vehicle->brand }}</div></div>
             <div class="info-item"><div class="lbl">Modelo</div><div class="val">{{ $vehicle->model }}</div></div>
             <div class="info-item"><div class="lbl">Año</div><div class="val">{{ $vehicle->year }}</div></div>
-            <div class="info-item"><div class="lbl">Kilometraje</div><div class="val">{{ number_format((int) $vehicle->mileage, 0, ',', '.') }} km</div></div>
-            @if($vehicle->vin)
-            <div class="info-item" style="grid-column:span 2"><div class="lbl">VIN / Chasis</div><div class="val">{{ $vehicle->vin }}</div></div>
-            @endif
         </div>
     </div>
-
-    {{-- ── Propietario ─────────────────────────────────────────────────────── --}}
-    <div class="card">
-        <div class="card-title">Propietario</div>
-        <div class="info-grid">
-            <div class="info-item"><div class="lbl">Nombre</div><div class="val">{{ $vehicle->customer?->name ?? '—' }}</div></div>
-            @if($vehicle->customer?->phone)
-            <div class="info-item"><div class="lbl">Teléfono</div><div class="val">{{ $vehicle->customer->phone }}</div></div>
-            @endif
-        </div>
-    </div>
-
-    {{-- ── Recordatorios pendientes ────────────────────────────────────────── --}}
-    @if($vehicle->reminders->isNotEmpty())
-    <div class="card">
-        <div class="card-title">⚠️ Servicios Recomendados</div>
-        @foreach($vehicle->reminders as $r)
-        <div class="list-item">
-            <div class="title">{{ $r->title }}</div>
-            <div class="desc">Vence: {{ $r->due_at ? $r->due_at->format('d/m/Y') : '—' }}</div>
-        </div>
-        @endforeach
-    </div>
-    @endif
-
-    {{-- ── Presupuestos ────────────────────────────────────────────────────── --}}
-    @if($vehicle->quotes->isNotEmpty())
-    <div class="card">
-        <div class="card-title">Presupuestos</div>
-        @foreach($vehicle->quotes as $q)
-        <div class="list-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div class="title">{{ $q->code }}</div>
-                    <div class="date">{{ $q->created_at->format('d/m/Y') }}</div>
-                    @if($q->detected_fault)
-                    <div class="desc">{{ $q->detected_fault }}</div>
-                    @endif
-                </div>
-                <div>
-                    @php
-                        $color = match($q->status?->value) {
-                            'draft'    => 'gray',
-                            'sent'     => 'warning',
-                            'accepted' => 'success',
-                            'rejected' => 'danger',
-                            default    => 'gray',
-                        };
-                    @endphp
-                    <span class="badge badge-{{ $color }}">{{ $q->status?->getLabel() ?? '—' }}</span>
-                    @if($q->total > 0)
-                    <div style="font-size:13px; font-weight:700; text-align:right; margin-top:4px;">
-                        $ {{ number_format($q->total, 2, ',', '.') }}
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
-    @endif
 
     {{-- ── Historial de OTs ────────────────────────────────────────────────── --}}
     <div class="card">
         <div class="card-title">Historial de Servicios</div>
         @forelse($vehicle->workOrders as $wo)
         <div class="list-item">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div class="title">{{ $wo->number }}</div>
-                    <div class="date">{{ $wo->created_at->format('d/m/Y') }}</div>
-                    @if($wo->complaint)
-                    <div class="desc">{{ $wo->complaint }}</div>
-                    @endif
-                </div>
-                @php
-                    $woColor = match($wo->status?->value) {
-                        'received'  => 'gray',
-                        'repairing' => 'info',
-                        'completed' => 'success',
-                        'delivered' => 'success',
-                        default     => 'gray',
-                    };
-                @endphp
-                <span class="badge badge-{{ $woColor }}">{{ $wo->status?->getLabel() ?? '—' }}</span>
-            </div>
+            <div class="date">{{ $wo->created_at->format('d/m/Y') }}</div>
+            @if($wo->work_performed)
+            <div class="desc">{{ $wo->work_performed }}</div>
+            @else
+            <div class="desc">Trabajo sin detalle registrado.</div>
+            @endif
         </div>
         @empty
         <div class="empty">Sin historial de servicios aún.</div>

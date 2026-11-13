@@ -1,8 +1,11 @@
 services:
   app:
+    image: local/motor1000-app:${MOTOR1000_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        RELEASE_REVISION: ${MOTOR1000_RELEASE_REVISION:-unknown}
     container_name: motor1000_app
     restart: unless-stopped
     working_dir: /var/www
@@ -49,7 +52,7 @@ services:
     container_name: motor1000_nginx
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-80}:80"
+      - "127.0.0.1:${APP_PORT:-8080}:80"
     volumes:
       - ./:/var/www:ro
       - app_storage:/var/www/storage:ro
@@ -97,18 +100,26 @@ services:
       - motor1000
 
   horizon:
+    image: local/motor1000-horizon:${MOTOR1000_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        RELEASE_REVISION: ${MOTOR1000_RELEASE_REVISION:-unknown}
     container_name: motor1000_horizon
     restart: unless-stopped
     working_dir: /var/www
     command: php artisan horizon
+    stop_grace_period: 120s
+    stop_signal: SIGTERM
+    init: true
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      APP_LOCALE: ${APP_LOCALE:-es}
       DB_CONNECTION: ${DB_CONNECTION:-mysql}
       DB_HOST: mysql
       DB_PORT: 3306
@@ -139,17 +150,26 @@ services:
       - motor1000
 
   scheduler:
+    image: local/motor1000-scheduler:${MOTOR1000_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        RELEASE_REVISION: ${MOTOR1000_RELEASE_REVISION:-unknown}
     container_name: motor1000_scheduler
     restart: unless-stopped
     working_dir: /var/www
+    stop_grace_period: 120s
+    stop_signal: SIGTERM
+    init: true
     command: sh -c "while true; do php artisan schedule:run --no-interaction; sleep 60; done"
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
+      APP_LOCALE: ${APP_LOCALE:-es}
       DB_CONNECTION: ${DB_CONNECTION:-mysql}
       DB_HOST: mysql
       DB_PORT: 3306

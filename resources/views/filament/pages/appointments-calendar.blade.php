@@ -181,7 +181,7 @@
             const formatDateTimeForQuery = function (date) {
                 const pad = (value) => String(value).padStart(2, '0');
 
-                return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+                return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:00`;
             };
 
             const persistEventChange = async function (info) {
@@ -193,8 +193,8 @@
                 }
 
                 try {
-                    const start = info.event.start ? info.event.start.toISOString() : null;
-                    const end = info.event.end ? info.event.end.toISOString() : null;
+                    const start = info.event.start ? formatDateTimeForQuery(info.event.start) : null;
+                    const end = info.event.end ? formatDateTimeForQuery(info.event.end) : null;
 
                     if (!start) {
                         info.revert();
@@ -226,6 +226,11 @@
 
             const calendar = new FullCalendar.Calendar(el, {
                 locale: 'es',
+                // Los eventos contienen la hora de pared del taller, sin offset.
+                // UTC evita conversiones del navegador; no representa cómo se
+                // guardan las fechas. Selección y arrastre usan el mismo criterio.
+                timeZone: 'UTC',
+                now: @js(now(\App\Support\CurrentTenant::get()?->timezone ?: config('app.timezone'))->format('Y-m-d\TH:i:s')),
                 initialView: 'dayGridMonth',
                 ...barras(),
                 windowResize: function () {
@@ -258,7 +263,7 @@
                     const start = new Date(info.start);
 
                     if (info.allDay) {
-                        start.setHours(9, 0, 0, 0);
+                        start.setUTCHours(9, 0, 0, 0);
                     }
 
                     const end = info.end ? new Date(info.end) : new Date(start.getTime() + 60 * 60 * 1000);

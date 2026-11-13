@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3.36-fpm-trixie@sha256:d0dea3f5d95314eac94a732469f4cf0ee658a22c2ce3f2612272b9d5b42d1a72
 
 # System dependencies
 RUN apt-get update && apt-get install -y \

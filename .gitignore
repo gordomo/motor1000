@@ -18,6 +18,9 @@
 .idea
 .vscode
 .DS_Store
+.deploy.lock
+/motor1000.tar.gz
+__pycache__/
 npm-debug.log
 yarn-error.log
 pnpm-debug.log

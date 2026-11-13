@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Traits\BelongsToTenant;
+use App\Support\CurrentTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -106,12 +108,47 @@ class Customer extends Model
         return $this->birthday && $this->birthday->format('m-d') === now()->format('m-d');
     }
 
-    public function isInactive(int $months = 6): bool
+    public static function inactivityMonths(?Tenant $tenant = null): int
     {
-        if (! $this->last_visit_at) {
-            return true;
+        return max(1, (int) (($tenant ?? CurrentTenant::get())?->getSetting('inactive_customer_months', 12) ?? 12));
+    }
+
+    public function isInactive(?int $months = null): bool
+    {
+        $tenant = CurrentTenant::id() === $this->tenant_id ? CurrentTenant::get() : $this->tenant;
+
+        return $this->last_visit_at !== null
+            && $this->last_visit_at->lte(now()->subMonthsNoOverflow($months ?? self::inactivityMonths($tenant)));
+    }
+
+    public function relationshipStatus(): string
+    {
+        if ($this->last_visit_at === null) {
+            return 'prospect';
         }
 
-        return $this->last_visit_at->lt(now()->subMonths($months));
+        if ($this->isInactive()) {
+            return 'inactive';
+        }
+
+        return $this->status === 'vip' ? 'vip' : 'active';
+    }
+
+    public function scopeWithRelationshipStatus(Builder $query, string $status, ?int $months = null): Builder
+    {
+        $cutoff = now()->subMonthsNoOverflow($months ?? self::inactivityMonths());
+
+        return match ($status) {
+            'prospect' => $query->whereNull('last_visit_at'),
+            'inactive' => $query->whereNotNull('last_visit_at')->where('last_visit_at', '<=', $cutoff),
+            'vip' => $query->where('last_visit_at', '>', $cutoff)->where('status', 'vip'),
+            'active' => $query->where('last_visit_at', '>', $cutoff)->where('status', '!=', 'vip'),
+            default => $query->whereRaw('1 = 0'),
+        };
+    }
+
+    public function scopeInactive(Builder $query, ?int $months = null): Builder
+    {
+        return $query->withRelationshipStatus('inactive', $months);
     }
 }

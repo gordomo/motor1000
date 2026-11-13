@@ -118,12 +118,14 @@ class WorkOrdersBoard extends Page
         // Lee exactamente las mismas órdenes que el listado (global scope de tenant),
         // evitando el desfasaje que mostraba datos de demo / órdenes huérfanas.
         $orders = WorkOrder::query()
+            ->where('status', '!=', WorkOrderStatus::Cancelled)
             ->with(['customer:id,name', 'vehicle:id,license_plate,brand,model', 'mechanic:id,name'])
             ->latest()
             ->get()
             ->groupBy(fn (WorkOrder $order) => $order->status->value);
 
         $this->columns = collect(WorkOrderStatus::cases())
+            ->reject(fn (WorkOrderStatus $status): bool => $status === WorkOrderStatus::Cancelled)
             ->map(function (WorkOrderStatus $status) use ($orders): array {
                 return [
                     'value' => $status->value,

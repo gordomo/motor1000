@@ -31,7 +31,7 @@ class PlatformStatsWidget extends BaseWidget
             ->sum('total');
 
         $abiertas = WorkOrder::withoutGlobalScopes([TenantScope::class])
-            ->whereNotIn('status', ['delivered'])
+            ->whereNotIn('status', ['delivered', 'cancelled'])
             ->count();
 
         $citasHoy = Appointment::withoutGlobalScopes([TenantScope::class])

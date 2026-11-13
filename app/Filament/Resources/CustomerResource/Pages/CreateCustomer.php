@@ -25,6 +25,8 @@ class CreateCustomer extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $data['status'] = ($data['vip_customer'] ?? false) ? 'vip' : 'active';
+        unset($data['vip_customer']);
         $data['tenant_id'] = \App\Support\CurrentTenant::id();
 
         return $data;

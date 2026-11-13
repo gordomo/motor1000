@@ -37,7 +37,7 @@ class CustomerFactory extends Factory
     {
         return $this->state([
             'status'        => 'inactive',
-            'last_visit_at' => fake()->dateTimeBetween('-2 years', '-7 months'),
+            'last_visit_at' => fake()->dateTimeBetween('-2 years', '-13 months'),
         ]);
     }
 

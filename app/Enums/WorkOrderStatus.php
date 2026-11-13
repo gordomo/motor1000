@@ -12,6 +12,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
     case Repairing = 'repairing';
     case Completed = 'completed';
     case Delivered = 'delivered';
+    case Cancelled = 'cancelled';
 
     /**
      * Estados retirados del flujo (pedido 4 del cliente): 'diagnosis' y
@@ -31,6 +32,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
             self::Repairing => __('En reparación'),
             self::Completed => __('Completado'),
             self::Delivered => __('Entregado'),
+            self::Cancelled => __('Anulada'),
         };
     }
 
@@ -41,6 +43,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
             self::Repairing => 'info',
             self::Completed => 'success',
             self::Delivered => 'primary',
+            self::Cancelled => 'danger',
         };
     }
 
@@ -51,6 +54,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
             self::Repairing => 'heroicon-o-wrench',
             self::Completed => 'heroicon-o-check-circle',
             self::Delivered => 'heroicon-o-truck',
+            self::Cancelled => 'heroicon-o-x-circle',
         };
     }
 
@@ -71,7 +75,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::Delivered]);
+        return in_array($this, [self::Delivered, self::Cancelled]);
     }
 
     /** El estado anterior en el circuito (para "Volver un paso"), o null si es el primero. */
@@ -82,6 +86,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
             self::Repairing => self::Received,
             self::Completed => self::Repairing,
             self::Delivered => self::Completed,
+            self::Cancelled => null,
         };
     }
 
@@ -92,6 +97,7 @@ enum WorkOrderStatus: string implements HasLabel, HasColor, HasIcon
             self::Repairing => [self::Completed],
             self::Completed => [self::Delivered],
             self::Delivered => [],
+            self::Cancelled => [],
         };
     }
 }

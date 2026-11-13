@@ -29,7 +29,22 @@ class UpdateWorkOrderStatusAction
         ?string $comment = null,
         array $options = [],
     ): WorkOrder {
+        return DB::transaction(function () use ($order, $newStatus, $comment, $options): WorkOrder {
+            $locked = WorkOrder::query()->lockForUpdate()->findOrFail($order->id);
+            $order->setRawAttributes($locked->getAttributes(), true);
+            $order->setRelations([]);
+
+            return $this->executeLocked($order, $newStatus, $comment, $options);
+        });
+    }
+
+    private function executeLocked(WorkOrder $order, WorkOrderStatus $newStatus, ?string $comment, array $options): WorkOrder
+    {
         $previousStatus = $order->status;
+
+        if ($order->isCancelled() || $newStatus === WorkOrderStatus::Cancelled) {
+            throw new DomainException(__('Las anulaciones se registran con motivo desde la acción Anular. Una orden anulada no se reabre.'));
+        }
 
         // Las validaciones de flujo se pueden saltear solo desde código interno
         // (por ejemplo una migración o un seeder), nunca desde la UI.

@@ -55,12 +55,12 @@ class WorkOrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return (string) WorkOrder::whereNotIn('status', ['delivered'])->count();
+        return (string) WorkOrder::whereNotIn('status', ['delivered', 'cancelled'])->count();
     }
 
     public static function getNavigationBadgeColor(): string
     {
-        return WorkOrder::whereNotIn('status', ['delivered'])->count() > 10
+        return WorkOrder::whereNotIn('status', ['delivered', 'cancelled'])->count() > 10
             ? 'warning' : 'primary';
     }
 
@@ -445,12 +445,13 @@ class WorkOrderResource extends Resource
                     ->query(fn(Builder $q) => $q
                         ->whereNotNull('estimated_at')
                         ->where('estimated_at', '<', now())
-                        ->whereNotIn('status', ['completed', 'delivered'])
+                        ->whereNotIn('status', ['completed', 'delivered', 'cancelled'])
                     ),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                WorkOrderResource\AnularOrden::configure(Tables\Actions\Action::make('cancel')),
                 Tables\Actions\Action::make('pdf')
                     ->label(__('PDF'))
                     ->icon('heroicon-o-document-arrow-down')
@@ -682,7 +683,7 @@ class WorkOrderResource extends Resource
                             $salteados = 0;
 
                             foreach ($records as $record) {
-                                if ($record->isFree() || $record->balance() <= 0) {
+                                if ($record->isCancelled() || $record->isFree() || $record->balance() <= 0) {
                                     $salteados++;
 
                                     continue;
@@ -715,7 +716,6 @@ class WorkOrderResource extends Resource
                         ->color('gray')
                         ->deselectRecordsAfterCompletion()
                         ->action(fn (Collection $records) => app(BulkPdfZipService::class)->downloadWorkOrders($records)),
-                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
@@ -729,6 +729,16 @@ class WorkOrderResource extends Resource
                 ->schema([
                     Infolists\Components\TextEntry::make('number')->label(__('Número'))->weight('bold'),
                     Infolists\Components\TextEntry::make('status')->label(__('Estado'))->badge(),
+                    Infolists\Components\TextEntry::make('cancelled_reason')
+                        ->label(__('Motivo de anulación'))
+                        ->visible(fn (WorkOrder $record): bool => $record->isCancelled())
+                        ->columnSpanFull(),
+                    Infolists\Components\TextEntry::make('cancelledBy.name')
+                        ->label(__('Anulada por'))
+                        ->visible(fn (WorkOrder $record): bool => $record->isCancelled()),
+                    Infolists\Components\TextEntry::make('cancelled_at')
+                        ->label(__('Fecha de anulación'))->dateTime('d/m/Y H:i')
+                        ->visible(fn (WorkOrder $record): bool => $record->isCancelled()),
                     Infolists\Components\TextEntry::make('priority')->label(__('Prioridad'))->badge()->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::prioridad($state)),
                     Infolists\Components\TextEntry::make('customer.name')->label(__('Cliente')),
                     Infolists\Components\TextEntry::make('vehicle.display_name')->label(__('Vehículo')),

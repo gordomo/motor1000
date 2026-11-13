@@ -139,10 +139,14 @@ class WorkOrderClosuresReport extends Page
     /** Rango elegido, saneado: si viene al revés se da vuelta. */
     public function rango(): array
     {
-        $desde = CarbonImmutable::parse($this->desde ?: now()->startOfMonth())->startOfDay();
-        $hasta = CarbonImmutable::parse($this->hasta ?: now()->endOfMonth())->endOfDay();
+        $desde = CarbonImmutable::parse($this->desde ?: now()->startOfMonth());
+        $hasta = CarbonImmutable::parse($this->hasta ?: now()->endOfMonth());
 
-        return $desde->greaterThan($hasta) ? [$hasta, $desde] : [$desde, $hasta];
+        if ($desde->greaterThan($hasta)) {
+            [$desde, $hasta] = [$hasta, $desde];
+        }
+
+        return [$desde->startOfDay(), $hasta->endOfDay()];
     }
 
     /**
@@ -154,7 +158,7 @@ class WorkOrderClosuresReport extends Page
         [$desde, $hasta] = $this->rango();
 
         $total = $this->enRango($desde, $hasta)->count();
-        $dias  = max(1, $desde->diffInDays($hasta) + 1);
+        $dias  = (int) $desde->diffInDays($hasta->startOfDay()) + 1;
 
         return [
             'total'      => $total,

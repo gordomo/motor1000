@@ -36,18 +36,14 @@ class ListCustomers extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query) => $query->doesntHave('workOrders'))
                 ->badge(fn () => Customer::query()->doesntHave('workOrders')->count()),
             'active'   => Tab::make('Activos')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'active')),
+                ->modifyQueryUsing(fn (Builder $query) => $query->withRelationshipStatus('active')),
             'vip'      => Tab::make('VIP')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'vip')),
+                ->modifyQueryUsing(fn (Builder $query) => $query->withRelationshipStatus('vip')),
+            'prospect' => Tab::make('Prospectos')
+                ->modifyQueryUsing(fn (Builder $query) => $query->withRelationshipStatus('prospect')),
             'inactive' => Tab::make('Inactivos')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where(fn (Builder $sub) => $sub
-                    ->whereNull('last_visit_at')
-                    ->orWhere('last_visit_at', '<', now()->subMonths(6))
-                ))
-                ->badge(fn () => Customer::query()->where(fn (Builder $sub) => $sub
-                    ->whereNull('last_visit_at')
-                    ->orWhere('last_visit_at', '<', now()->subMonths(6))
-                )->count()),
+                ->modifyQueryUsing(fn (Builder $query) => $query->inactive())
+                ->badge(fn () => Customer::query()->inactive()->count()),
         ];
     }
 }

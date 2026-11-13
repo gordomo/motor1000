@@ -27,7 +27,7 @@ class WorkOrderStatusChartWidget extends ChartWidget
 
         $data = WorkOrder::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
-            ->whereNotIn('status', ['delivered'])
+            ->whereNotIn('status', ['delivered', 'cancelled'])
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status')
@@ -38,7 +38,7 @@ class WorkOrderStatusChartWidget extends ChartWidget
         $colors = [];
 
         foreach (WorkOrderStatus::cases() as $status) {
-            if ($status === WorkOrderStatus::Delivered) continue;
+            if ($status->isTerminal()) continue;
             $labels[] = $status->getLabel();
             $values[] = $data[$status->value] ?? 0;
             $colors[] = match($status->getColor()) {

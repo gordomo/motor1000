@@ -28,12 +28,26 @@ class WorkOrderPolicy
     public function update(User $user, WorkOrder $workOrder): bool
     {
         return $user->tenant_id === $workOrder->tenant_id
+            && ! $workOrder->isCancelled()
             && $user->hasAnyRole(['admin', 'receptionist']);
     }
 
     public function delete(User $user, WorkOrder $workOrder): bool
     {
+        return false;
+    }
+
+    public function deleteAny(User $user): bool
+    {
+        return false;
+    }
+
+    public function cancel(User $user, WorkOrder $workOrder): bool
+    {
+        // Hasta incorporar los permisos por persona de F1-3, lo administra
+        // el administrador del taller. Recepción y mecánicos no anulan.
         return $user->tenant_id === $workOrder->tenant_id
-            && $user->hasAnyRole(['admin', 'receptionist']);
+            && ! $workOrder->isCancelled()
+            && $user->hasRole('admin');
     }
 }

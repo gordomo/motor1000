@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Scopes\TenantScope;
 use App\Models\Customer;
 use App\Models\Reminder;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Collection;
 
 class ReminderService
@@ -24,15 +25,11 @@ class ReminderService
             ->get();
     }
 
-    public function getInactiveCustomers(int $tenantId, int $months = 6): Collection
+    public function getInactiveCustomers(int $tenantId, ?int $months = null): Collection
     {
         return Customer::withoutGlobalScopes([TenantScope::class])
             ->where('tenant_id', $tenantId)
-            ->where('status', 'active')
-            ->where(function ($q) use ($months) {
-                $q->whereNull('last_visit_at')
-                  ->orWhere('last_visit_at', '<', now()->subMonths($months));
-            })
+            ->inactive($months ?? Customer::inactivityMonths(Tenant::find($tenantId)))
             ->with('vehicles')
             ->orderBy('last_visit_at')
             ->get();

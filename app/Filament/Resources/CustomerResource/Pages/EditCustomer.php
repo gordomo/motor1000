@@ -21,4 +21,12 @@ class EditCustomer extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['status'] = ($data['vip_customer'] ?? false) ? 'vip' : 'active';
+        unset($data['vip_customer']);
+
+        return $data;
+    }
 }

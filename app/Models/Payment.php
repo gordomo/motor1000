@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Ingreso de dinero de una orden de trabajo: el adelanto que deja el cliente al
@@ -52,9 +53,22 @@ class Payment extends Model
         'paid_at' => 'datetime',
     ];
 
+    public function save(array $options = [])
+    {
+        // Mantiene el bloqueo de la orden durante el alta del cobro para que
+        // no se pueda anular entre la validación y el INSERT.
+        return DB::transaction(fn () => parent::save($options));
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Payment $payment) {
+            $order = WorkOrder::query()->lockForUpdate()->find($payment->work_order_id);
+            if ($order?->isCancelled()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'amount' => __('No se pueden registrar cobros en una orden anulada.'),
+                ]);
+            }
             $payment->paid_at ??= now();
             $payment->user_id ??= auth()->id();
         });

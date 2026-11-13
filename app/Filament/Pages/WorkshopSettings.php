@@ -61,7 +61,10 @@ class WorkshopSettings extends Page implements HasForms
 
         $this->form->fill(array_merge(
             $tenant->attributesToArray(),
-            ['booking' => $tenant->bookingConfig()],
+            [
+                'booking' => $tenant->bookingConfig(),
+                'inactive_customer_months' => \App\Models\Customer::inactivityMonths($tenant),
+            ],
         ));
     }
 
@@ -121,6 +124,10 @@ class WorkshopSettings extends Page implements HasForms
                 Forms\Components\Section::make(__('Configuración'))
                     ->columns(2)
                     ->schema([
+                        Forms\Components\TextInput::make('inactive_customer_months')
+                            ->label(__('Meses sin visita para considerar inactivo'))
+                            ->integer()->minValue(1)->maxValue(120)->required()
+                            ->helperText(__('Solo aplica a clientes que ya visitaron el taller. Los que nunca vinieron son prospectos.')),
                         Forms\Components\Select::make('timezone')
                             ->label(__('Zona horaria'))
                             ->options([
@@ -207,6 +214,9 @@ class WorkshopSettings extends Page implements HasForms
 
         // Config de reservas del turnero.
         $data['booking_settings'] = $state['booking'] ?? null;
+        $data['settings'] = array_merge($tenant->settings ?? [], [
+            'inactive_customer_months' => (int) $state['inactive_customer_months'],
+        ]);
 
         $tenant->update($data);
 

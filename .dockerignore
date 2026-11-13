@@ -14,4 +14,5 @@ Dockerfile
 Dockerfile.prod
 docker-compose*.yml
 npm-debug.log
-composer.lock
+*.tar.gz
+.deploy.lock

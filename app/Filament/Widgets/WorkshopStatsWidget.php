@@ -18,7 +18,7 @@ class WorkshopStatsWidget extends BaseWidget
 
         return [
             Stat::make(__('Ingresos del mes'), '$ ' . number_format($kpis['monthly_revenue'], 2, ',', '.'))
-                ->description(__('Total facturado en el mes'))
+                ->description(__('Cobros registrados en el mes'))
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
 
@@ -38,7 +38,7 @@ class WorkshopStatsWidget extends BaseWidget
                 ->color('info'),
 
             Stat::make(__('Clientes inactivos'), (string) $kpis['inactive_customers'])
-                ->description(__('Sin visita hace 6+ meses'))
+                ->description(__('Sin visita hace :months+ meses', ['months' => \App\Models\Customer::inactivityMonths()]))
                 ->descriptionIcon('heroicon-m-user-minus')
                 ->color($kpis['inactive_customers'] > 0 ? 'danger' : 'success'),
 

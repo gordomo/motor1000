@@ -18,7 +18,7 @@ class EditWorkOrder extends EditRecord
         return [
             $this->volverAction(),
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            \App\Filament\Resources\WorkOrderResource\AnularOrden::configure(Actions\Action::make('cancel')),
         ];
     }
 

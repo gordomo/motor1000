@@ -47,11 +47,13 @@ class CustomerResource extends Resource
                         ->label(__('Nombre Completo'))
                         ->required()
                         ->maxLength(255),
-                    Forms\Components\Select::make('status')
+                    Forms\Components\Placeholder::make('relationship_status')
                         ->label(__('Estado'))
-                        ->options(CustomerStatus::class)
-                        ->default('active')
-                        ->required(),
+                        ->content(fn (?Customer $record): string => \App\Support\Etiquetas::estadoCliente($record?->relationshipStatus() ?? 'prospect'))
+                        ->helperText(__('Se calcula según la última visita y el plazo configurado en Mi Taller.')),
+                    Forms\Components\Toggle::make('vip_customer')
+                        ->label(__('Cliente VIP'))
+                        ->afterStateHydrated(fn (Forms\Components\Toggle $component, ?Customer $record) => $component->state($record?->status === 'vip')),
                     Forms\Components\TextInput::make('phone')
                         ->label(__('Teléfono'))
                         ->tel()
@@ -184,6 +186,7 @@ class CustomerResource extends Resource
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label(__('Estado'))
+                    ->state(fn (Customer $record): string => $record->relationshipStatus())
                     ->colors([
                         'success' => 'active',
                         'danger'  => 'inactive',
@@ -205,15 +208,12 @@ class CustomerResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('Estado'))
-                    ->options(CustomerStatus::class),
+                    ->options(CustomerStatus::class)
+                    ->query(fn (Builder $query, array $data): Builder => filled($data['value'] ?? null)
+                        ? $query->withRelationshipStatus($data['value']) : $query),
                 Tables\Filters\Filter::make('inactive')
-                    ->label(__('Inactivos (6+ meses)'))
-                    ->query(fn(Builder $q) => $q
-                        ->where(fn($q) => $q
-                            ->whereNull('last_visit_at')
-                            ->orWhere('last_visit_at', '<', now()->subMonths(6))
-                        )
-                    ),
+                    ->label(fn (): string => __('Inactivos (:months+ meses)', ['months' => Customer::inactivityMonths()]))
+                    ->query(fn (Builder $query): Builder => $query->inactive()),
                 // Pedido 9: cliente "real" = tiene al menos una orden de trabajo.
                 Tables\Filters\TernaryFilter::make('con_ordenes')
                     ->label(__('Clientes con trabajo hecho'))
@@ -275,12 +275,10 @@ class CustomerResource extends Resource
                     Infolists\Components\TextEntry::make('health_state')
                         ->label(__('Salud de relación'))
                         ->badge()
-                        ->state(function (Customer $record): string {
-                            if (! $record->last_visit_at) {
-                                return 'En riesgo';
-                            }
-
-                            return $record->last_visit_at->lt(now()->subMonths(6)) ? 'En riesgo' : 'Activa';
+                        ->state(fn (Customer $record): string => match ($record->relationshipStatus()) {
+                            'prospect' => 'Sin visitas',
+                            'inactive' => 'En riesgo',
+                            default => 'Activa',
                         })
                         ->color(fn (string $state): string => $state === 'Activa' ? 'success' : 'danger'),
                 ]),
@@ -292,6 +290,7 @@ class CustomerResource extends Resource
                     Infolists\Components\TextEntry::make('email')->label(__('Email')),
                     Infolists\Components\TextEntry::make('status')
                         ->label(__('Estado'))
+                        ->state(fn (Customer $record): string => $record->relationshipStatus())
                         ->badge()
                         ->formatStateUsing(fn (?string $state) => \App\Support\Etiquetas::estadoCliente($state)),
                     Infolists\Components\TextEntry::make('last_visit_at')

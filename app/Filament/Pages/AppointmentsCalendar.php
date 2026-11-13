@@ -62,7 +62,7 @@ class AppointmentsCalendar extends Page
     {
         return \App\Models\WorkOrder::query()
             ->whereNotNull('estimated_at')
-            ->where('status', '!=', \App\Enums\WorkOrderStatus::Delivered)
+            ->whereNotIn('status', ['delivered', 'cancelled'])
             ->with(['customer:id,name', 'vehicle:id,license_plate', 'mechanic:id,name'])
             ->orderBy('estimated_at')
             ->get()
@@ -74,8 +74,8 @@ class AppointmentsCalendar extends Page
                 return [
                     'id' => 'wo-' . $order->id,
                     'title' => $title,
-                    'start' => $start?->toIso8601String(),
-                    'end' => $start?->copy()->addMinutes(30)->toIso8601String(),
+                    'start' => $this->calendarTime($start),
+                    'end' => $this->calendarTime($start?->copy()->addMinutes(30)),
                     'allDay' => false,
                     'editable' => false,
                     'classNames' => ['evento-entrega'],
@@ -121,8 +121,8 @@ class AppointmentsCalendar extends Page
                 return [
                     'id' => (string) $appointment->id,
                     'title' => $title,
-                    'start' => $start?->toIso8601String(),
-                    'end' => $end?->toIso8601String(),
+                    'start' => $this->calendarTime($start),
+                    'end' => $this->calendarTime($end),
                     'allDay' => false,
                     'url' => AppointmentResource::getUrl('edit', ['record' => $appointment]),
                     // Los colores van por clase en la vista (appointments-calendar.blade.php).
@@ -142,6 +142,8 @@ class AppointmentsCalendar extends Page
 
     public function updateAppointmentSchedule(int|string $appointmentId, string $start, ?string $end = null): void
     {
+        abort_unless(auth()->check() && static::canAccess(), 403);
+
         try {
             $appointment = Appointment::query()->findOrFail($appointmentId);
 
@@ -149,9 +151,10 @@ class AppointmentsCalendar extends Page
                 throw new \RuntimeException(__('No se puede reprogramar una cita completada o cancelada.'));
             }
 
-            $startAt = Carbon::parse($start);
+            $timezone = \App\Support\CurrentTenant::get()?->timezone ?: config('app.timezone');
+            $startAt = Carbon::parse($start, $timezone)->setTimezone($timezone);
             $endAt = $end
-                ? Carbon::parse($end)
+                ? Carbon::parse($end, $timezone)->setTimezone($timezone)
                 : $startAt->copy()->addMinutes((int) ($appointment->duration_minutes ?: 60));
 
             if ($endAt->lessThanOrEqualTo($startAt)) {
@@ -194,6 +197,14 @@ class AppointmentsCalendar extends Page
 
             throw $e;
         }
+    }
+
+    /** Hora de pared del taller: el calendario no debe convertirla a la del navegador. */
+    private function calendarTime(?Carbon $date): ?string
+    {
+        $timezone = \App\Support\CurrentTenant::get()?->timezone ?: config('app.timezone');
+
+        return $date?->copy()->setTimezone($timezone)->format('Y-m-d\TH:i:s');
     }
 
     protected function getHeaderActions(): array

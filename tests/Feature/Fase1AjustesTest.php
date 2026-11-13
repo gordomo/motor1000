@@ -45,7 +45,7 @@ beforeEach(function () {
 it('4: el flujo de estados ya no tiene diagnóstico ni esperando piezas', function () {
     $values = array_column(WorkOrderStatus::cases(), 'value');
 
-    expect($values)->toBe(['received', 'repairing', 'completed', 'delivered'])
+    expect($values)->toBe(['received', 'repairing', 'completed', 'delivered', 'cancelled'])
         ->and(WorkOrderStatus::tryFrom('diagnosis'))->toBeNull()
         ->and(WorkOrderStatus::tryFrom('waiting_parts'))->toBeNull();
 });
@@ -199,7 +199,7 @@ it('todas las pestañas de clientes filtran de verdad', function () {
     // y la pestaña quedaba rota.
     // last_visit_at explícito: el factory lo genera al azar y hacía el test frágil.
     $vip = Customer::factory()->create([
-        'tenant_id' => $this->t->id, 'status' => 'vip', 'last_visit_at' => null,
+        'tenant_id' => $this->t->id, 'status' => 'vip', 'last_visit_at' => now(),
     ]);
     $this->customer->update(['status' => 'active', 'last_visit_at' => now()]);
 
@@ -211,10 +211,13 @@ it('todas las pestañas de clientes filtran de verdad', function () {
         ->assertCanSeeTableRecords([$this->customer])
         ->assertCanNotSeeTableRecords([$vip]);
 
-    // El vip nunca visitó → cae en "Inactivos" (criterio last_visit_at).
+    $inactivo = Customer::factory()->create([
+        'tenant_id' => $this->t->id, 'status' => 'active', 'last_visit_at' => now()->subMonths(13),
+    ]);
+    // Inactivo se calcula por visitas: un VIP reciente no aparece acá.
     Livewire::test(ListCustomers::class, ['activeTab' => 'inactive'])
-        ->assertCanSeeTableRecords([$vip])
-        ->assertCanNotSeeTableRecords([$this->customer]);
+        ->assertCanSeeTableRecords([$inactivo])
+        ->assertCanNotSeeTableRecords([$this->customer, $vip]);
 });
 
 it('todas las pestañas de órdenes de trabajo filtran de verdad', function () {

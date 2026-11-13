@@ -23,6 +23,7 @@ class ViewWorkOrder extends ViewRecord
                 ->url(fn (): string => route('work-orders.pdf', $this->record))
                 ->openUrlInNewTab(),
             Actions\EditAction::make(),
+            \App\Filament\Resources\WorkOrderResource\AnularOrden::configure(Actions\Action::make('cancel')),
         ];
     }
 }

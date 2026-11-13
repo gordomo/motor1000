@@ -27,13 +27,13 @@ it('el rol manager ya no existe en el modelo de roles', function(){
         ->and(\App\Support\Roles::WORKSHOP)->toEqual(['admin','receptionist','mechanic']);
 });
 
-it('recepcionista puede eliminar clientes y órdenes', function(){
+it('recepcionista conserva el permiso de clientes pero no puede eliminar órdenes', function(){
     $u = mkUser('receptionist', $this->tenant);
     $c = Customer::factory()->create(['tenant_id'=>$this->tenant->id]);
     $v = Vehicle::factory()->create(['tenant_id'=>$this->tenant->id,'customer_id'=>$c->id]);
     $wo = WorkOrder::factory()->create(['tenant_id'=>$this->tenant->id,'customer_id'=>$c->id,'vehicle_id'=>$v->id]);
     expect($u->can('delete', $c))->toBeTrue()
-        ->and($u->can('delete', $wo))->toBeTrue();
+        ->and($u->can('delete', $wo))->toBeFalse();
 });
 
 // 2026-10: el mecánico trabaja solo desde su tablero; el listado y la ficha de
