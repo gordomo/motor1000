@@ -9,11 +9,15 @@ import unittest
 from test_preflight import ROOT, fixture
 
 FAKE_DOCKER = '''#!/usr/bin/env python3
-import json, os, pathlib, sys
+import json, os, pathlib, subprocess, sys
 args = sys.argv[1:]
 with open(os.environ['DOCKER_CALLS'], 'a') as log:
     log.write(json.dumps(args) + '\\n')
-if args[0] == 'inspect':
+if args[0] == 'exec' and 'php' in args:
+    php_args = args[args.index('php') + 1:]
+    result = subprocess.run(['/usr/bin/docker', 'exec', '-i', 'motor1000_app', 'php', *php_args], input=sys.stdin.buffer.read())
+    sys.exit(result.returncode)
+elif args[0] == 'inspect':
     print(pathlib.Path(os.environ['FAKE_CONTAINERS']).read_text())
 elif args[:2] == ['image', 'tag']:
     pass
@@ -25,6 +29,8 @@ elif args[0] == 'cp':
         target.write_text('old nginx config')
 elif 'config' in args:
     print(pathlib.Path(os.environ['FAKE_CONFIG']).read_text())
+elif 'ps' in args and '-q' in args:
+    print('app-id')
 elif 'ps' in args:
     print('app-id\\nnginx-id\\nmysql-id\\nredis-id\\nhorizon-id\\nscheduler-id')
 elif 'du' in args:
@@ -80,7 +86,7 @@ class DeployGuardTests(unittest.TestCase):
         result = self.run_deploy('--check')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse((self.path / 'backups').exists())
-        self.assertEqual(len(self.calls()), 3)
+        self.assertEqual(len(self.calls()), 5)
 
     def test_dirty_checkout_stops_before_docker(self):
         (self.repo / 'server-changes.txt').write_text('keep me')

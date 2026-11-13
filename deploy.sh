@@ -9,7 +9,7 @@ mode=${1:---check}
 dc=(docker compose -f docker-compose.prod.yml)
 backup_root=${MOTOR1000_BACKUP_DIR:-/var/backups/motor1000}
 mirror=${MOTOR1000_BACKUP_MIRROR:-}
-for program in docker git python3 gzip tar sha256sum flock curl; do
+for program in docker git gzip tar sha256sum flock curl; do
     command -v "$program" >/dev/null || { echo "Falta $program" >&2; exit 1; }
 done
 head=$(git rev-parse HEAD)
@@ -43,7 +43,19 @@ trap cleanup EXIT
 mapfile -t ids < <("${dc[@]}" ps -aq)
 [[ ${#ids[@]} -gt 0 ]] || { echo 'No se encontró una instalación existente.' >&2; exit 1; }
 docker inspect "${ids[@]}" > "$check_tmp/containers.json"
-python3 scripts/deploy-preflight.py "$check_tmp/compose.json" "$check_tmp/containers.json"
+# El PHP del contenedor actual procesa JSON; no requiere PHP ni Python en el VPS.
+app_id=$("${dc[@]}" ps -q app)
+[[ -n "$app_id" ]] || { echo 'El contenedor app no está corriendo.' >&2; exit 1; }
+php_tool=$(tail -n +2 scripts/deploy-tool.php)
+run_tool() { docker exec -i "$app_id" php -r "$php_tool" "$@"; }
+state_input() {
+    printf '{"config":'
+    cat "$check_tmp/compose.json"
+    printf ',"containers":'
+    cat "$check_tmp/containers.json"
+    printf '}\n'
+}
+state_input | run_tool preflight
 echo "Revisión preparada: $head"
 if [[ "$mode" == --check ]]; then
     echo "Backup principal: $backup_root (verificación por restauración obligatoria)."
@@ -69,7 +81,25 @@ cp "$check_tmp/compose.json" "$backup/previous-compose.json"
 cp "$check_tmp/containers.json" "$backup/previous-containers.json"
 printf '%s\n' "$head" > "$backup/target-revision"
 # Protege las imágenes viejas antes de reemplazar sus tags durante el build.
-python3 scripts/deploy-recovery.py "$backup" "$root" "$run_id"
+for artifact in compose images script plan; do
+    case "$artifact" in
+        script) destination="$backup/recover.sh" ;;
+        plan) destination="$check_tmp/recovery-plan.tsv" ;;
+        *) destination="$backup/recovery-$artifact.json" ;;
+    esac
+    state_input | run_tool "recovery-$artifact" "$backup" "$root" "$run_id" > "$destination"
+done
+chmod 700 "$backup/recover.sh"
+while IFS=$'\t' read -r service container image tag; do
+    docker image tag "$image" "$tag"
+    case "$service" in
+        app)
+            mkdir "$backup/public"
+            docker cp "$container:/var/www/public/." "$backup/public/"
+            ;;
+        nginx) docker cp "$container:/etc/nginx/conf.d/default.conf" "$backup/nginx.conf" ;;
+    esac
+done < "$check_tmp/recovery-plan.tsv"
 echo 'Construyendo imágenes antes de interrumpir el servicio…'
 "${dc[@]}" build app horizon scheduler
 "${dc[@]}" exec -T app php artisan down --retry=60
@@ -111,14 +141,14 @@ fi
 "${dc[@]}" up -d --no-deps --no-build --pull never --force-recreate app
 "${dc[@]}" exec -T app php artisan optimize:clear
 "${dc[@]}" exec -T app php scripts/deploy-state.php > "$check_tmp/pending.json"
-python3 - "$check_tmp/pending.json" <<'PY'
-import hashlib, json, pathlib, sys
-name = '2026_11_13_100000_add_cancellation_to_work_orders'
-allowed = {name: hashlib.sha256(pathlib.Path('database/migrations/' + name + '.php').read_bytes()).hexdigest()}
-pending = json.load(open(sys.argv[1]))
-if any(name not in allowed or allowed[name] != digest for name, digest in pending.items()):
-    sys.exit('Hay migraciones pendientes no autorizadas. Se mantiene el mantenimiento.')
-PY
+app_id=$("${dc[@]}" ps -q app)
+migration=2026_11_13_100000_add_cancellation_to_work_orders
+migration_hash=$(sha256sum "database/migrations/$migration.php" | awk '{print $1}')
+{
+    printf '{"pending":'
+    cat "$check_tmp/pending.json"
+    printf ',"allowed":{"%s":"%s"}}\n' "$migration" "$migration_hash"
+} | run_tool validate-migrations
 "${dc[@]}" exec -T app php artisan migrate --force --no-interaction
 counts > "$backup/counts-after.tsv"
 diff -u <(awk -F '\t' '$1 != "migrations"' "$backup/counts-before.tsv") \

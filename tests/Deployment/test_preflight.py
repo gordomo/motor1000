@@ -1,5 +1,5 @@
-import copy
 import json
+import os
 import pathlib
 import subprocess
 import tempfile
@@ -32,14 +32,20 @@ def fixture():
 
 
 class PreflightTests(unittest.TestCase):
+    def run_tool(self, operation, data):
+        code = (ROOT / 'scripts/deploy-tool.php').read_text().split('\n', 1)[1]
+        return subprocess.run(['/usr/bin/docker', 'exec', '-i', 'motor1000_app', 'php', '-r', code, operation],
+                              input=json.dumps(data), capture_output=True, text=True)
+
     def run_preflight(self, config, containers):
-        with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory)
-            (path / 'config.json').write_text(json.dumps(config))
-            (path / 'containers.json').write_text(json.dumps(containers))
-            return subprocess.run(['python3', str(ROOT / 'scripts/deploy-preflight.py'),
-                                   str(path / 'config.json'), str(path / 'containers.json')],
-                                  capture_output=True, text=True)
+        return self.run_tool('preflight', {'config': config, 'containers': containers})
+
+    def test_only_reviewed_migration_hashes_are_accepted(self):
+        allowed = {'reviewed': 'a' * 64}
+        for pending in ({}, allowed):
+            self.assertEqual(self.run_tool('validate-migrations', {'allowed': allowed, 'pending': pending}).returncode, 0)
+        for pending in ({'reviewed': 'b' * 64}, {'unknown': 'a' * 64}):
+            self.assertNotEqual(self.run_tool('validate-migrations', {'allowed': allowed, 'pending': pending}).returncode, 0)
 
     def test_accepts_existing_production_volumes(self):
         self.assertEqual(self.run_preflight(*fixture()).returncode, 0)
