@@ -102,6 +102,12 @@ while IFS=$'\t' read -r service container image tag; do
 done < "$check_tmp/recovery-plan.tsv"
 echo 'Construyendo imágenes antes de interrumpir el servicio…'
 "${dc[@]}" build app horizon scheduler
+# Probar como el usuario de PHP-FPM antes de cerrar producción. Un checkout
+# hecho con umask 077 no debe producir una imagen ilegible para www-data.
+docker run --rm --network none --user www-data \
+    -e APP_ENV=production -e LOG_CHANNEL=stderr \
+    "local/motor1000-app:$MOTOR1000_IMAGE_TAG" \
+    php artisan route:list --path=panel/login --json >/dev/null
 "${dc[@]}" exec -T app php artisan down --retry=60
 quiesced=1
 "${dc[@]}" stop -t 300 nginx scheduler horizon
@@ -159,6 +165,8 @@ diff -u <(awk -F '\t' '$1 != "migrations"' "$backup/counts-before.tsv") \
 # el build generado, conservando los hashes anteriores para sesiones abiertas.
 mkdir -p public/build
 docker cp "$("${dc[@]}" ps -q app):/var/www/public/build/." public/build/
+find public/build -type d ! -perm -005 -exec chmod a+rx {} +
+find public/build -type f ! -perm -004 -exec chmod a+r {} +
 "${dc[@]}" up -d --no-deps --no-build --pull never --force-recreate nginx
 # Laravel exceptúa /up del mantenimiento. Verifica el recorrido nginx → PHP.
 "${dc[@]}" exec -T app curl -fsS --retry 12 --retry-delay 2 --retry-connrefused http://nginx/up > /dev/null

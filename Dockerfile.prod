@@ -1,8 +1,5 @@
 FROM php:8.3.36-fpm-trixie@sha256:d0dea3f5d95314eac94a732469f4cf0ee658a22c2ce3f2612272b9d5b42d1a72
 
-ARG RELEASE_REVISION=unknown
-LABEL org.opencontainers.image.revision=$RELEASE_REVISION
-
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 RUN apt-get update && apt-get install -y \
@@ -44,6 +41,8 @@ WORKDIR /var/www
 
 COPY . /var/www
 
+RUN sh scripts/normalize-code-permissions.sh
+
 RUN mkdir -p /var/www/bootstrap/cache /var/www/storage/framework/cache \
     /var/www/storage/framework/sessions /var/www/storage/framework/views \
     /var/www/storage/logs \
@@ -53,6 +52,9 @@ RUN mkdir -p /var/www/bootstrap/cache /var/www/storage/framework/cache \
 RUN composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 RUN npm ci
 RUN npm run build
+
+ARG RELEASE_REVISION=unknown
+LABEL org.opencontainers.image.revision=$RELEASE_REVISION
 
 EXPOSE 9000
 
